@@ -1,4 +1,4 @@
-# baseq3a
+# foundation
 
 Unofficial Quake III Arena gamecode patch
 
@@ -19,11 +19,15 @@ Unofficial Quake III Arena gamecode patch
  * improved prediction
  * damage-based hitsounds
  * colored skins
+ * CPMA fullbright skins
+ * linux qvm build support
+ * cg_crosshairColor support (seta cg_crosshairColor "0x00ff00ff" //for green)
  * high-quality proportional font renderer
 
 # TODO:
 
  * bugfixes
+ * add projectile delag code
 
 # Documentation
 
