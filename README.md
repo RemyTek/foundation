@@ -19,10 +19,10 @@ Unofficial Quake III Arena gamecode patch
  * improved prediction
  * damage-based hitsounds
  * colored skins
- * CPMA fullbright skins
+ * high-quality proportional font renderer
+ * CPMA-style fullbright skins
  * linux qvm build support
  * cg_crosshairColor support (seta cg_crosshairColor "0x00ff00ff" //for green)
- * high-quality proportional font renderer
  * cg_kickScale support with a default value of 0 to disable screen shake when taking damage.
 
 # TODO:
