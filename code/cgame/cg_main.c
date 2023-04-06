@@ -180,6 +180,7 @@ vmCvar_t	cg_oldRail;
 vmCvar_t	cg_oldRocket;
 vmCvar_t	cg_oldPlasma;
 vmCvar_t	cg_trueLightning;
+vmCvar_t	cg_kickScale;
 
 #ifdef MISSIONPACK
 vmCvar_t 	cg_redTeamName;
@@ -325,6 +326,7 @@ static const cvarTable_t cvarTable[] = {
 	{ &cg_oldRocket, "cg_oldRocket", "1", CVAR_ARCHIVE},
 	{ &cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE},
 	{ &cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE},
+	{ &cg_kickScale, "cg_kickScale", "0", CVAR_ARCHIVE },
 	{ &cg_hitSounds, "cg_hitSounds", "0", CVAR_ARCHIVE},
 	{ &cg_enemyModel, "cg_enemyModel", "", CVAR_ARCHIVE},
 	{ &cg_enemyColors, "cg_enemyColors", "", CVAR_ARCHIVE},
