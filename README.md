@@ -30,6 +30,7 @@ Unofficial Quake III Arena gamecode patch
  * add projectile delag code
  * rework crosshair colors to support color string names and q3 color codes (e.g. "Green" or "2").
  * add ruleset and crontab support similar to excessiveplus, edawn, etc.
+ * add more gametypes
 
 # Documentation
 
