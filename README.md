@@ -4,7 +4,11 @@ Unofficial Quake III Arena gamecode patch
 
 # current state
 
-[![Disabled Screen Shake](https://img.youtube.com/vi/T9BtoBtDGd4/default.jpg)](https://youtu.be/T9BtoBtDGd4)
+
+
+
+https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a102-5333569f0030.mp4
+
 
 # What is done:
 
@@ -15,6 +19,10 @@ Unofficial Quake III Arena gamecode patch
  * fixed spawn system
  * fixed in-game crosshair proportions
  * fixed UI mouse sensitivity for high-resolution
+
+https://user-images.githubusercontent.com/290740/230671995-3eab0fa8-96c3-4aa6-9936-d2acaa8c26f8.mp4
+
+
  * fixed server browser + faster scanning
  * new demo UI (subfolders,filtering,sorting)
  * updated serverinfo UI
