@@ -2,6 +2,10 @@
 
 Unofficial Quake III Arena gamecode patch
 
+# current state
+
+https://youtu.be/T9BtoBtDGd4
+
 # What is done:
 
  * new toolchain used (optimized q3lcc and q3asm)
