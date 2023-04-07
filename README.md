@@ -2,7 +2,9 @@
 
 Unofficial Quake III Arena gamecode patch
 
-# Current state (disabled screen shake when taking damage):
+# Current state:
+
+## Disabled screen shake when taking damage:
 
 https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a102-5333569f0030.mp4
 
