@@ -4,7 +4,7 @@ Unofficial Quake III Arena gamecode patch
 
 # current state
 
-https://youtu.be/T9BtoBtDGd4
+[![Disabled Screen Shake](https://img.youtube.com/vi/T9BtoBtDGd4/default.jpg)](https://youtu.be/T9BtoBtDGd4)
 
 # What is done:
 
