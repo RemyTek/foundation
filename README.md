@@ -2,10 +2,7 @@
 
 Unofficial Quake III Arena gamecode patch
 
-# current state
-
-
-
+# Current state
 
 https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a102-5333569f0030.mp4
 
