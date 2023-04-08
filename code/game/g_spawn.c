@@ -269,6 +269,10 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
 		if ( !strcmp(item->classname, ent->classname) ) {
+			if ( g_instagib.integer && item->giType != IT_TEAM ) {
+				// only spawn team play items in instagib mode
+				return qfalse;
+			}
 			G_SpawnItem( ent, item );
 			return qtrue;
 		}
