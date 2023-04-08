@@ -4,6 +4,10 @@ Unofficial Quake III Arena gamecode patch
 
 # Current state:
 
+## Added instagib support:
+
+https://user-images.githubusercontent.com/290740/230708646-ef9bd016-2284-4ca0-9efb-65e1457297a7.mp4
+
 ## Disabled screen shake when taking damage:
 
 https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a102-5333569f0030.mp4
