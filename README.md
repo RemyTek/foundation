@@ -43,6 +43,7 @@ https://user-images.githubusercontent.com/290740/230671995-3eab0fa8-96c3-4aa6-99
  * rework crosshair colors to support color string names and q3 color codes (e.g. "Green" or "2").
  * add ruleset and crontab support similar to excessiveplus, edawn, etc.
  * add more gametypes
+ * add fullbright skin support for team games.
 
 # Documentation
 
