@@ -22,10 +22,6 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * fixed spawn system
  * fixed in-game crosshair proportions
  * fixed UI mouse sensitivity for high-resolution
-
-https://user-images.githubusercontent.com/290740/230671995-3eab0fa8-96c3-4aa6-9936-d2acaa8c26f8.mp4
-
-
  * fixed server browser + faster scanning
  * new demo UI (subfolders,filtering,sorting)
  * updated serverinfo UI
