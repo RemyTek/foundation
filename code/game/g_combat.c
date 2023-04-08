@@ -78,7 +78,7 @@ void TossClientItems( gentity_t *self ) {
 	}
 
 	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
-		self->client->ps.ammo[ weapon ] ) {
+		self->client->ps.ammo[ weapon ] && !g_instagib.integer ) {
 		// find the item type for this weapon
 		item = BG_FindItemForWeapon( weapon );
 
@@ -899,6 +899,16 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		float	mass;
 
 		mass = 200;
+
+		if (targ != attacker) {
+			if (g_instagib.integer) {
+				switch (mod) {
+					case MOD_GAUNTLET:
+					case MOD_RAILGUN:
+						damage = INFINITE;
+				}
+			}
+		}
 
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
 		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
