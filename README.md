@@ -4,6 +4,9 @@ Unofficial Quake III Arena gamecode patch
 
 # Current state:
 
+## Got FB skins working with team-based gametypes:
+
+
 ## Added instagib support:
 
 https://user-images.githubusercontent.com/290740/230708646-ef9bd016-2284-4ca0-9efb-65e1457297a7.mp4
