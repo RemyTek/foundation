@@ -1,6 +1,6 @@
 # foundation
 
-Unofficial Quake III Arena gamecode patch
+Foundation is a foundation to build mods on.
 
 # Current state:
 
