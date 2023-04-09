@@ -2021,16 +2021,17 @@ static void CG_DrawCrosshair( void ) {
 	}
 
 	// set color based on health
-	if ( cgs.crosshairColor[3] > 0.0f )
-	{
-		trap_R_SetColor( cgs.crosshairColor );
-	}
-	else if ( cg_crosshairHealth.integer ) {
+	if ( cg_crosshairHealth.integer ) {
 		vec4_t		hcolor;
 
 		CG_ColorForHealth( hcolor );
 		trap_R_SetColor( hcolor );
-	} else {
+	}
+	else if ( cgs.crosshairColor[3] > 0.0f )
+	{
+		trap_R_SetColor( cgs.crosshairColor );
+	}	 
+	else {
 		trap_R_SetColor( NULL );
 	}
 
