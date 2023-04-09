@@ -35,6 +35,7 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * damage-based hitsounds
  * colored skins
  * high-quality proportional font renderer
+ * Kr3m's custom ctf_unified.shader for popping decals at any picmip setting.
  * CPMA-style fullbright skins
  * linux qvm build support
  * cg_crosshairColor support (seta cg_crosshairColor "0x00ff00ff" //for green)
