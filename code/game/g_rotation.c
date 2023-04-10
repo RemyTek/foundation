@@ -53,7 +53,7 @@ void G_LoadMap( const char *map )
 
 qboolean ParseMapRotation( void ) 
 {
-	char buf[ 4096 ];
+	char buf[ 8192 ];
 	char cvar[ 256 ];
 	char map[ 256 ];
 	char *s;
