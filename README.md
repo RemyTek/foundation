@@ -41,6 +41,7 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * cg_crosshairColor support (seta cg_crosshairColor "0x00ff00ff" //for green)
  * cg_kickScale support with a default value of 0 to disable screen shake when taking damage.
  * added fullbright skin support for team games.
+ * fixed crosshairColor overriding crosshairHealth settings.
  * fixed spawn times for items
 
 # TODO:
@@ -51,6 +52,7 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * ~~cg_crosshairColor support (seta cg_crosshairColor "0x00ff00ff" //for green)~~
  * ~~cg_kickScale support with a default value of 0 to disable screen shake when taking damage.~~
  * ~~add fullbright skin support for team games.~~
+ * ~~fixed crosshairColor overriding crosshairHealth settings.~~
  * ~~fix spawn times for items~~
  * bugfixes
  * add projectile delag code
