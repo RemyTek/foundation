@@ -4,6 +4,10 @@ Foundation is a foundation to build mods on based on baseq3a.
 
 # Current state:
 
+## Fixed crosshairHealth
+
+https://user-images.githubusercontent.com/290740/231115437-49be24c4-6999-4ba0-89e3-48eeddcb71e3.mp4
+
 ## Got FB skins working with team-based gametypes:
 
 https://user-images.githubusercontent.com/290740/230755343-e4a1347e-c6bc-4b59-83f9-8d8c2620ce44.mp4
