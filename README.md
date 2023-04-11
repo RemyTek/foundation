@@ -4,7 +4,7 @@ Foundation is a foundation to build mods on based on baseq3a.
 
 # Current state:
 
-## Fixed crosshairHealth
+## Fixed crosshairHealth:
 
 https://user-images.githubusercontent.com/290740/231115437-49be24c4-6999-4ba0-89e3-48eeddcb71e3.mp4
 
