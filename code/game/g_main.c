@@ -66,6 +66,7 @@ vmCvar_t	pmove_msec;
 vmCvar_t	g_listEntity;
 vmCvar_t	g_instagib;
 vmCvar_t	g_railJump;
+vmCvar_t	g_noSelfDamage;
 #ifdef MISSIONPACK
 vmCvar_t	g_obeliskHealth;
 vmCvar_t	g_obeliskRegenPeriod;
@@ -167,6 +168,7 @@ static cvarTable_t gameCvarTable[] = {
 	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse},
 	{ &g_instagib, "g_instagib", "0", CVAR_SERVERINFO | CVAR_LATCH, 0, qtrue },
 	{ &g_railJump, "g_railJump", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_noSelfDamage, "g_noSelfDamage", "0", CVAR_ARCHIVE, 0, qtrue },
 
 	{ &g_rotation, "g_rotation", "", CVAR_ARCHIVE, 0, qfalse }
 

@@ -983,9 +983,15 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	take = damage;
 
 	// save some from armor
-	asave = CheckArmor( targ, take, dflags );
-
-	take -= asave;
+	//qlone - self damage
+	if (targ == attacker && g_noSelfDamage.integer == 2 || g_instagib.integer == 1) {
+		asave = 0;
+	}
+	else {
+	//qlone - self damage
+		asave = CheckArmor (targ, take, dflags);
+		take -= asave;
+	} //qlone - self damage
 
 	if ( g_debugDamage.integer ) {
 		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
@@ -1051,6 +1057,12 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		targ->client->lasthurt_client = attacker->s.number;
 		targ->client->lasthurt_mod = mod;
 	}
+
+	//qlone - self damage
+	if (targ == attacker && g_noSelfDamage.integer || g_instagib.integer) {
+		return;
+	}
+	//qlone - self damage
 
 	// do the damage
 	if (take) {

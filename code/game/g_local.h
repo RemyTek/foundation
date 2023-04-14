@@ -810,6 +810,7 @@ extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
 extern  vmCvar_t	g_instagib;
 extern	vmCvar_t	g_railJump;
+extern	vmCvar_t	g_noSelfDamage;	// <0|1|2> (self damages, no, no+armor)
 
 void	trap_Print( const char *text );
 void	trap_Error( const char *text );
