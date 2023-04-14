@@ -809,6 +809,7 @@ extern	vmCvar_t	g_enableBreath;
 extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
 extern  vmCvar_t	g_instagib;
+extern	vmCvar_t	g_railJump;
 
 void	trap_Print( const char *text );
 void	trap_Error( const char *text );
@@ -1016,6 +1017,9 @@ void	trap_BotResetWeaponState(int weaponstate);
 int		trap_GeneticParentsAndChildSelection(int numranks, float *ranks, int *parent1, int *parent2, int *child);
 
 void	trap_SnapVector( float *v );
+
+// Rail jumping
+void G_RailgunRadiusDamage (vec3_t origin, gentity_t *ent);
 
 // extension interface
 
