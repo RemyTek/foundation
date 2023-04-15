@@ -67,6 +67,8 @@ vmCvar_t	g_listEntity;
 vmCvar_t	g_instagib;
 vmCvar_t	g_railJump;
 vmCvar_t	g_noSelfDamage;
+vmCvar_t	g_startArmor;
+vmCvar_t	g_startHealth;
 #ifdef MISSIONPACK
 vmCvar_t	g_obeliskHealth;
 vmCvar_t	g_obeliskRegenPeriod;
@@ -169,6 +171,8 @@ static cvarTable_t gameCvarTable[] = {
 	{ &g_instagib, "g_instagib", "0", CVAR_SERVERINFO | CVAR_LATCH, 0, qtrue },
 	{ &g_railJump, "g_railJump", "0", CVAR_ARCHIVE, 0, qtrue },
 	{ &g_noSelfDamage, "g_noSelfDamage", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_startArmor, "g_startArmor", "0", 0, 0, qfalse },
+	{ &g_startHealth, "g_startHealth", "0", 0, 0, qfalse },
 
 	{ &g_rotation, "g_rotation", "", CVAR_ARCHIVE, 0, qfalse }
 
