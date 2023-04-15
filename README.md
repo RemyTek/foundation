@@ -47,6 +47,7 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * added fullbright skin support for team games.
  * fixed crosshairColor overriding crosshairHealth settings.
  * fixed spawn times for items
+ * added g_startHealth and g_startArmor
 
 # TODO:
 
