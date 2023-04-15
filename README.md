@@ -69,6 +69,7 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * add random map rotation functionality
  * add g_doReady and /ready as a toggle
  * better HUD
+ * improve AI
  * some features from Quake Live.
  
 
