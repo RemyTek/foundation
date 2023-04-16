@@ -996,8 +996,6 @@ static void CG_SetSkinAndModel( clientInfo_t *newInfo,
 	char *skin, *slash;
 	qboolean	pm_model;
 	qboolean	fb_model;
-	qboolean	fullbright_skin;
-	qboolean	promode_skin;
 	team_t		team;
 	const char	*colors;
 	int skinLen = strlen(cg_enemyModel.string);
