@@ -36,4 +36,4 @@ vm/ui/%.asm: $(QADIR)/%.c; $(ui_cc)
 vm/ui/%.asm: $(UIDIR)/%.c; $(ui_cc)
 
 clean:
-	$(RM) -rf *.pk3 vm/
+	$(RM) -rf *.pk3 vm/ ../cgame/*.asm ../game/*.asm ../ui/*.asm
