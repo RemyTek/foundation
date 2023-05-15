@@ -998,8 +998,6 @@ static void CG_SetSkinAndModel( clientInfo_t *newInfo,
 	qboolean	fb_model;
 	team_t		team;
 	const char	*colors;
-	int skinLen = strlen(cg_enemyModel.string);
-	const char *cskinName = &cg_enemyModel.string[skinLen-2];
 	
 	team = newInfo->team;
 	pm_model = ( Q_stricmp( cg_enemyModel.string, PM_SKIN ) == 0 ) ? qtrue : qfalse;
