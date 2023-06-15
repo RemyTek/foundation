@@ -1,6 +1,6 @@
 # foundation
 
-Foundation is a foundation to build mods on based on baseq3a.
+Foundation is a foundation to build mods on.
 
 # Current state:
 
