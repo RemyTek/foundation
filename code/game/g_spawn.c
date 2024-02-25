@@ -606,6 +606,159 @@ void SP_worldspawn( void ) {
 }
 
 
+// ******* custom entity loading -wiz *******
+
+static char *entityString;
+static char *entityParsePoint;
+
+static qboolean ReadEntityToken(char *buffer, int bufferSize)
+{
+	const char *token;
+
+	token = COM_Parse(&entityParsePoint);
+	if (!entityParsePoint && token[0] == '\0')
+		return qfalse;
+
+	Q_strncpyz(buffer, token, bufferSize);
+	return qtrue;
+}
+
+static qboolean G_ParseSpawnVarsFromFile(void) {
+	char		keyname[MAX_TOKEN_CHARS];
+	char		com_token[MAX_TOKEN_CHARS];
+
+	// parse the opening brace
+	if (!ReadEntityToken(com_token, sizeof(com_token))) {
+		// end of spawn string
+		return qfalse;
+	}
+	if (com_token[0] != '{') {
+		G_Printf("G_ParseSpawnVarsFromFile: found %s when expecting {\n", com_token);
+		return qfalse;
+	}
+
+	// go through all the key / value pairs
+	while (1) {
+		// parse key
+		if (!ReadEntityToken(keyname, sizeof(keyname))) {
+			G_Printf("G_ParseSpawnVarsFromFile: EOF without closing brace\n");
+			break;
+		}
+
+		if (keyname[0] == '}') {
+			break;
+		}
+
+		// parse value
+		if (!ReadEntityToken(com_token, sizeof(com_token))) {
+			G_Printf("G_ParseSpawnVarsFromFile: EOF without closing brace\n");
+			break;
+		}
+
+		if (com_token[0] == '}') {
+			G_Printf("G_ParseSpawnVarsFromFile: closing brace without data\n");
+			return qtrue;
+		}
+		if (level.numSpawnVars == MAX_SPAWN_VARS) {
+			G_Printf("G_ParseSpawnVarsFromFile: MAX_SPAWN_VARS\n");
+			break;
+		}
+		level.spawnVars[level.numSpawnVars][0] = G_AddSpawnVarToken(keyname);
+		level.spawnVars[level.numSpawnVars][1] = G_AddSpawnVarToken(com_token);
+		level.numSpawnVars++;
+	}
+
+	return qtrue;
+}
+
+static void G_RemoveDuplicateItems(void)
+{
+	gentity_t *ent1, *ent2;
+	int i, j;
+	
+	// check for item entities on top of each other and remove the original
+	// this is so spawning from file will replace them if same coordinates
+	for (i = MAX_CLIENTS; i < level.num_entities; i++) {
+		ent1 = &g_entities[i];
+
+		if (!ent1->inuse) {
+			continue;
+		}
+		if (!ent1->item) {
+			continue;
+		}
+		
+		for (j = i + 1; j < level.num_entities; j++) {
+			ent2 = &g_entities[j];
+
+			if (!ent2->inuse) {
+				continue;
+			}
+			if (!ent2->item) {
+				continue;
+			}
+			
+			if (ent1->r.currentOrigin[0] == ent2->r.currentOrigin[0] &&
+			    ent1->r.currentOrigin[1] == ent2->r.currentOrigin[1] &&
+				ent1->r.currentOrigin[2] == ent2->r.currentOrigin[2])
+			{
+				G_FreeEntity(ent1);
+				ent1->freetime = 0;
+			}
+		}
+	}
+}
+
+static qboolean G_SpawnEntitiesFromFile(void)
+{
+	fileHandle_t file;
+	char filename[MAX_FILEPATH];
+	int filelen;
+	int i;
+
+	Com_sprintf(filename, sizeof(filename), "maps/%s.add", g_mapname.string);
+
+	filelen = trap_FS_FOpenFile(filename, &file, FS_READ);
+	if (file == FS_INVALID_HANDLE) {
+		G_Printf("Entities file %s does not exist.\n", filename);
+		return qfalse;
+	}
+	if (filelen == 0) {
+		G_Printf("Entity file is empty: %s\n", filename);
+		return qfalse;
+	}
+
+	// allocate buffer in game memory
+	entityString = G_Alloc(filelen);
+	// read file into buffer entityString
+	trap_FS_Read(entityString, filelen, file);
+	entityString[filelen] = 0;
+	// close the file
+	trap_FS_FCloseFile(file);
+	// set the parse pointer to the beginning of string
+	entityParsePoint = entityString;
+	
+	//level.numSpawnVars = 0;
+	//level.numSpawnVarChars = 0;
+
+	// parse ents
+	while (G_ParseSpawnVarsFromFile()) {
+		G_SpawnGEntityFromSpawnVars();
+	}
+
+	// free memory buffer
+	//entityParsePoint = NULL;
+	//G_Free(entityString);  // not implemented in g_mem.c
+
+	// in case new entities are replacing existing items
+	G_RemoveDuplicateItems();
+
+	return qtrue; // loaded successfully
+}
+
+// ******* end custom entity loading *******
+
+
 /*
 ==============
 G_SpawnEntitiesFromString
@@ -629,7 +782,10 @@ void G_SpawnEntitiesFromString( void ) {
 	// parse ents
 	while( G_ParseSpawnVars() ) {
 		G_SpawnGEntityFromSpawnVars();
-	}	
+	}
+
+	// parse custom entities
+	G_SpawnEntitiesFromFile();
 
 	level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors
 }
