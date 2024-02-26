@@ -627,6 +627,9 @@ static qboolean G_ParseSpawnVarsFromFile(void) {
 	char		keyname[MAX_TOKEN_CHARS];
 	char		com_token[MAX_TOKEN_CHARS];
 
+	level.numSpawnVars = 0;
+	level.numSpawnVarChars = 0;
+	
 	// parse the opening brace
 	if (!ReadEntityToken(com_token, sizeof(com_token))) {
 		// end of spawn string
@@ -702,8 +705,13 @@ static void G_RemoveDuplicateItems(void)
 			    ent1->r.currentOrigin[1] == ent2->r.currentOrigin[1] &&
 				ent1->r.currentOrigin[2] == ent2->r.currentOrigin[2])
 			{
+				if (ent1->team && *ent1->team) {
+					continue; // teamed items can be stacked
+				}
+				G_Printf("Removing item %s at %s\n", ent1->item->classname, vtos(ent1->r.currentOrigin));
 				G_FreeEntity(ent1);
 				ent1->freetime = 0;
+				break;
 			}
 		}
 	}
@@ -728,6 +736,8 @@ static qboolean G_SpawnEntitiesFromFile(void)
 		return qfalse;
 	}
 
+	G_Printf("Loading custom entities from %s\n", filename);
+
 	// allocate buffer in game memory
 	entityString = G_Alloc(filelen);
 	// read file into buffer entityString
@@ -738,9 +748,6 @@ static qboolean G_SpawnEntitiesFromFile(void)
 	// set the parse pointer to the beginning of string
 	entityParsePoint = entityString;
 	
-	//level.numSpawnVars = 0;
-	//level.numSpawnVarChars = 0;
-
 	// parse ents
 	while (G_ParseSpawnVarsFromFile()) {
 		G_SpawnGEntityFromSpawnVars();
