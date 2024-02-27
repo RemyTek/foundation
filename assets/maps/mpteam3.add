@@ -30,7 +30,7 @@
 {
 	"random" "0"
 	"wait" "120"
-	"origin" "256 640 850"
+	"origin" "256 640 800"
 	"spawnflags" "1"
 	"classname" "item_quad"
 
