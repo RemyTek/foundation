@@ -34,3 +34,12 @@
 	"origin" "3024 2736 16"
 
 }
+
+// entity 8
+{
+	"origin" "-2656 -2336 36"
+	"gametype" "ctf"
+	"team" "badness"
+	"classname" "item_invisibility"
+
+}
