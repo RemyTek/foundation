@@ -759,8 +759,6 @@ extern	gentity_t		g_entities[MAX_GENTITIES];
 	#include "g_cvar.h"
 #undef EXTERN_G_CVAR
 
-extern	vmCvar_t	g_railJump;
-
 void	trap_Print( const char *text );
 void	trap_Error( const char *text );
 int		trap_Milliseconds( void );

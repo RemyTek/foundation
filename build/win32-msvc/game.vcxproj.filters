@@ -208,5 +208,8 @@
     <ClInclude Include="..\..\code\game\syn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\code\game\g_cvar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

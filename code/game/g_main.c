@@ -22,14 +22,11 @@ gclient_t		g_clients[MAX_CLIENTS];
 	#include "g_cvar.h"
 #undef DECLARE_G_CVAR
 
-vmCvar_t	g_railJump;
-
 static cvarTable_t gameCvarTable[] = {
 
 	// noset vars
 	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
-	{ &g_smoothClients, "g_railJump", "0", CVAR_ARCHIVE, 0, qtrue},
 
 #define G_CVAR_LIST
 	#include "g_cvar.h"
