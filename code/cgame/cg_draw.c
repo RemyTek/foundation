@@ -2003,14 +2003,14 @@ CG_SetCrosshairColor
 static void CG_SetCrosshairColor( void ) {
 	static int		colorNum;
 	static float	*colors[] = {
-		colorBlack,
-		colorBlue,
-		colorGreen,
-		colorCyan,
 		colorRed,
-		colorMagenta,
+		colorGreen,
 		colorYellow,
-		colorWhite
+		colorBlue,	
+		colorCyan,		
+		colorMagenta,		
+		colorWhite,
+		colorOrange
 	};
 
 	colorNum = cg_crosshairColor.integer;
