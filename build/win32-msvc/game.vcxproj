@@ -23,7 +23,6 @@
     <ProjectGuid>{25F3B624-E060-4DAD-93D6-479AB6CD782F}</ProjectGuid>
     <RootNamespace>game</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -80,7 +79,6 @@
     <OutDir>.\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\$(Platform)\$(Configuration)_$(ProjectName)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>qagamex86_64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>.\$(Platform)\$(Configuration)\</OutDir>
@@ -134,9 +132,7 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName)$(TargetExt) "$(QUAKE3DIR)\$(MODDIR)\$(TargetName)$(TargetExt)"
-
-
+      <Command>copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName)$(ARCHL)$(TargetExt) "$(QUAKE3DIR)\$(MODDIR)\$(TargetName)$(ARCHL)$(TargetExt)"
 copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName).pdb "$(QUAKE3DIR)\$(MODDIR)\$(TargetName).pdb"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -220,7 +216,6 @@ copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName).pdb "$(QUAKE3DIR)\$(MOD
     <ClInclude Include="..\..\code\game\bg_public.h" />
     <ClInclude Include="..\..\code\game\botlib.h" />
     <ClInclude Include="..\..\code\game\chars.h" />
-    <ClInclude Include="..\..\code\game\g_cvar.h" />
     <ClInclude Include="..\..\code\game\g_local.h" />
     <ClInclude Include="..\..\code\game\g_public.h" />
     <ClInclude Include="..\..\code\game\g_rankings.h" />

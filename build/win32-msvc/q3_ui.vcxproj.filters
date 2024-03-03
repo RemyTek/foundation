@@ -166,8 +166,5 @@
     <ClInclude Include="..\..\code\q3_ui\ui_local.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\code\q3_ui\ui_cvar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

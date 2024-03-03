@@ -22,8 +22,8 @@ gclient_t		g_clients[MAX_CLIENTS];
 	#include "g_cvar.h"
 #undef DECLARE_G_CVAR
 
-static cvarTable_t gameCvarTable[] = {
 
+static cvarTable_t gameCvarTable[] = {
 	// noset vars
 	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },

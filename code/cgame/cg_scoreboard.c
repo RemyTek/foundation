@@ -221,7 +221,6 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 	}
 }
 
-
 /*
 =================
 CG_ScoreboardClick
@@ -251,9 +250,13 @@ void CG_ScoreboardClick( void )
 			continue;
 		}
 
-		if ( !cg.demoPlayback ) {
-			trap_SendClientCommand( va( "follow %i", score->client ) );
-		}
+		/* if( score->team == cg.snap->ps.persistant[PERS_TEAM] ) {
+			return;
+		} else {
+			if ( !cg.demoPlayback ) {
+				trap_SendClientCommand( va( "follow %i", score->client ) );
+			}
+		} */
 	}
 }
 

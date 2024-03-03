@@ -15,6 +15,7 @@ int	enemyColorsModificationCount = -1;
 int teamModelModificationCount  = -1;
 int	teamColorsModificationCount = -1;
 static int crosshairColorModificationCount = -1;
+int cg_playback_follow;
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
 void CG_Shutdown( void );
@@ -1733,6 +1734,8 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	memset( cg_entities, 0, sizeof(cg_entities) );
 	memset( cg_weapons, 0, sizeof(cg_weapons) );
 	memset( cg_items, 0, sizeof(cg_items) );
+
+	cg_playback_follow = -1;
 
 	cg.clientNum = clientNum;
 

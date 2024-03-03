@@ -2408,7 +2408,8 @@ static void CG_DrawProxWarning( void ) {
 		Com_sprintf( s, sizeof(s), "YOU HAVE BEEN MINED" );
 	}
 
-	CG_DrawString( 320, 64 + 64 + BIGCHAR_HEIGHT, s, g_color_table[ColorIndex(COLOR_RED)], BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0, DF_SHADOW | DF_FORCE_COLOR | DF_CENTER );
+	CG_DrawString( 320, 64 + 64 + BIGCHAR_HEIGHT, s, g_color_table[ColorIndex(COLOR_RED)], BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0, DS_SHADOW | DS_FORCE_COLOR | DS_CENTER );
+}
 #endif
 
 

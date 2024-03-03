@@ -112,9 +112,6 @@
     <ClInclude Include="..\..\code\cgame\tr_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\code\cgame\cg_cvar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\code\cgame\cgame.def">

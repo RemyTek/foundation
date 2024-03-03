@@ -178,13 +178,13 @@ static void CG_DrawPlayerArmorValue(rectDef_t *rect, float scale, vec4_t color, 
   
 
 	if (shader) {
-    trap_R_SetColor( color );
+		trap_R_SetColor( color );
 		CG_DrawPic(rect->x, rect->y, rect->w, rect->h, shader);
-	  trap_R_SetColor( NULL );
+		trap_R_SetColor( NULL );
 	} else {
 		Com_sprintf (num, sizeof(num), "%i", value);
 		value = CG_Text_Width(num, scale, 0);
-	  CG_Text_Paint(rect->x + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
+		CG_Text_Paint(rect->x + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
 	}
 }
 
@@ -577,8 +577,8 @@ static void CG_DrawPlayerHealth(rectDef_t *rect, float scale, vec4_t color, qhan
 		trap_R_SetColor( NULL );
 	} else {
 		Com_sprintf (num, sizeof(num), "%i", value);
-	  value = CG_Text_Width(num, scale, 0);
-	  CG_Text_Paint(rect->x + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
+		value = CG_Text_Width(num, scale, 0);
+		CG_Text_Paint(rect->x + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
 	}
 }
 
@@ -1453,7 +1453,7 @@ void CG_DrawMedal(int ownerDraw, rectDef_t *rect, float scale, vec4_t color, qha
 			value = score->perfect;
 			break;
 		case CG_GAUNTLET:
-			value = score->guantletCount;
+			value = score->gauntletCount;
 			break;
 		case CG_CAPTURES:
 			value = score->captures;
