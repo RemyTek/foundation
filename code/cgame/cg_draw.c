@@ -1995,6 +1995,33 @@ CROSSHAIR
 ================================================================================
 */
 
+/*
+=================
+CG_SetCrosshairColor
+=================
+*/
+static void CG_SetCrosshairColor( void ) {
+	static int		colorNum;
+	static float	*colors[] = {
+		colorBlack,
+		colorBlue,
+		colorGreen,
+		colorCyan,
+		colorRed,
+		colorMagenta,
+		colorYellow,
+		colorWhite
+	};
+
+	colorNum = cg_crosshairColor.integer;
+	if ( !colorNum ) { // if it's 0, then set to yellow
+		colorNum = 7;
+	}
+	colorNum = ( colorNum - 1 ) % ARRAY_LEN( colors );
+
+	trap_R_SetColor( colors[colorNum] );
+}
+
 
 /*
 =================
@@ -2027,12 +2054,12 @@ static void CG_DrawCrosshair( void ) {
 		CG_ColorForHealth( hcolor );
 		trap_R_SetColor( hcolor );
 	}
-	else if ( cgs.crosshairColor[3] > 0.0f )
+	/*else if ( cgs.crosshairColor[3] > 0.0f )
 	{
 		trap_R_SetColor( cgs.crosshairColor );
-	}	 
+	}*/	 
 	else {
-		trap_R_SetColor( NULL );
+		CG_SetCrosshairColor();
 	}
 
 	w = h = cg_crosshairSize.value;
@@ -2408,8 +2435,7 @@ static void CG_DrawProxWarning( void ) {
 		Com_sprintf( s, sizeof(s), "YOU HAVE BEEN MINED" );
 	}
 
-	CG_DrawString( 320, 64 + 64 + BIGCHAR_HEIGHT, s, g_color_table[ColorIndex(COLOR_RED)], BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0, DS_SHADOW | DS_FORCE_COLOR | DS_CENTER );
-}
+	CG_DrawString( 320, 64 + 64 + BIGCHAR_HEIGHT, s, g_color_table[ColorIndex(COLOR_RED)], BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0, DF_SHADOW | DF_FORCE_COLOR | DF_CENTER );
 #endif
 
 

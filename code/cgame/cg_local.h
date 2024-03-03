@@ -1126,7 +1126,6 @@ typedef struct {
 
 	// media
 	cgMedia_t		media;
-	vec4_t			crosshairColor;
 
 	float			fov;		// clamped cg_fov value
 	float			zoomFov;	// clamped cg_zoomFov value
