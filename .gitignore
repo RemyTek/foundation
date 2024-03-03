@@ -1,3 +1,5 @@
 build/linux-qvm/foundation01.pk3
 build/linux-qvm/vm/
 code/.vscode/
+build/win32-msvc/.vs/
+build/win32-msvc/x64/
