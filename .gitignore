@@ -3,3 +3,4 @@ build/linux-qvm/vm/
 code/.vscode/
 build/win32-msvc/.vs/
 build/win32-msvc/x64/
+build/linux-qvm/config.mk.bak
