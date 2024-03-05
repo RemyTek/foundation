@@ -20,11 +20,11 @@ GAME OPTIONS MENU
 #define ART_FX_BASE				"menu/art/fx_base"
 #define ART_FX_BLUE				"menu/art/fx_blue"
 #define ART_FX_CYAN				"menu/art/fx_cyan"
-#define ART_FX_GREEN			"menu/art/fx_grn"
+#define ART_FX_GREEN				"menu/art/fx_grn"
 #define ART_FX_RED				"menu/art/fx_red"
 #define ART_FX_TEAL				"menu/art/fx_teal"
-#define ART_FX_WHITE			"menu/art/fx_white"
-#define ART_FX_YELLOW			"menu/art/fx_yel"
+#define ART_FX_WHITE				"menu/art/fx_white"
+#define ART_FX_YELLOW				"menu/art/fx_yel"
 
 #define PREFERENCES_X_POS		360
 
@@ -38,8 +38,8 @@ GAME OPTIONS MENU
 #define ID_SYNCEVERYFRAME		134
 #define ID_FORCEMODEL			135
 #define ID_DRAWTEAMOVERLAY		136
-#define ID_ALLOWDOWNLOAD			137
-#define ID_BACK					138
+#define ID_ALLOWDOWNLOAD		137
+#define ID_BACK				138
 #define ID_CROSSHAIRCOLOR		139
 
 #define	NUM_CROSSHAIRS			10
@@ -52,8 +52,8 @@ typedef struct {
 	menubitmap_s		framel;
 	menubitmap_s		framer;
 
-	menulist_s			crosshair;
-	menulist_s			crosshaircolor;
+	menulist_s		crosshair;
+	menulist_s		crosshaircolor;
 	menuradiobutton_s	simpleitems;
 	menuradiobutton_s	brass;
 	menuradiobutton_s	wallmarks;
@@ -62,7 +62,7 @@ typedef struct {
 	menuradiobutton_s	highqualitysky;
 	menuradiobutton_s	synceveryframe;
 	menuradiobutton_s	forcemodel;
-	menulist_s			drawteamoverlay;
+	menulist_s		drawteamoverlay;
 	menuradiobutton_s	allowdownload;
 	menubitmap_s		back;
 
