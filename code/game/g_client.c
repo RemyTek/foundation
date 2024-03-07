@@ -973,6 +973,10 @@ void ClientSpawn(gentity_t *ent) {
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
+	for (i = 0; i < g_maxclients.integer; i++) {
+		client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+	}
+
 	if ( isSpectator ) {
 		spawnPoint = SelectSpectatorSpawnPoint( spawn_origin, spawn_angles );
 	} else if (g_gametype.integer >= GT_CTF ) {

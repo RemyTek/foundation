@@ -869,6 +869,7 @@ void ClearRegisteredItems( void ) {
 		RegisterItem( BG_FindItem( "Blue Cube" ) );
 	}
 #endif
+	G_RegisterWeapon();
 }
 
 /*
