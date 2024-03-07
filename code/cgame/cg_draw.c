@@ -2018,7 +2018,7 @@ static void CG_SetCrosshairColor( void ) {
 	if ( colorNum > 8 || colorNum < 0 ) { // if it's larger than 8 or less than 0, set it to white
 		colorNum = 7;
 	}
-	colorNum = ( colorNum ) % ARRAY_LEN( colors );
+	colorNum = colorNum % ARRAY_LEN( colors );
 
 	trap_R_SetColor( colors[colorNum] );
 }
@@ -2054,12 +2054,7 @@ static void CG_DrawCrosshair( void ) {
 
 		CG_ColorForHealth( hcolor );
 		trap_R_SetColor( hcolor );
-	}
-	/*else if ( cgs.crosshairColor[3] > 0.0f )
-	{
-		trap_R_SetColor( cgs.crosshairColor );
-	}*/	 
-	else {
+	} else {
 		CG_SetCrosshairColor();
 	}
 
