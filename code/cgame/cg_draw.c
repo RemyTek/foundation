@@ -2003,22 +2003,23 @@ CG_SetCrosshairColor
 static void CG_SetCrosshairColor( void ) {
 	static int		colorNum;
 	static float	*colors[] = {
-		colorBlack,		//0
-		colorRed,		//1
-		colorGreen,		//2
-		colorYellow,	//3
-		colorBlue,		//4
-		colorCyan,		//5
-		colorMagenta,	//6
-		colorWhite,		//7
-		colorOrange		//8
+		colorBlack,
+		colorRed,
+		colorGreen,
+		colorYellow,
+		colorBlue,	
+		colorCyan,
+		colorMagenta,
+		colorWhite,
+		colorOrange,
+		colorPink
 	};
 
 	colorNum = cg_crosshairColor.integer;
-	if ( colorNum > 8 || colorNum < 0 ) { // if it's larger than 8 or less than 0, set it to white
+	if ( colorNum > 9 || colorNum < 0 ) { // if it's larger than 9 or less than 0, set it to white
 		colorNum = 7;
 	}
-	colorNum = colorNum % ARRAY_LEN( colors );
+	colorNum = ( colorNum ) % ARRAY_LEN( colors );
 
 	trap_R_SetColor( colors[colorNum] );
 }
