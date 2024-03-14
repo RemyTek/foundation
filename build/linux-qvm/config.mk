@@ -1,4 +1,4 @@
-PK3 = foundation01.pk3
+PK3 = pak000.pk3
 
 basedir = ../../code
 
