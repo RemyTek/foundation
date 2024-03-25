@@ -43,9 +43,6 @@ The corresponding values are:
 * Railgun	32
 * Plasma Gun	64
 * BFG10K	128
-* Nailgun	256
-* Prox Launcher	512
-* Chaingun	1024
 
 So, in order to let a player starts with a shotgun, a grenade launcher and a rocket launcher you can use "wpflags 14" (for 14 is 2+4+8). Note that players always start with the machinegun and the gauntlet.
 
