@@ -20,11 +20,11 @@ GAME OPTIONS MENU
 #define ART_FX_BASE				"menu/art/fx_base"
 #define ART_FX_BLUE				"menu/art/fx_blue"
 #define ART_FX_CYAN				"menu/art/fx_cyan"
-#define ART_FX_GREEN			"menu/art/fx_grn"
+#define ART_FX_GREEN				"menu/art/fx_grn"
 #define ART_FX_RED				"menu/art/fx_red"
 #define ART_FX_TEAL				"menu/art/fx_teal"
-#define ART_FX_WHITE			"menu/art/fx_white"
-#define ART_FX_YELLOW			"menu/art/fx_yel"
+#define ART_FX_WHITE				"menu/art/fx_white"
+#define ART_FX_YELLOW				"menu/art/fx_yel"
 
 #define PREFERENCES_X_POS		360
 
@@ -119,7 +119,7 @@ static void Preferences_SetMenuItems( void ) {
 	if ( c < 0 || c > 7 ) { // if cvar is invalid, set to white
 		c = 7;
 	}
-	
+
 	uiSliderColorIndex = s_preferences.crosshaircolor.curvalue = gamecodetoui[c];
 
 	s_preferences.simpleitems.curvalue	= trap_Cvar_VariableValue( "cg_simpleItems" ) != 0;
@@ -321,13 +321,13 @@ static void Preferences_MenuInit( void ) {
 	y = 144;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
-	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS;
-	s_preferences.crosshair.generic.y			= y;
+	s_preferences.crosshair.generic.x		= PREFERENCES_X_POS;
+	s_preferences.crosshair.generic.y		= y;
 	s_preferences.crosshair.generic.name		= "Crosshair:";
 	s_preferences.crosshair.generic.callback	= Preferences_Event;
 	s_preferences.crosshair.generic.ownerdraw	= Crosshair_Draw;
-	s_preferences.crosshair.generic.id			= ID_CROSSHAIR;
-	s_preferences.crosshair.generic.top			= y - 4;
+	s_preferences.crosshair.generic.id		= ID_CROSSHAIR;
+	s_preferences.crosshair.generic.top		= y - 4;
 	s_preferences.crosshair.generic.bottom		= y + 20;
 	s_preferences.crosshair.generic.left		= PREFERENCES_X_POS - ( ( strlen(s_preferences.crosshair.generic.name) + 1 ) * SMALLCHAR_WIDTH );
 	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS + 48;

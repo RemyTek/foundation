@@ -330,9 +330,7 @@ extern	vec4_t		colorPink;
 #define COLOR_CYAN		'5'
 #define COLOR_MAGENTA	'6'
 #define COLOR_WHITE		'7'
-#define COLOR_ORANGE	'8'
-#define COLOR_PINK		'9'
-#define ColorIndex(c)	( ( (c) - '0' ) & 9 )
+#define ColorIndex(c)	( ( (c) - '0' ) & 7 )
 
 #define S_COLOR_BLACK	"^0"
 #define S_COLOR_RED		"^1"
@@ -342,8 +340,6 @@ extern	vec4_t		colorPink;
 #define S_COLOR_CYAN	"^5"
 #define S_COLOR_MAGENTA	"^6"
 #define S_COLOR_WHITE	"^7"
-#define S_COLOR_ORANGE	"^8"
-#define S_COLOR_PINK	"^7"
 
 #define S_COLOR_STRIP	S_COLOR_WHITE
 

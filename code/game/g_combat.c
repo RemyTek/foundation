@@ -415,6 +415,20 @@ void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
 	}
 }
 
+void G_GenericDeathCleanup( gentity_t *self ) {
+	if (self->client && self->client->hook) {
+		Weapon_HookFree(self->client->hook);
+	}
+
+#ifdef MISSIONPACK
+	if ((self->client->ps.eFlags & EF_TICKING) && self->activator) {
+		self->client->ps.eFlags &= ~EF_TICKING;
+		self->activator->think = G_FreeEntity;
+		self->activator->nextthink = level.time;
+	}
+#endif
+}
+
 /*
 ==================
 player_die
@@ -454,6 +468,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		self->activator->nextthink = level.time;
 	}
 #endif
+	G_GenericDeathCleanup(self); // removes hook and prox mines stuck to victim
+
 	self->client->ps.pm_type = PM_DEAD;
 
 	if ( attacker ) {

@@ -115,7 +115,7 @@ static void PlayerSettings_DrawName( void *self ) {
 	while ( (c = *txt) != 0 ) {
 		if ( !focus && Q_IsColorString( txt ) ) {
 			n = ColorIndex( *(txt+1) );
-			if( n == 0 ) {
+			if( n > 9 || n < 0 ) {
 				n = 7;
 			}
 			color = g_color_table[n];

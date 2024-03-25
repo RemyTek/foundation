@@ -937,6 +937,68 @@ void ClientBegin( int clientNum ) {
 	CalculateRanks();
 }
 
+void ClientBackupStats(gentity_t *ent, int *weapon, qboolean *god, int *persistantPW, int *portalID, int stats[MAX_STATS], int ammo[MAX_WEAPONS], int powerups[MAX_POWERUPS]) {
+	int i = 0;
+	*weapon = ent->client->ps.weapon;
+	*god = (ent->flags & FL_GODMODE) ? qtrue : qfalse;
+#ifdef MISSIONPACK
+	*persistantPW = ent->client->persistantPowerup ? ent->client->persistantPowerup->s.number : 0;
+	*portalID = ent->client->portalID;
+#endif
+	for( i = 0; i < MAX_STATS; i++ ) {
+		if ( i == STAT_HEALTH || i == STAT_MAX_HEALTH )
+			stats[i] = 0;
+		else
+			stats[i] = ent->client->ps.stats[i];
+	}
+	for( i = 0; i < MAX_WEAPONS; i++ ) {
+		ammo[i] = ent->client->ps.ammo[i];
+	}
+	for( i = 0; i < MAX_POWERUPS; i++ ) {
+		powerups[i] = ent->client->ps.powerups[i];
+	}
+}
+
+void ClientRestoreStats(gentity_t *ent, int *weapon, qboolean *god, int *persistantPW, int *portalID, int stats[MAX_STATS], int ammo[MAX_WEAPONS], int powerups[MAX_POWERUPS]) {
+	int i = 0;
+	ent->client->ps.weapon = *weapon;
+	if( *god ) {
+		ent->flags |= FL_GODMODE;
+	}
+#ifdef MISSIONPACK
+	ent->client->persistantPowerup = *persistantPW ? &g_entities[*persistantPW] : NULL;
+	ent->client->portalID = *portalID;
+#endif
+	for( i = 0; i < MAX_STATS; i++ ) {
+		if ( i == STAT_HEALTH || i == STAT_MAX_HEALTH )
+			continue;
+		ent->client->ps.stats[i] = stats[i];
+	}
+	for( i = 0; i < MAX_WEAPONS; i++ ) {
+		ent->client->ps.ammo[i] = ammo[i];
+	}
+	for( i = 0; i < MAX_POWERUPS; i++ ) {
+		ent->client->ps.powerups[i] = powerups[i];
+	}
+
+#ifdef MISSIONPACK
+	if ( ent->client->ps.powerups[PW_GUARD] ) {
+		ent->client->ps.stats[STAT_MAX_HEALTH] = 2*ent->client->pers.maxHealth;
+		ent->health = ent->client->ps.stats[STAT_HEALTH] = ent->client->ps.stats[STAT_MAX_HEALTH];
+		ent->client->ps.stats[STAT_ARMOR] = ent->client->ps.stats[STAT_MAX_HEALTH];
+	}
+
+	if ( ent->client->ps.stats[STAT_HOLDABLE_ITEM] == HI_KAMIKAZE ) {
+		ent->client->ps.eFlags |= EF_KAMIKAZE;
+	}
+#endif
+
+	if ( ent->client->ps.ammo[WP_MACHINEGUN] < 100 ) {
+		ent->client->ps.ammo[WP_MACHINEGUN] = 100;
+	}
+
+	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
+}
 
 /*
 ===========
@@ -973,7 +1035,6 @@ void ClientSpawn(gentity_t *ent) {
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
-
 	if ( isSpectator ) {
 		spawnPoint = SelectSpectatorSpawnPoint( spawn_origin, spawn_angles );
 	} else if (g_gametype.integer >= GT_CTF ) {
@@ -1093,9 +1154,17 @@ void ClientSpawn(gentity_t *ent) {
 	} else {
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 		if ( g_gametype.integer == GT_TEAM ) {
-			client->ps.ammo[WP_MACHINEGUN] = 50;
+			if ( g_startAmmoMG.integer ) {
+				client->ps.ammo[WP_MACHINEGUN] = g_startAmmoMG.integer;
+			} else {
+				client->ps.ammo[WP_MACHINEGUN] = 50;
+			}			
 		} else {
-			client->ps.ammo[WP_MACHINEGUN] = 100;
+			if ( g_startAmmoMG.integer ) {
+				client->ps.ammo[WP_MACHINEGUN] = g_startAmmoMG.integer;
+			} else {
+				client->ps.ammo[WP_MACHINEGUN] = 100;
+			}			
 		}
 	}
 
@@ -1106,23 +1175,21 @@ void ClientSpawn(gentity_t *ent) {
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
 
-	//qlone - custom health
-	if ( g_startHealth.integer > 0 ) {
-		client->ps.stats[STAT_HEALTH] += g_startHealth.integer;
-		if ( client->ps.stats[STAT_HEALTH] > client->ps.stats[STAT_MAX_HEALTH] * 2 )
+	if (g_startHealth.integer > 0) {
+		client->ps.stats[STAT_HEALTH] = g_startHealth.integer;
+		if (client->ps.stats[STAT_HEALTH] > client->ps.stats[STAT_MAX_HEALTH] * 2)
 			client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] * 2;
 		ent->health = client->ps.stats[STAT_HEALTH];
 	}
-	//qlone - custom health
 
-	//qlone - custom armor
-    if ( g_startArmor.integer > 0 ) {
-		client->ps.stats[ STAT_ARMOR ] += g_startArmor.integer;
-		if ( client->ps.stats[ STAT_ARMOR ] > client->ps.stats[ STAT_MAX_HEALTH ] * 2 ) {
-			client->ps.stats[ STAT_ARMOR ] = client->ps.stats[ STAT_MAX_HEALTH ] * 2;
+
+
+	if (g_startArmor.integer > 0) {
+		client->ps.stats[STAT_ARMOR] = g_startArmor.integer;
+		if (client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] * 2) {
+			client->ps.stats[STAT_ARMOR] = client->ps.stats[STAT_MAX_HEALTH] * 2;
 		}
 	}
-	//qlone - custom armor
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
@@ -1134,8 +1201,9 @@ void ClientSpawn(gentity_t *ent) {
 	SetClientViewAngle( ent, spawn_angles );
 
 	// entity should be unlinked before calling G_KillBox()	
-	if ( !isSpectator )
-		G_KillBox( ent );
+	if (!isSpectator)
+		G_KillBox(ent);
+	G_SpawnWeapon(client);
 
 	// force the base weapon up
 	client->ps.weapon = WP_MACHINEGUN;
@@ -1164,10 +1232,20 @@ void ClientSpawn(gentity_t *ent) {
 		// select the highest weapon number available, after any
 		// spawn given items have fired
 		client->ps.weapon = 1;
-		for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
-			if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
-				client->ps.weapon = i;
-				break;
+		if (!g_startingWeapon.integer || g_instagib.integer > 0) {
+			for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
+				if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+					client->ps.weapon = i;
+					break;
+				}
+			}
+		} else {
+			client->ps.weapon = g_startingWeapon.integer;
+		}
+		if (g_startArmor.integer > 0) {
+			client->ps.stats[STAT_ARMOR] = g_startArmor.integer;
+			if (client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] * 2) {
+				client->ps.stats[STAT_ARMOR] = client->ps.stats[STAT_MAX_HEALTH] * 2;
 			}
 		}
 	}

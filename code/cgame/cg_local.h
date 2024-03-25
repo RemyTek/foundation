@@ -686,6 +686,8 @@ typedef struct {
 	int				followClient;
 
 	qboolean		skipDFshaders;
+
+	int				lastweapon, currentweapon;
 } cg_t;
 
 
@@ -1131,6 +1133,8 @@ typedef struct {
 	//hook
 	unsigned int	g_grapplePull;
   	unsigned int	g_grappleDelayTime;
+	unsigned int	g_sgPelletSpread;
+	unsigned int	g_sgPellets;
 
 	float			fov;		// clamped cg_fov value
 	float			zoomFov;	// clamped cg_zoomFov value
@@ -1347,6 +1351,7 @@ void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *pare
 //
 void CG_NextWeapon_f( void );
 void CG_PrevWeapon_f( void );
+void CG_LastWeapon_f( void );
 void CG_Weapon_f( void );
 
 void CG_RegisterWeapon( int weaponNum );

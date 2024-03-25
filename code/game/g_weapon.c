@@ -111,7 +111,7 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 	}
 #endif
 
-	damage = 50 * s_quadFactor;
+	damage = g_damageG.integer * s_quadFactor;
 	G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, MOD_GAUNTLET );
 
 	return qtrue;
@@ -301,7 +301,7 @@ static qboolean ShotgunPellet( const vec3_t start, const vec3_t end, gentity_t *
 		}
 
 		if ( traceEnt->takedamage ) {
-			damage = DEFAULT_SHOTGUN_DAMAGE * s_quadFactor;
+			damage = g_damageSG.integer * s_quadFactor;
 #ifdef MISSIONPACK
 			if ( traceEnt->client && traceEnt->client->invulnerabilityTime > level.time ) {
 				if (G_InvulnerabilityEffect( traceEnt, forward, tr.endpos, impactpoint, bouncedir )) {
@@ -348,9 +348,9 @@ static void ShotgunPattern( const vec3_t origin, const vec3_t origin2, int seed,
 	G_DoTimeShiftFor( ent );
 
 	// generate the "random" spread pattern
-	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
-		r = Q_crandom( &seed ) * DEFAULT_SHOTGUN_SPREAD * 16;
-		u = Q_crandom( &seed ) * DEFAULT_SHOTGUN_SPREAD * 16;
+		for ( i = 0 ; i < g_sgPellets.integer ; i++ ) {
+		r = Q_crandom( &seed ) * g_sgPelletSpread.integer * 16;
+		u = Q_crandom( &seed ) * g_sgPelletSpread.integer * 16;
 		VectorMA( origin, ( 8192.0 * 16.0 ), forward, end );
 		VectorMA( end, r, right, end );
 		VectorMA( end, u, up, end );
@@ -469,7 +469,7 @@ void weapon_railgun_fire( gentity_t *ent ) {
 	int			passent;
 	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
-	damage = 100 * s_quadFactor;
+	damage = g_damageRG.integer * s_quadFactor;
 
 	VectorMA( muzzle_origin, 8192.0, forward, end );
 
@@ -601,7 +601,7 @@ void G_RailgunRadiusDamage (vec3_t origin, gentity_t *ent) {
 	float damage, radius, distMax, dist, points;
 
 	// use the same values as the Rocket Launcher
-	damage = 100;
+	damage = g_railJumpDamage.integer;
 	radius = 120;
 
 	// max distance to trigger the damage
@@ -747,7 +747,7 @@ void Weapon_LightningFire( gentity_t *ent ) {
 	gentity_t	*traceEnt, *tent;
 	int			damage, i, passent;
 
-	damage = 8 * s_quadFactor;
+	damage = g_damageLG.integer * s_quadFactor;
 
 	passent = ent->s.number;
 
@@ -951,9 +951,9 @@ void FireWeapon( gentity_t *ent ) {
 		break;
 	case WP_MACHINEGUN:
 		if ( g_gametype.integer != GT_TEAM ) {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE );
+			Bullet_Fire( ent, MACHINEGUN_SPREAD, g_damageMG.integer );
 		} else {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE );
+			Bullet_Fire( ent, MACHINEGUN_SPREAD, g_damageTeamMG.integer );
 		}
 		break;
 	case WP_GRENADE_LAUNCHER:

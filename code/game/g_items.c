@@ -43,6 +43,7 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 		return 0;
 
 	switch( ent->item->giType ) {
+
 	case IT_WEAPON:
 		if ( firstSpawn )
 			return SPAWN_WEAPONS;
@@ -246,6 +247,15 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
 static void Add_Ammo( gentity_t *ent, int weapon, int count )
 {
+	// if ammo already above limit from /give cheat don't bother
+	if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT )
+		return;
+
+	if ( weapon == WP_GAUNTLET || weapon == WP_GRAPPLING_HOOK ) {
+		ent->client->ps.ammo[weapon] = -1;
+		return;
+	}
+
 	ent->client->ps.ammo[weapon] += count;
 	if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT ) {
 		ent->client->ps.ammo[weapon] = AMMO_HARD_LIMIT;
@@ -763,6 +773,9 @@ void FinishSpawningItem( gentity_t *ent ) {
 
 
 qboolean	itemRegistered[MAX_ITEMS];
+qboolean Registered( gitem_t *item ) {
+	return ( item && itemRegistered[ item - bg_itemlist ] );
+}
 
 /*
 ==================

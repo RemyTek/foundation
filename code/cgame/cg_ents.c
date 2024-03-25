@@ -798,6 +798,9 @@ static void CG_TeamBase( const centity_t *cent ) {
 #else
 	if ( cgs.gametype == GT_CTF) {
 #endif
+		if ( cg_simpleItems.integer ) {
+			return;
+		}
 		// show the flag base
 		memset(&model, 0, sizeof(model));
 		model.reType = RT_MODEL;

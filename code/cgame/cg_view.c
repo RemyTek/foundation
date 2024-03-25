@@ -916,4 +916,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	if ( cg_stats.integer ) {
 		CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
 	}
+
+	if ( cg.weaponSelect != cg.currentweapon ) {
+		cg.lastweapon = cg.currentweapon;
+		cg.currentweapon = cg.weaponSelect;
+	}
 }

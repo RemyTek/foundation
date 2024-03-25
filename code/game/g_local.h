@@ -470,6 +470,7 @@ void G_RevertVote( gclient_t *client );
 //
 // g_items.c
 //
+qboolean Registered( gitem_t *item );
 void G_CheckTeamItems( void );
 void G_RunItem( gentity_t *ent );
 void RespawnItem( gentity_t *ent );
@@ -609,7 +610,10 @@ void CopyToBodyQue( gentity_t *ent );
 void respawn (gentity_t *ent);
 void BeginIntermission (void);
 void InitBodyQue (void);
+void ClientBackupStats(gentity_t *ent, int *weapon, qboolean *god, int *persistantPW, int *portalID, int stats[MAX_STATS], int ammo[MAX_WEAPONS], int powerups[MAX_POWERUPS]);
+void ClientRestoreStats(gentity_t *ent, int *weapon, qboolean *god, int *persistantPW, int *portalID, int stats[MAX_STATS], int ammo[MAX_WEAPONS], int powerups[MAX_POWERUPS]);
 void ClientSpawn( gentity_t *ent );
+void G_GenericDeathCleanup( gentity_t *self );
 void player_die (gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod);
 void AddScore( gentity_t *ent, vec3_t origin, int score );
 void CalculateRanks( void );
@@ -750,6 +754,13 @@ qboolean G_MapExist( const char *map );
 
 // custom weapons
 void G_RegisterWeapon( void );
+void G_SpawnWeapon( gclient_t *client );
+qboolean G_RemoveAmmo( gitem_t *item );
+qboolean G_RemoveItem( gitem_t *item );
+qboolean G_RemovePowerup( gitem_t *item );
+qboolean G_RemoveWeapon( gitem_t *item );
+void G_SetInfiniteAmmo ( gclient_t *client );
+void Hook_Fire( gentity_t *ent );
 
 #include "g_team.h" // teamplay specific stuff
 

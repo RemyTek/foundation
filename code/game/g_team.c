@@ -702,9 +702,12 @@ Team_DroppedFlagThink
 */
 static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 	int			i;
-	gentity_t	*player;
+	gentity_t	*player, *tent;
 	gclient_t	*cl = other->client;
 	int			enemy_flag;
+#ifdef MISSIONPACK
+	vec3_t	origin, angles;
+#endif
 
 #ifdef MISSIONPACK
 	if( g_gametype.integer == GT_1FCTF ) {
@@ -752,6 +755,23 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 
 	teamgame.last_flag_capture = level.time;
 	teamgame.last_capture_team = team;
+
+#ifdef MISSIONPACK
+	if( g_gametype.integer == GT_1FCTF && g_1FRespawn.integer ) {
+		qboolean backup_god = qfalse;
+		int backup_weapon = WP_NONE, backup_persist = 0, backup_portal = 0;
+		int backup_stats[MAX_STATS], backup_ammo[MAX_WEAPONS], backup_powerups[MAX_POWERUPS];
+
+		tent = G_TempEntity( cl->ps.origin, EV_PLAYER_TELEPORT_OUT );
+		tent->s.clientNum = other->s.clientNum;
+		G_GenericDeathCleanup(other);
+		ClientBackupStats(other, &backup_weapon, &backup_god, &backup_persist, &backup_portal, backup_stats, backup_ammo, backup_powerups);
+		ClientSpawn(other);
+		ClientRestoreStats(other, &backup_weapon, &backup_god, &backup_persist, &backup_portal, backup_stats, backup_ammo, backup_powerups);
+		tent = G_TempEntity( cl->ps.origin, EV_PLAYER_TELEPORT_IN );
+		tent->s.clientNum = other->s.clientNum;
+	}
+#endif
 
 	// Increase the team's score
 	AddTeamScore(ent->s.pos.trBase, other->client->sess.sessionTeam, 1);
@@ -1496,3 +1516,89 @@ qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker ) {
 	return qfalse;
 }
 #endif
+
+static void Cmd_Flaginfo_f( gentity_t *ent ) {
+	if ( g_gametype.integer < GT_CTF ) {
+		return;
+	}
+
+	switch( g_gametype.integer ) {
+		case GT_CTF:
+		{
+			switch( teamgame.redStatus ) {
+				case -1:
+				case FLAG_ATBASE:
+				{
+					break;
+				}
+				case FLAG_TAKEN:
+				{
+					break;
+				}
+				case FLAG_DROPPED:
+				{
+					break;
+				}
+				default:
+					break;
+			}
+			switch( teamgame.blueStatus ) {
+				case -1:
+				case FLAG_ATBASE:
+				{
+					break;
+				}
+				case FLAG_TAKEN:
+				{
+					break;
+				}
+				case FLAG_DROPPED:
+				{
+					break;
+				}
+				default:
+					break;
+			}
+			break;
+		}
+#ifdef MISSIONPACK
+		case GT_1FCTF:
+		{
+			switch( teamgame.flagStatus ) {
+				case -1:
+				case FLAG_ATBASE:
+				{
+					break;
+				}
+				case FLAG_TAKEN_RED:
+				{
+					break;
+				}
+				case FLAG_TAKEN_BLUE:
+				{
+					break;
+				}
+				case FLAG_DROPPED:
+				{
+					break;
+				}
+				default:
+					break;
+			}
+			break;
+		}
+		case GT_OBELISK:
+		{
+			break;
+		}
+		case GT_HARVESTER:
+		{
+			break;
+		}
+#endif
+		default:
+			return;
+	}
+}
+
+

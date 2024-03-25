@@ -1293,6 +1293,12 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 		gun.shaderRGBA[3] = 255;
 	}
+	else {
+		gun.shaderRGBA[0] = 255 * ci->color1[0];
+		gun.shaderRGBA[1] = 255 * ci->color1[1];
+		gun.shaderRGBA[2] = 255 * ci->color1[2];
+		gun.shaderRGBA[3] = 255;
+	}
 
 	gun.hModel = weapon->weaponModel;
 	if (!gun.hModel) {
@@ -1720,6 +1726,18 @@ void CG_PrevWeapon_f( void ) {
 	}
 	if ( i == MAX_WEAPONS ) {
 		cg.weaponSelect = original;
+	}
+}
+
+
+void CG_LastWeapon_f( void ) {
+	if ( !cg.snap || (cg.snap->ps.pm_flags & PMF_FOLLOW) || cg.demoPlayback || !cg.lastweapon ) {
+		return;
+	}
+
+	if ( CG_WeaponSelectable( cg.lastweapon ) ) {
+		cg.weaponSelect = cg.lastweapon;
+		cg.weaponSelectTime = cg.time;
 	}
 }
 
@@ -2181,9 +2199,9 @@ static void CG_ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, int othe
 	CrossProduct( forward, right, up );
 
 	// generate the "random" spread pattern
-	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
-		r = Q_crandom( &seed ) * DEFAULT_SHOTGUN_SPREAD * 16;
-		u = Q_crandom( &seed ) * DEFAULT_SHOTGUN_SPREAD * 16;
+	for ( i = 0 ; i < cgs.g_sgPellets ; i++ ) {
+		r = Q_crandom( &seed ) * cgs.g_sgPelletSpread * 16;
+		u = Q_crandom( &seed ) * cgs.g_sgPelletSpread * 16;
 		VectorMA( origin, 8192 * 16, forward, end);
 		VectorMA (end, r, right, end);
 		VectorMA (end, u, up, end);

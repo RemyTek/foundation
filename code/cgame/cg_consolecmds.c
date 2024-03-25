@@ -486,6 +486,7 @@ static consoleCommand_t	commands[] = {
 	{ "weapnext", CG_NextWeapon_f },
 	{ "weapprev", CG_PrevWeapon_f },
 	{ "weapon", CG_Weapon_f },
+	{ "lastweapon", CG_LastWeapon_f },
 	{ "tcmd", CG_TargetCommand_f },
 	{ "tell_target", CG_TellTarget_f },
 	{ "tell_attacker", CG_TellAttacker_f },
@@ -581,6 +582,7 @@ void CG_InitConsoleCommands( void ) {
 	trap_AddCommand ("votell");
 #endif
 	trap_AddCommand ("give");
+	trap_AddCommand ("loaded");
 	trap_AddCommand ("god");
 	trap_AddCommand ("notarget");
 	trap_AddCommand ("noclip");

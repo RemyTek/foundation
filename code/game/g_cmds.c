@@ -257,7 +257,9 @@ void Cmd_Give_f( gentity_t *ent )
 
 	if (give_all || Q_stricmp(name, "ammo") == 0)
 	{
-		for ( i = 0 ; i < MAX_WEAPONS ; i++ ) {
+		for ( i = WP_MACHINEGUN ; i < MAX_WEAPONS ; i++ ) {
+			if (i == WP_GRAPPLING_HOOK)
+				continue;
 			ent->client->ps.ammo[i] = 999;
 		}
 		if (!give_all)
@@ -270,6 +272,36 @@ void Cmd_Give_f( gentity_t *ent )
 
 		if (!give_all)
 			return;
+	}
+
+	if (Q_stricmp(name, "quad") == 0) {
+		ent->client->ps.powerups[PW_QUAD] = level.time + 100*1000;
+		return;
+	}
+
+	if (Q_stricmp(name, "haste") == 0) {
+		ent->client->ps.powerups[PW_HASTE] = level.time + 100*1000;
+		return;
+	}
+
+	if (Q_stricmp(name, "invis") == 0) {
+		ent->client->ps.powerups[PW_INVIS] = level.time + 100*1000;
+		return;
+	}
+
+	if (Q_stricmp(name, "fly") == 0) {
+		ent->client->ps.powerups[PW_FLIGHT] = level.time + 100*1000;
+		return;
+	}
+
+	if (Q_stricmp(name, "regen") == 0) {
+		ent->client->ps.powerups[PW_REGEN] = level.time + 100*1000;
+		return;
+	}
+
+	if (Q_stricmp(name, "suit") == 0) {
+		ent->client->ps.powerups[PW_BATTLESUIT] = level.time + 100*1000;
+		return;
 	}
 
 	if (Q_stricmp(name, "excellent") == 0) {
@@ -304,12 +336,40 @@ void Cmd_Give_f( gentity_t *ent )
 		VectorCopy( ent->r.currentOrigin, it_ent->s.origin );
 		it_ent->classname = it->classname;
 		G_SpawnItem (it_ent, it);
-		FinishSpawningItem(it_ent );
+		if (!it_ent || !it_ent->inuse) {
+			return;
+		}
+		FinishSpawningItem (it_ent);
+		if (!it_ent || !it_ent->inuse) {
+			return;
+		}
 		memset( &trace, 0, sizeof( trace ) );
 		Touch_Item (it_ent, ent, &trace);
 		if (it_ent->inuse) {
 			G_FreeEntity( it_ent );
 		}
+	}
+}
+
+
+void Cmd_Loaded_f( gentity_t *ent ) {
+	int i;
+	if ( !CheatsOk( ent ) ) {
+		return;
+	}
+
+	if ( ent->health < ent->client->ps.stats[STAT_MAX_HEALTH] )
+		ent->health = ent->client->ps.stats[STAT_HEALTH] = ent->client->ps.stats[STAT_MAX_HEALTH];
+
+	if ( !ent->client->ps.powerups[PW_SCOUT] )
+		ent->client->ps.stats[STAT_ARMOR] = 200;
+
+	ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_NUM_WEAPONS) - 1 - ( 1 << WP_NONE );
+
+	for ( i = WP_MACHINEGUN ; i < MAX_WEAPONS ; i++ ) {
+		if (i == WP_GRAPPLING_HOOK)
+			continue;
+		ent->client->ps.ammo[i] = 999;
 	}
 }
 
@@ -534,6 +594,11 @@ qboolean SetTeam( gentity_t *ent, const char *s ) {
 	int					specClient;
 	int					teamLeader;
 	qboolean			checkTeamLeader;
+
+	// fix: this prevents rare creation of invalid players
+	if ( !ent->inuse ) {
+		return qfalse;
+	}
 
 	//
 	// see what change is requested
@@ -1871,6 +1936,8 @@ void ClientCommand( int clientNum ) {
 
 	if (Q_stricmp (cmd, "give") == 0)
 		Cmd_Give_f (ent);
+	else if (Q_stricmp (cmd, "loaded") == 0)
+		Cmd_Loaded_f (ent);
 	else if (Q_stricmp (cmd, "god") == 0)
 		Cmd_God_f (ent);
 	else if (Q_stricmp (cmd, "notarget") == 0)
