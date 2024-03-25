@@ -5,7 +5,13 @@ Foundation is a foundation to build mods on.
 ## New cvars
 
 * g_noSelfDamage <0|1> : default to 0. Toggle the player self damages
-* g_startAmmo*X* <0|200> : allow to define the amount of ammunitions for a weapon. *X* can be MG, SG, GL, RL, LG, RG, PG, BFG, NG, PL, CG
+* g_startAmmo*X* <0|200> : allow to define the amount of ammunitions for a weapon. *X* can be MG, SG, GL, RL, LG, RG, PG, BFG
+* g_damage*X* <0|999> : allow to define the amount of damage for a weapon. *X* can be MG, SG, GL, RL, LG, RG, PG, BFG
+* g_sgPellets <1|?> : number of shotgun pellets per shot
+* g_sgPelletSpread <1|?> : amount of shotgun spread defaults to 700
+* g_splashDamage*X* <1|?> : allow to define the amount of splash damage for a weapon. *X* can be GL, RL, PG, BFG
+* g_splashRadius*X* <1|?> : allow to define the amount of splash damage for a weapon. *X* can be GL, RL, PG, BFG
+* g_velocityRL <1|?> : how fast the rockets move
 * g_startArmor <0|200> : allow to define the amount of armor at spawn
 * g_startHealth <0|200> : allow to define the amount of health at spawn
 * g_ammoRespawn <seconds> : ammo respawn times for FFA and Duel
