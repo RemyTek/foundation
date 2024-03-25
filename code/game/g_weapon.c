@@ -655,7 +655,7 @@ void Weapon_GrapplingHook_Fire (gentity_t *ent)
 	ent->client->fireHeld = qtrue;
   
   	if (g_grappleHoldTime.integer > 0) {
-    	ent->client->grapple_release_time = g_grappleHoldTime.integer + level.time;
+    	ent->client->grapple_release_time = ( g_grappleHoldTime.integer * 1000 ) + level.time;
   	} else {
     	ent->client->grapple_release_time = 0;
   	}
