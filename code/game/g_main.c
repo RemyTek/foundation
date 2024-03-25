@@ -331,8 +331,13 @@ void G_SpawnWeapon ( gclient_t *client ) {
 		client->ps.ammo[ WP_LIGHTNING ] = getAmmoValue ( "g_startAmmoLG" );
 	}
 	if ( g_wpflags.integer & 32 ) {
-		client->ps.stats[ STAT_WEAPONS ] |= 1 << WP_RAILGUN;
-		client->ps.ammo[ WP_RAILGUN ] = getAmmoValue ( "g_startAmmoRG" );
+		if ( g_instagib.integer < 1) {
+			client->ps.stats[ STAT_WEAPONS ] |= 1 << WP_RAILGUN;
+			client->ps.ammo[ WP_RAILGUN ] = getAmmoValue ( "g_startAmmoRG" );
+		} else {
+			client->ps.stats[STAT_WEAPONS] = ( 1 << WP_RAILGUN );
+			client->ps.ammo[WP_RAILGUN] = 999;
+		}
 	}
 	if ( g_wpflags.integer & 64 ) {
 		client->ps.stats[ STAT_WEAPONS ] |= 1 << WP_PLASMAGUN;

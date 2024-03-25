@@ -2,6 +2,10 @@
 
 Foundation is a foundation to build mods on.
 
+## Known bug
+
+The example rotation is just to show what is possible. Until a specific bug is fixed, I would recommend running separate servers if you want to switch between instagib and not instagib as weapon pickups will be missing otherwise.
+
 ## New cvars
 
 * g_noSelfDamage <0|1> : default to 0. Toggle the player self damages
