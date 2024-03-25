@@ -26,6 +26,12 @@ Foundation is a foundation to build mods on.
 * g_powerupTeamRespawn <seconds> : powerup respawn times for team gametypes
 * g_holdableRespawn <seconds> : holdable respawn times for FFA and Duel
 * g_holdableTeamRespawn <seconds> : holdable respawn times for team gametypes
+* g_grapple <0|1> : enable grapple hook
+* g_grappleDelayTime <0|?> : delay time in milliseconds
+* g_grappleHoldTime <0|?> : how long the grapple will hold on in seconds 0 for infinite camping
+* g_grappleSpeed <0|?> : deploy speed in UPS
+* g_grapplePull <0|?> : pull speed in UPS
+* g_grappleDamage <0|?> : grapple hook damage 0 to disable
 
 ### Flagged cvars
 

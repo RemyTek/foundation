@@ -348,7 +348,7 @@ static void ShotgunPattern( const vec3_t origin, const vec3_t origin2, int seed,
 	G_DoTimeShiftFor( ent );
 
 	// generate the "random" spread pattern
-		for ( i = 0 ; i < g_sgPellets.integer ; i++ ) {
+	for ( i = 0 ; i < g_sgPellets.integer ; i++ ) {
 		r = Q_crandom( &seed ) * g_sgPelletSpread.integer * 16;
 		u = Q_crandom( &seed ) * g_sgPelletSpread.integer * 16;
 		VectorMA( origin, ( 8192.0 * 16.0 ), forward, end );
