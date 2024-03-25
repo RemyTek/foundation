@@ -52,8 +52,6 @@ The **removeX** cvars allow to choose to remove items from a map, **X** is eithe
   * item_invis 8
   * item_regen 16
   * item_flight 32
-  
-In addition, some dynamic cvars may be used to replace an item on a map. The syntax is **replace_ITEM "NEW_ITEM"**, where ITEM is a valid Q3 item classname. If you want to replace the bullets ammo with the rockets ammo use `set replace_ammo_bullets "ammo_rockets"`. Note that replace does only change the classname thus only items of the same type should be safely replaced...
 
 # Current state:
 
