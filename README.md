@@ -68,9 +68,6 @@ https://user-images.githubusercontent.com/290740/230755343-e4a1347e-c6bc-4b59-83
 https://user-images.githubusercontent.com/290740/230708646-ef9bd016-2284-4ca0-9efb-65e1457297a7.mp4
 
 
-https://github.com/RemyTek/foundation/assets/290740/e840ec89-0c5b-4e17-9211-bcfd84b59abb
-
-
 ## Disabled screen shake when taking damage:
 
 https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a102-5333569f0030.mp4
