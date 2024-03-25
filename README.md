@@ -8,6 +8,18 @@ Foundation is a foundation to build mods on.
 * g_startAmmo*X* <0|200> : allow to define the amount of ammunitions for a weapon. *X* can be MG, SG, GL, RL, LG, RG, PG, BFG, NG, PL, CG
 * g_startArmor <0|200> : allow to define the amount of armor at spawn
 * g_startHealth <0|200> : allow to define the amount of health at spawn
+* g_ammoRespawn <seconds> : ammo respawn times for FFA and Duel
+g_ammoTeamRespawn <seconds> : ammo respawn times for team gametypes
+g_armorRespawn <seconds> : armor respawn times for FFA and Duel
+g_armorTeamRespawn <seconds> : armor respawn times for team gametypes
+g_healthRespawn <seconds> : health respawn times for FFA and Duel
+g_healthTeamRespawn <seconds> : health respawn times for team gametypes
+g_megahealthRespawn <seconds> : megahealth respawn times for FFA and Duel
+g_megahealthTeamRespawn <seconds> : megahealth respawn times for team gametypes
+g_powerupRespawn <seconds> : powerup respawn times for FFA and Duel
+g_powerupTeamRespawn <seconds> : powerup respawn times for team gametypes
+g_holdableRespawn <seconds> : holdable respawn times for FFA and Duel
+g_holdableTeamRespawn <seconds> : holdable respawn times for team gametypes
 
 ### Flagged cvars
 
