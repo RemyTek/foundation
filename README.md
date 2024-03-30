@@ -78,7 +78,8 @@ The **removeX** cvars allow to choose to remove items from a map, **X** is eithe
 
 ## Configurable Grapple Hook:
 
-https://dayentech.net/videos/grapple.mp4
+
+https://github.com/RemyTek/foundation/assets/290740/d9aa3040-83c5-4854-b9d5-d83acc5ed918
 
 ## Fixed crosshairHealth:
 
