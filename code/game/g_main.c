@@ -202,7 +202,7 @@ void G_FindTeams( void ) {
 
 
 void G_RemapTeamShaders( void ) {
-#ifdef MISSIONPACK
+//#ifdef MISSIONPACK
 	char string[1024];
 	float f = level.time * 0.001;
 	Com_sprintf( string, sizeof(string), "team_icon/%s_red", g_redteam.string );
@@ -212,7 +212,7 @@ void G_RemapTeamShaders( void ) {
 	AddRemap("textures/ctf2/blueteam01", string, f); 
 	AddRemap("textures/ctf2/blueteam02", string, f); 
 	trap_SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
-#endif
+//#endif
 }
 
 
