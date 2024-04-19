@@ -652,6 +652,8 @@ void QDECL G_Printf( const char *fmt, ... );
 void QDECL G_Error( const char *fmt, ... );
 void G_BroadcastServerCommand( int ignoreClient, const char *command );
 
+qboolean G_AreTeamStringValid();
+
 //
 // g_client.c
 //
