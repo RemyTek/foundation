@@ -150,6 +150,7 @@ https://user-images.githubusercontent.com/290740/230672040-74bcfa4d-9400-4be6-a1
  * better HUD
  * improve AI
  * some features from Quake Live.
+ * add other announcers
 
 
 # Documentation

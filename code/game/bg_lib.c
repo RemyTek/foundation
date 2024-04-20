@@ -1,6 +1,4 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
 //
-// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // bg_lib,c -- standard C library replacement routines used by code
 // compiled for the virtual machine
