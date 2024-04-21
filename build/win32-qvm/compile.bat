@@ -9,7 +9,7 @@ set gamedir=..\..\..\..\code\game
 set uidir=..\..\..\..\code\q3_ui
 
 set tooldir=%~dp0tools\
-set pk3=%~dp0pak8a.pk3
+set pk3=%~dp0pak000.pk3
 
 set cc1=%tooldir%q3lcc -DQ3_VM -DCGAME  -S -Wf-g -I%cgamedir% -I%gamedir% %1
 set cc2=%tooldir%q3lcc -DQ3_VM -DQAGAME -S -Wf-g -I%gamedir% %1
