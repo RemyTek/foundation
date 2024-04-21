@@ -1,4 +1,4 @@
-PK3 = pak8a.pk3
+PK3 = pak000.pk3
 
 basedir = ../../code
 
