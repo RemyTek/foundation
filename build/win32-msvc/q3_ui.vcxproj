@@ -124,8 +124,8 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName)$(TargetExt) "$(QUAKE3DIR)\$(MODDIR)
-copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName).pdb "$(QUAKE3DIR)\$(MODDIR)</Command>
+      <Command>copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName)$(TargetExt) "$(QUAKE3DIR)\$(MOD)
+copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName).pdb "$(QUAKE3DIR)\$(MOD)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // active (after loading) gameplay
 
 #include "cg_local.h"
+#include "..\game\bg_promode.h" // CPM
 
 #ifdef MISSIONPACK
 #include "../ui/ui_shared.h"
@@ -633,6 +634,14 @@ static void CG_DrawStatusBar( void ) {
 	}
 
 	if ( ps->stats[ STAT_ARMOR ] ) {
+		qhandle_t model = cgs.media.armorModel; // CPM
+
+		// CPM: Fix RA shader
+		if ( g_promode.integer ) {
+			if ( ps->stats[ STAT_ARMORTYPE ] == 2 ) {
+				model = cgs.media.armorModelRA;
+			}
+		}
 		origin[0] = 90;
 		origin[1] = 0;
 		origin[2] = -10;
@@ -725,6 +734,12 @@ static void CG_DrawStatusBar( void ) {
 	//
 	value = ps->stats[STAT_ARMOR];
 	if ( value > 0 ) {
+        // CPM: Armor icon
+        qhandle_t icon = cgs.media.armorIcon;
+
+        if (g_promode.integer && ps->stats[STAT_ARMORTYPE] == 2)
+            icon = cgs.media.armorIconRA;
+        
 #ifdef USE_NEW_FONT_RENDERER
 		CG_SelectFont( 1 );
 		CG_DrawString( 370 + CHAR_WIDTH*3, y, va( "%i", value ), colors[ color ], CHAR_WIDTH, CHAR_HEIGHT, 0, DS_RIGHT | DS_PROPORTIONAL );

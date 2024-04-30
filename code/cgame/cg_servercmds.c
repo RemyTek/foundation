@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef MISSIONPACK // bk001204
 #include "../../ui/menudef.h" // bk001205 - for Q3_ui as well
+#include "..\game\bg_promode.h" // CPM
 
 typedef struct {
 	const char *order;
@@ -394,6 +395,12 @@ static void CG_ConfigStringModified( void ) {
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();
 	}
+	// CPM
+		else if ( num == CS_promode )
+		{
+			CPM_UpdateSettings( (atoi(str)) ? ((cgs.gametype == GT_TEAM) ? 2 : 1) : 0 );
+		}
+	// !CPM
 		
 }
 

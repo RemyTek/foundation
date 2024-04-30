@@ -72,6 +72,8 @@ cd vm\cgame
 @if errorlevel 1 goto quit
 %cc1% %gamedir%\bg_misc.c
 @if errorlevel 1 goto quit
+%cc1% %gamedir%\bg_promode.c
+@if errorlevel 1 goto quit
 %cc1% %gamedir%\bg_pmove.c
 @if errorlevel 1 goto quit
 %cc1% %gamedir%\bg_slidemove.c
@@ -118,6 +120,8 @@ cd vm\game
 %cc2% %gamedir%\bg_lib.c
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\bg_misc.c 
+@if errorlevel 1 goto quit
+%cc2% %gamedir%\bg_promode.c
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\bg_pmove.c
 @if errorlevel 1 goto quit

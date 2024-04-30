@@ -184,4 +184,6 @@ G_CVAR( g_rotation, "g_rotation", "0", CVAR_ARCHIVE, 0, qfalse, qfalse )
 G_CVAR( g_redteam, "g_redteam", "", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO, 0, qtrue, qtrue )
 G_CVAR( g_blueteam, "g_blueteam", "", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO, 0, qtrue, qtrue )
 
+G_CVAR( g_promode, "g_promode", "0", CVAR_SYSTEMINFO | CVAR_SERVERINFO, 0, qtrue, qtrue )
+
 #undef G_CVAR

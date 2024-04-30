@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_shared.h"
 #include "bg_public.h"
 #include "bg_local.h"
+#include "bg_promode.h"
 
 pmove_t		*pm;
 pml_t		pml;
@@ -385,6 +386,15 @@ static qboolean PM_CheckJump( void ) {
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
+	// CPM: check for double-jump
+		if ( pm->movetype > 0 ) {
+			if (pm->ps->stats[STAT_JUMPTIME] > 0) {
+				pm->ps->velocity[2] += cpm_pm_jump_z;
+			}
+
+			pm->ps->stats[STAT_JUMPTIME] = 400;
+		}
+	// !CPM
 	PM_AddEvent( EV_JUMP );
 
 	if ( pm->cmd.forwardmove >= 0 ) {
@@ -611,6 +621,8 @@ static void PM_AirMove( void ) {
 	vec3_t		wishdir;
 	float		wishspeed;
 	float		scale;
+    float		accel; // CPM
+    float		wishspeed2; // CPM
 	usercmd_t	cmd;
 
 	PM_Friction();
@@ -639,8 +651,30 @@ static void PM_AirMove( void ) {
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
 
+	// CPM: Air Control
+	wishspeed2 = wishspeed;
+	if (DotProduct(pm->ps->velocity, wishdir) < 0) {
+		accel = cpm_pm_airstopaccelerate;
+	} else {
+		accel = pm_airaccelerate;
+	}
+	if ((pm->ps->movementDir == 2 || pm->ps->movementDir == -2 || pm->ps->movementDir == 10) || 
+		(pm->ps->movementDir == 6 || pm->ps->movementDir == -6 || pm->ps->movementDir == 14)) {
+		if (wishspeed > cpm_pm_wishspeed) {
+			wishspeed = cpm_pm_wishspeed;
+		}
+		accel = cpm_pm_strafeaccelerate;
+	}
+	// !CPM
+
 	// not on ground, so little effect on velocity
-	PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
+    // CPM: Air control
+    PM_Accelerate (wishdir, wishspeed, accel);
+    if ( pm->movetype > 0 )
+        CPM_PM_Aircontrol (pm, wishdir, wishspeed2);
+    // !CPM
+
+
 
 	// we may have a ground plane that is very steep, even
 	// though we don't have a groundentity

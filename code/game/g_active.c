@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
+#include "bg_promode.h" // CPM
 
 
 /*
@@ -282,7 +283,23 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		// use seperate code for determining if an item is picked up
 		// so you don't have to actually contact its bounding box
 		if ( hit->s.eType == ET_ITEM ) {
-			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
+			memset( &trace, 0, sizeof(trace) );
+
+			if ( hit->touch ) {
+				hit->touch (hit, ent, &trace);
+			}
+
+
+			/***************************
+			* There is most likely a
+			* much better way of handling
+			* this, but this is how I got
+			* it working.
+			***************************/
+			//FIXME: This shouldn't need 2 qboolean's.
+			if ( !g_promode.integer && !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
+				continue;
+			} else if ( g_promode.integer && !BG_ProModePlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
 				continue;
 			}
 		} else {
@@ -462,7 +479,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// count down armor when over max
-		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
+		//if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
+		if ( (client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH]) && !g_promode.integer ) { // CPM
 			client->ps.stats[STAT_ARMOR]--;
 		}
 	}
@@ -762,6 +780,8 @@ void ClientThink_real( gentity_t *ent ) {
 	usercmd_t	*ucmd;
 
 	client = ent->client;
+
+    pm.movetype = g_promode.integer;
 
 	// don't think if the client is not yet connected (and thus not yet spawned in)
 	if (client->pers.connected != CON_CONNECTED) {

@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "g_local.h"
+#include "bg_promode.h"
 
 // g_client.c -- client functions that don't happen every frame
 
@@ -675,7 +676,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 #else
 	health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->pers.maxHealth = health;
-	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > HEALTH_SOFT_LIMIT ) {
+	if ( client->pers.maxHealth < 1 || g_promode.integer || client->pers.maxHealth > HEALTH_SOFT_LIMIT ) {
 		client->pers.maxHealth = HEALTH_SOFT_LIMIT;
 	}
 #endif

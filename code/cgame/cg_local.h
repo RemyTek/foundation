@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tr_types.h"
 #include "../game/bg_public.h"
 #include "cg_public.h"
+#include "../ui/keycodes.h"
 
 
 // The entire cgame module is unloaded and reloaded on each level change,

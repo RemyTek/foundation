@@ -10,6 +10,7 @@ ai_vcmd
 bg_lib
 bg_misc
 bg_pmove
+bg_promode
 bg_slidemove
 g_active
 g_arenas

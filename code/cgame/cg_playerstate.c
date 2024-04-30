@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // when the snapshot transitions like all the other entities
 
 #include "cg_local.h"
+#include "../game/bg_promode.h"
 
 /*
 ==============
@@ -334,6 +335,31 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	} else if ( ps->persistant[PERS_HITS] < ops->persistant[PERS_HITS] ) {
 		trap_S_StartLocalSound( cgs.media.hitTeamSound, CHAN_LOCAL_SOUND );
 	}
+
+    // CPM: Hit tones
+    if (g_promode.integer)
+    {
+        int delta;
+
+        delta = ps->persistant[PERS_HITS] - ops->persistant[PERS_HITS];
+
+        if (delta > 75)
+            trap_S_StartLocalSound( cgs.media.hitSound[3], CHAN_LOCAL_SOUND );
+        else if (delta > 50)
+            trap_S_StartLocalSound( cgs.media.hitSound[2], CHAN_LOCAL_SOUND );
+        else if (delta > 25)
+            trap_S_StartLocalSound( cgs.media.hitSound[1], CHAN_LOCAL_SOUND );
+        else if (delta > 0)
+            trap_S_StartLocalSound( cgs.media.hitSound[0], CHAN_LOCAL_SOUND );
+        else if (delta < 0)
+            trap_S_StartLocalSound( cgs.media.hitTeamSound, CHAN_LOCAL_SOUND );
+    } else {
+        if ( ps->persistant[PERS_HITS] > ops->persistant[PERS_HITS] ) {
+            trap_S_StartLocalSound( cgs.media.hitSound[2], CHAN_LOCAL_SOUND );
+        } else if ( ps->persistant[PERS_HITS] < ops->persistant[PERS_HITS] ) {
+            trap_S_StartLocalSound( cgs.media.hitTeamSound, CHAN_LOCAL_SOUND );
+        }
+    }
 
 	// health changes of more than -1 should make pain sounds
 	if ( ps->stats[STAT_HEALTH] < ops->stats[STAT_HEALTH] - 1 ) {
