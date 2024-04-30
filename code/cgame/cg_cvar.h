@@ -135,6 +135,6 @@ CG_CVAR( cg_deadBodyDarken, "cg_deadBodyDarken", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_fovAdjust, "cg_fovAdjust", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_followKiller, "cg_followKiller", "0", CVAR_ARCHIVE )
 
-CG_CVAR( g_promode, "g_promode", "0", CVAR_SERVERINFO )
+CG_CVAR( g_promode, "g_promode", "0", 0 )
 
 #undef CG_CVAR
