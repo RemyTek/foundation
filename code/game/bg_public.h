@@ -197,7 +197,7 @@ typedef struct {
 	int			pmove_msec;
 
 	int			grapplePull;
-    int         movetype;
+    int         movetype;  //physics type
 
 	// callbacks to test the world
 	// these will be different functions during game and cgame
