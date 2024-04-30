@@ -305,7 +305,7 @@ void CPM_PM_Aircontrol (pmove_t *pm, vec3_t wishdir, float wishspeed )
 	float	zspeed, speed, dot, k;
 	int		i;
 
-	if ( (pm->ps->movementDir && pm->ps->movementDir !=4 && pm->ps->movementDir != -4 && pm->ps->movementDir != 12) || wishspeed == 0.0) 
+	if ( (pm->ps->movementDir && pm->ps->movementDir != 4 && pm->ps->movementDir != -4 && pm->ps->movementDir != 12) || wishspeed == 0.0)
 		return; // can't control movement if not moveing forward or backward
 
 	zspeed = pm->ps->velocity[2];

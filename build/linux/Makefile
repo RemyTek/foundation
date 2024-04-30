@@ -334,6 +334,7 @@ CGOBJ_ = \
   $(B)/$(MOD)/cgame/bg_lib.o \
   $(B)/$(MOD)/cgame/bg_misc.o \
   $(B)/$(MOD)/cgame/bg_pmove.o \
+  $(B)/$(MOD)/cgame/bg_promode.o \
   $(B)/$(MOD)/cgame/bg_slidemove.o \
   $(B)/$(MOD)/cgame/cg_consolecmds.o \
   $(B)/$(MOD)/cgame/cg_draw.o \
@@ -378,6 +379,7 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/bg_lib.o \
   $(B)/$(MOD)/game/bg_misc.o \
   $(B)/$(MOD)/game/bg_pmove.o \
+  $(B)/$(MOD)/game/bg_promode.o \
   $(B)/$(MOD)/game/bg_slidemove.o \
   $(B)/$(MOD)/game/g_active.o \
   $(B)/$(MOD)/game/g_arenas.o \

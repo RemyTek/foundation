@@ -4,7 +4,7 @@
 // active (after loading) gameplay
 
 #include "cg_local.h"
-#include "..\game\bg_promode.h" // CPM
+#include "../game/bg_promode.h" // CPM
 
 /*
 ==============
