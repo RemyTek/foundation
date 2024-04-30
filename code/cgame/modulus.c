@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0
+ * The Original Code is Copyright (C) 2017-2024 by the baseq3a project with permission from the author. All rights reserved. */
+//modulus.c by Cyrax
+
 #include <stdio.h>
 #include <math.h>
 
