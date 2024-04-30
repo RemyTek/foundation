@@ -1850,7 +1850,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_ParseServerinfo();
 
     // CPM: Setup according to the pro mode settings
-    s = CG_ConfigString( CS_promode );
+    s = CG_ConfigString( CS_PROMODE );
     CPM_UpdateSettings( (atoi(s)) ? ((cgs.gametype == GT_TEAM) ? 2 : 1) : 0 );
     // !CPM
 

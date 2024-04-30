@@ -636,12 +636,12 @@ static void CG_DrawStatusBar( void ) {
 	if ( ps->stats[ STAT_ARMOR ] ) {
 		qhandle_t model = cgs.media.armorModel; // CPM
 
-		// CPM: Fix RA shader
-		if ( g_promode.integer ) {
-			if ( ps->stats[ STAT_ARMORTYPE ] == 2 ) {
-				model = cgs.media.armorModelRA;
-			}
-		}
+		//// CPM: Fix RA shader
+		//if ( g_promode.integer ) {
+		//	if ( ps->stats[ STAT_ARMORTYPE ] == 2 ) {
+		//		model = cgs.media.armorModelRA;
+		//	}
+		//}
 		origin[0] = 90;
 		origin[1] = 0;
 		origin[2] = -10;
@@ -737,8 +737,8 @@ static void CG_DrawStatusBar( void ) {
         // CPM: Armor icon
         qhandle_t icon = cgs.media.armorIcon;
 
-        if (g_promode.integer && ps->stats[STAT_ARMORTYPE] == 2)
-            icon = cgs.media.armorIconRA;
+        /*if (g_promode.integer && ps->stats[STAT_ARMORTYPE] == 2)
+            icon = cgs.media.armorIconRA;*/
         
 #ifdef USE_NEW_FONT_RENDERER
 		CG_SelectFont( 1 );

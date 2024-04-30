@@ -396,7 +396,7 @@ static void CG_ConfigStringModified( void ) {
 		CG_ShaderStateChanged();
 	}
 	// CPM
-		else if ( num == CS_promode )
+		else if ( num == CS_PROMODE )
 		{
 			CPM_UpdateSettings( (atoi(str)) ? ((cgs.gametype == GT_TEAM) ? 2 : 1) : 0 );
 		}

@@ -98,7 +98,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_MAX					(CS_PARTICLES+MAX_LOCATIONS)
 
 //CPM
-#define CS_PRO_MODE             16
+#define CS_PROMODE             16
 
 #if (CS_MAX) > MAX_CONFIGSTRINGS
 #error overflow: (CS_MAX) > MAX_CONFIGSTRINGS

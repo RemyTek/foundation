@@ -337,7 +337,7 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	}
 
     // CPM: Hit tones
-    if (g_promode.integer)
+    /*if (g_promode.integer)
     {
         int delta;
 
@@ -359,7 +359,11 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
         } else if ( ps->persistant[PERS_HITS] < ops->persistant[PERS_HITS] ) {
             trap_S_StartLocalSound( cgs.media.hitTeamSound, CHAN_LOCAL_SOUND );
         }
-    }
+    }*/
+
+	if (ps->persistant[PERS_HITS] < ops->persistant[PERS_HITS]) {
+		trap_S_StartLocalSound(cgs.media.hitTeamSound, CHAN_LOCAL_SOUND);
+	}
 
 	// health changes of more than -1 should make pain sounds
 	if ( ps->stats[STAT_HEALTH] < ops->stats[STAT_HEALTH] - 1 ) {

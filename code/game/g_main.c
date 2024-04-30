@@ -530,7 +530,7 @@ static void G_UpdateCvars( void ) {
             CPM_UpdateSettings((cv->vmCvar->integer) ? ((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);
 
             // Set the config string (so clients will be updated)
-            trap_SetConfigstring(CS_PRO_MODE, va("%d", g_promode.integer));
+            trap_SetConfigstring(CS_PROMODE, va("%d", g_promode.integer));
             continue;
         }
 		else if ( cv->vmCvar ) {
@@ -671,7 +671,7 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 		((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);
 
 	// Set the config string
-	trap_SetConfigstring(CS_PRO_MODE, va("%d", g_promode.integer));
+	trap_SetConfigstring(CS_PROMODE, va("%d", g_promode.integer));
 	// !CPM
 
 	// set some level globals
