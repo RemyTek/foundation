@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
-#include "../game/bg_promode.h" // CPM
 
 #ifdef MISSIONPACK
 #include "../ui/ui_shared.h"
@@ -1851,7 +1850,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
     // CPM: Setup according to the pro mode settings
     s = CG_ConfigString( CS_PROMODE );
-    CPM_UpdateSettings( (atoi(s)) ? ((cgs.gametype == GT_TEAM) ? 2 : 1) : 0 );
+    //CPM_UpdateSettings( (atoi(s)) ? ((cgs.gametype == GT_TEAM) ? 2 : 1) : 0 );
     // !CPM
 
 	CG_ParseSysteminfo();

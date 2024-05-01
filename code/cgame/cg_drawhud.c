@@ -4,7 +4,6 @@
 // active (after loading) gameplay
 
 #include "cg_local.h"
-#include "../game/bg_promode.h" // CPM
 
 /*
 ==============
@@ -177,7 +176,7 @@ void CG_DrawStatusBars ( int superhud ) {
 	switch ( hud[superhud].element ) {
 		case StatusBar_AmmoBar:
 			ps->ammo[cent->currentState.weapon] > 200 ? (value1 = 200):(value1 = ps->ammo[cent->currentState.weapon]);
-			if ( g_pro_mode.integer ) {
+			if ( g_promode.integer ) {
 				if ( cent->currentState.weapon == WP_SHOTGUN ) {
 					max = 25;
 				} else if ( cent->currentState.weapon == WP_GRENADE_LAUNCHER ) {
@@ -368,7 +367,7 @@ static void CG_HDrawStatusBar( int superhud ) {
 		qhandle_t model = cgs.media.armorModel; // CPM
 
 		// CPM: Fix RA shader
-		if ( g_pro_mode.integer ) {
+		if ( g_promode.integer ) {
 			if ( ps->stats[ STAT_ARMORTYPE ] == 2 ) {
 				model = cgs.media.armorModelRA;
 			}
@@ -387,7 +386,7 @@ static void CG_HDrawStatusBar( int superhud ) {
 				qhandle_t icon;
 
 				// CPM: Armor icon
-				if ( g_pro_mode.integer && ps->stats[STAT_ARMORTYPE] == 2 ) {
+				if ( g_promode.integer && ps->stats[STAT_ARMORTYPE] == 2 ) {
 					icon = cgs.media.armorIconRA;
 				} else {
 					icon = cgs.media.armorIcon;
@@ -491,7 +490,7 @@ static void CG_HDrawStatusBar( int superhud ) {
 		// CPM: Armor icon
 		qhandle_t icon = cgs.media.armorIcon;
 
-		if (g_pro_mode.integer && ps->stats[STAT_ARMORTYPE] == 2)
+		if (g_promode.integer && ps->stats[STAT_ARMORTYPE] == 2)
 			icon = cgs.media.armorIconRA;
 		// !CPM
 

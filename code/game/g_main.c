@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
-#include "bg_promode.h" // CPM
+//#include "bg_promode.h" // CPM
 
 level_locals_t	level;
 
@@ -525,15 +525,15 @@ static void G_UpdateCvars( void ) {
 	qboolean remapped = qfalse;
 
 	for ( i = 0, cv = gameCvarTable ; i < ARRAY_LEN( gameCvarTable ) ; i++, cv++ ) {
-        if ( cv->vmCvar == &g_promode ) {
+        /*if ( cv->vmCvar == &g_promode ) {
             // CPM: Detect if g_promode has been changed
             CPM_UpdateSettings((cv->vmCvar->integer) ? ((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);
 
             // Set the config string (so clients will be updated)
             trap_SetConfigstring(CS_PROMODE, va("%d", g_promode.integer));
             continue;
-        }
-		else if ( cv->vmCvar ) {
+        }*/
+		if ( cv->vmCvar ) {
 			trap_Cvar_Update( cv->vmCvar );
 
 			if ( cv->modificationCount != cv->vmCvar->modificationCount ) {
@@ -667,8 +667,8 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// CPM: Initialize
 	// Update all settings
-	CPM_UpdateSettings((g_promode.integer) ?
-		((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);
+	/*CPM_UpdateSettings((g_promode.integer) ?
+		((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);*/
 
 	// Set the config string
 	trap_SetConfigstring(CS_PROMODE, va("%d", g_promode.integer));

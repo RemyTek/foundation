@@ -23,9 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // bg_pmove.c -- both games player movement code
 // takes a playerstate and a usercmd as input and returns a modifed playerstate
 
-#include "q_shared.h"
-#include "bg_public.h"
-#include "bg_local.h"
+#include "bg_pmove.h"
 #include "bg_promode.h"
 
 pmove_t		*pm;
@@ -363,45 +361,36 @@ static void PM_SetMovementDir( void ) {
 PM_CheckJump
 =============
 */
-static qboolean PM_CheckJump( void ) {
-	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
-		return qfalse;		// don't allow jump until all buttons are up
+qboolean PM_CheckJump(void) {
+	if (pm->ps->pm_flags & PMF_RESPAWNED) {
+		return qfalse;  // don't allow jump until all buttons are up
 	}
 
-	if ( pm->cmd.upmove < 10 ) {
+	if (pm->cmd.upmove < 10) {
 		// not holding jump
 		return qfalse;
 	}
 
 	// must wait for jump to be released
-	if ( pm->ps->pm_flags & PMF_JUMP_HELD ) {
+	if (pm->ps->pm_flags & PMF_JUMP_HELD) {
 		// clear upmove so cmdscale doesn't lower running speed
 		pm->cmd.upmove = 0;
 		return qfalse;
 	}
 
-	pml.groundPlane = qfalse;		// jumping away
-	pml.walking = qfalse;
+	pml.groundPlane = qfalse;  // jumping away
+	pml.walking     = qfalse;
 	pm->ps->pm_flags |= PMF_JUMP_HELD;
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
-	pm->ps->velocity[2] = JUMP_VELOCITY;
-	// CPM: check for double-jump
-		if ( pm->movetype > 0 ) {
-			if (pm->ps->stats[STAT_JUMPTIME] > 0) {
-				pm->ps->velocity[2] += cpm_pm_jump_z;
-			}
+	pm->ps->velocity[2]     = JUMP_VELOCITY;
+	PM_AddEvent(EV_JUMP);
 
-			pm->ps->stats[STAT_JUMPTIME] = 400;
-		}
-	// !CPM
-	PM_AddEvent( EV_JUMP );
-
-	if ( pm->cmd.forwardmove >= 0 ) {
-		PM_ForceLegsAnim( LEGS_JUMP );
+	if (pm->cmd.forwardmove >= 0) {
+		PM_ForceLegsAnim(LEGS_JUMP);
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 	} else {
-		PM_ForceLegsAnim( LEGS_JUMPB );
+		PM_ForceLegsAnim(LEGS_JUMPB);
 		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 	}
 
@@ -614,74 +603,49 @@ PM_AirMove
 
 ===================
 */
-static void PM_AirMove( void ) {
-	int			i;
-	vec3_t		wishvel;
-	float		fmove, smove;
-	vec3_t		wishdir;
-	float		wishspeed;
-	float		scale;
-    float		accel; // CPM
-    float		wishspeed2; // CPM
-	usercmd_t	cmd;
+void PM_AirMove(void) {
+	int       i;
+	vec3_t    wishvel;
+	float     fmove, smove;
+	vec3_t    wishdir;
+	float     wishspeed;
+	float     scale;
+	usercmd_t cmd;
 
 	PM_Friction();
 
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
 
-	cmd = pm->cmd;
-	scale = PM_CmdScale( &cmd );
+	cmd   = pm->cmd;
+	scale = PM_CmdScale(&cmd);
 
 	// set the movementDir so clients can rotate the legs for strafing
 	PM_SetMovementDir();
 
 	// project moves down to flat plane
 	pml.forward[2] = 0;
-	pml.right[2] = 0;
-	VectorNormalize (pml.forward);
-	VectorNormalize (pml.right);
+	pml.right[2]   = 0;
+	VectorNormalize(pml.forward);
+	VectorNormalize(pml.right);
 
-	for ( i = 0 ; i < 2 ; i++ ) {
-		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
+	for (i = 0; i < 2; i++) {
+		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
 	}
 	wishvel[2] = 0;
 
-	VectorCopy (wishvel, wishdir);
+	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
 
-	// CPM: Air Control
-	wishspeed2 = wishspeed;
-	if (DotProduct(pm->ps->velocity, wishdir) < 0) {
-		accel = cpm_pm_airstopaccelerate;
-	} else {
-		accel = pm_airaccelerate;
-	}
-	if ((pm->ps->movementDir == 2 || pm->ps->movementDir == -2 || pm->ps->movementDir == 10) || 
-		(pm->ps->movementDir == 6 || pm->ps->movementDir == -6 || pm->ps->movementDir == 14)) {
-		if (wishspeed > cpm_pm_wishspeed) {
-			wishspeed = cpm_pm_wishspeed;
-		}
-		accel = cpm_pm_strafeaccelerate;
-	}
-	// !CPM
-
 	// not on ground, so little effect on velocity
-    // CPM: Air control
-    PM_Accelerate (wishdir, wishspeed, accel);
-    if ( pm->movetype > 0 )
-        CPM_PM_Aircontrol (pm, wishdir, wishspeed2);
-    // !CPM
-
-
+	PM_Accelerate(wishdir, wishspeed, pm_airaccelerate);
 
 	// we may have a ground plane that is very steep, even
 	// though we don't have a groundentity
 	// slide along the steep plane
-	if ( pml.groundPlane ) {
-		PM_ClipVelocity (pm->ps->velocity, pml.groundTrace.plane.normal, 
-			pm->ps->velocity, OVERCLIP );
+	if (pml.groundPlane) {
+		PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal, pm->ps->velocity, OVERCLIP);
 	}
 
 #if 0
@@ -694,7 +658,7 @@ static void PM_AirMove( void ) {
 		PM_SlideMove ( qtrue );
 #endif
 
-	PM_StepSlideMove ( qtrue );
+	PM_StepSlideMove(qtrue);
 }
 
 /*
@@ -2123,7 +2087,12 @@ void Pmove (pmove_t *pmove) {
 			}
 		}
 		pmove->cmd.serverTime = pmove->ps->commandTime + msec;
-		PmoveSingle( pmove );
+		if (0) {
+			PmoveSingle(pmove);
+		}  // Uses all baseq3a default PM_ functions
+		else {
+			phy_PmoveSingle(pmove);
+		}  // Uses custom move code
 
 		if ( pmove->ps->pm_flags & PMF_JUMP_HELD ) {
 			pmove->cmd.upmove = 20;

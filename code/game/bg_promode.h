@@ -1,113 +1,86 @@
+#include "bg_pmove.h"
 
-void CPM_UpdateSettings(int num);
+// Physics variables
+extern qboolean phy_initialized;
+//  General
+extern float phy_stopspeed;
+// Acceleration
+extern float phy_fly_accel;
+// Friction
+extern float phy_friction;
+extern float phy_fly_friction;
+extern float phy_spectator_friction;
 
-//#define CS_PRO_MODE 16
+// New variables
+extern float phy_crouch_scale;  // Default renamed
+// extern int   df_promode;             // pm->movetype; // Physics type selection
+// Ground
+extern float phy_ground_basespeed;  // Movement speed on the ground (aka maxspeed). Equivalent to the default g_speed
+extern float phy_ground_accel;      // Acceleration when on the ground. sv_accelerate
+// Air
+extern float phy_air_basespeed;  // Maxspeed on air when in VQ3, or when strafing diagonally in CPM
+extern float phy_air_accel;      // Acceleration when in VQ3, or when strafing diagonally in CPM
+// Air deceleration. To have different accel values for stopping down than for accelerating normally.
+extern float phy_air_decel;       // Factor to scale down air acceleration, when the current angle is over decelAngle
+extern float phy_air_decelAngle;  // Angle at which air deceleration will change
+// AirStrafe (aka AD turning)
+extern float phy_airstrafe_accel;      // Acceleration when strafing "quakeworld style" in CPM
+extern float phy_airstrafe_basespeed;  // Maxspeed on air when in VQ3, or when strafing diagonally in CPM
+// AirControl (aka W turning)
+extern qboolean phy_aircontrol;         // Turns aircontrol on or off
+extern float    phy_aircontrol_amount;  // Amount you can control yourself with W/S
+extern float    phy_aircontrol_power;   // Aircontrol formula exponent
+extern float phy_airstopaccelerate;
+extern float phy_wishspeed;
+// Stepup
+#define STEPSIZE 18
+extern int phy_step_size;    // Distance that will be moved up/down for step behavior. (default = STEPSIZE = 18)
+extern int phy_step_maxvel;  // When set, it limits the maximum vertical speed at which you can multi/double jump. Prevents stairs-climb crazyness
+// Jump
+extern int phy_jump_type;         // Jump type selection. Available VQ3, CPM
+extern int phy_jump_velocity;     // Vertical velocity that will be set/added when jumping (default = JUMP_VELOCITY = 270)
+extern int phy_jump_timebuffer;   // Amount of time(ms) since last jump, where CPM dj behavior can happen. (default CPM = 400)
+extern int phy_jump_dj_velocity;  // Amount of velocity to add to CPM dj behavior. (default CPM = 100)
+// Powerups
+// extern float phy_haste_factor;           // Multiplier to apply during haste powerup (q3 default = 1.3)
+// extern float phy_quad_factor;            // Multiplier to apply during quad powerup  (q3 default = 3)
+// Water
+extern float phy_water_accel;
+extern float phy_water_scale;  // phy_swimScale;
+extern float phy_water_friction;
+// Slick
+extern float phy_water_friction;
+extern float phy_slick_accel;
 
-extern float cpm_pm_jump_z;
+// Physics indexes
+#define VQ3 0  // VQ3
+#define CPM 1  // CPM
+#define CQ3 2  // CQ3
 
-// Physics
-extern float	cpm_pm_airstopaccelerate;
-extern float	cpm_pm_aircontrol;
-extern float	cpm_pm_strafeaccelerate;
-extern float	cpm_pm_wishspeed;
-extern float	pm_accelerate; // located in bg_pmove.c
-extern float	pm_friction; // located in bg_pmove.c
+// Initialize
+void phy_init(int movetype);  // Calls all other initializer functions
+void cpm_init(void);
+void vq3_init(void);
+void cq3_init(void);
 
-void CPM_PM_Aircontrol ( pmove_t *pm, vec3_t wishdir, float wishspeed );
+// Movement
+void phy_PmoveSingle(pmove_t* pmove);  // Core movement entrypoint
+void phy_move(pmove_t* pmove);         // Calls all other movement functions
+void cpm_move(pmove_t* pmove);
+void vq3_move(pmove_t* pmove);
+void cq3_move(pmove_t* pmove);
 
-// Gauntlet
-extern float	cpm_Gauntletknockback;
+// Core functions (common to all/most)
+void     core_Accelerate(vec3_t wishdir, float wishspeed, float accel, float basespeed);
+void     core_Friction(void);
+void     core_Weapon(void);
+void     core_GroundTrace(void);
+float    core_CmdScale(usercmd_t* cmd, qboolean fix);
+qboolean core_SlideMove(qboolean gravity);
+void     core_StepSlideMove(qboolean gravity);
 
-// Machinegun
-extern float	cpm_MGbox;
-extern float	cpm_MGdmg;
-extern float	cpm_MGdmg_tp;
-extern int		cpm_MGweapon;
-
-// Shotgun
-extern float	cpm_SSGdmg;
-//extern float	cpm_SSGspread;
-//extern int		cpm_SSGcount;
-extern float	cpm_SSGknockback;
-extern int		cpm_SSGmaxammo;
-
-qboolean CPM_CanGrabAmmo(const gitem_t *item, const playerState_t *ps);
-
-// Grenade Launcher
-extern float	cpm_GLreload;
-extern int		cpm_GLmaxammo;
-
-// Rocket Launcher
-extern float	cpm_RLspeed;
-extern int		cpm_RLmaxammo;
-//extern float	cpm_RLsplashknockback;
-//extern float	cpm_RLknockback;
-
-// Lightning Gun
-extern float	cpm_LGknockback;
-extern int		cpm_LGmaxammo;
-
-// Railgun
-extern int		cpm_RGmaxammo;
-extern int		cpm_RGbox;
-extern float	cpm_RGchange;
-
-// Plasma Gun
-//extern float	cpm_PGdmg;
-//extern float	cpm_PGknockback;
-
-// Weapon switching
-extern float	cpm_weapondrop;
-extern float	cpm_weaponraise;
-extern float	cpm_outofammodelay;
-
-// Armor system
-#define CPM_YAPROTECTION 0.60
-#define CPM_RAPROTECTION 0.75
-#define CPM_RABREAKPOINT 120	// this is the point where a player with RA can pickup an YA
-								// calculated through YAPROT / RAPROT = 0.60 / 0.75 = 0.8
-								// then MAXYA * 0.8 = 150 * 0.8 = 120
-#define CPM_RAMULTIPLIER 1.25   // If a player has little RA and picks up an YA, multiply his
-								// RA value with this. (0.75 / 0.60 = 1.25)
-extern int		cpm_armorsystem;
-qboolean CPM_CanGrabArmor(const gitem_t *item, const playerState_t *ps);
-
-// Battle Suit
-extern float	cpm_BSprotection;
-
-// Respawn Health
-extern float	cpm_respawnhealth;
-
-// Backpacks
-//extern int		cpm_backpacks;
-
-// Radius Damage Fix
-//extern int		cpm_radiusdamagefix;
-
-// Z Knockback
-extern float	cpm_knockback_z;
-
-// Respawn Times
-extern int		cpm_itemrespawnhealth;
-extern int		cpm_itemrespawnpowerup;
-extern int		cpm_itemrespawnBS;
-extern int		cpm_itemrespawnammo;
-extern int		cpm_startpowerups;
-
-// Megahealth
-//extern int		cpm_megastyle;
-#define CPM_MEGARESPAWNDELAY 20
-
-// Respawn delay
-//extern float	cpm_clientrespawndelay;
-
-// Hit tones
-extern int		cpm_hittones;
-
-// Item size
-extern int		cpm_itemsize;
-
-// Lava damage
-extern float	cpm_lavadamage;
-extern float	cpm_slimedamage;
-extern float	cpm_lavafrequency;
+// Math
+void VectorReflect(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
+void VectorReflect2D(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
+void VectorReflectOS(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
+void VectorReflectBC(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
