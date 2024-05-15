@@ -282,23 +282,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		// use seperate code for determining if an item is picked up
 		// so you don't have to actually contact its bounding box
 		if ( hit->s.eType == ET_ITEM ) {
-			memset( &trace, 0, sizeof(trace) );
-
-			if ( hit->touch ) {
-				hit->touch (hit, ent, &trace);
-			}
-
-
-			/***************************
-			* There is most likely a
-			* much better way of handling
-			* this, but this is how I got
-			* it working.
-			***************************/
-			//FIXME: This shouldn't need 2 qboolean's.
-			if ( !g_promode.integer && !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
-				continue;
-			} else if ( g_promode.integer && !BG_ProModePlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
+			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
 				continue;
 			}
 		} else {
@@ -478,8 +462,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// count down armor when over max
-		//if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
-		if ( (client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH]) && !g_promode.integer ) { // CPM
+		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
 			client->ps.stats[STAT_ARMOR]--;
 		}
 	}
@@ -780,8 +763,6 @@ void ClientThink_real( gentity_t *ent ) {
 
 	client = ent->client;
 
-    pm.movetype = g_promode.integer;
-
 	// don't think if the client is not yet connected (and thus not yet spawned in)
 	if (client->pers.connected != CON_CONNECTED) {
 		return;
@@ -950,6 +931,9 @@ void ClientThink_real( gentity_t *ent ) {
 	pm.grapplePull = g_grapplePull.integer;
 
 	VectorCopy( client->ps.origin, client->oldOrigin );
+
+	//pass promode phyiscs through pm
+	pm.movetype = g_promode.integer;
 
 #ifdef MISSIONPACK
 		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {
