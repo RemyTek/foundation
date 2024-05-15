@@ -1170,7 +1170,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	if ( g_instagib.integer ) {
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_RAILGUN );
-		client->ps.ammo[WP_RAILGUN] = 999;
+		client->ps.ammo[WP_RAILGUN] = 9999;
 	} else {
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 		if ( g_gametype.integer == GT_TEAM ) {

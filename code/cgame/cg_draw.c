@@ -680,9 +680,13 @@ static void CG_DrawStatusBar( void ) {
 				}
 			}
 #ifdef USE_NEW_FONT_RENDERER
-			CG_SelectFont( 1 );
-			CG_DrawString( CHAR_WIDTH*3, y, va( "%i", value ), colors[ color ], CHAR_WIDTH, CHAR_HEIGHT, 0, DS_RIGHT | DS_PROPORTIONAL );
-			CG_SelectFont( 0 );
+			if ( value < 999 ) {
+                CG_SelectFont( 1 );
+                CG_DrawString( CHAR_WIDTH*3, y, va( "%i", value ), colors[ color ], CHAR_WIDTH, CHAR_HEIGHT, 0, DS_RIGHT | DS_PROPORTIONAL );
+                CG_SelectFont( 0 );
+            } else {
+                CG_DrawPic( CHAR_WIDTH, y, ICON_SIZE, ICON_SIZE, cgs.media.infiniteammoShader );
+            }
 #else
 			trap_R_SetColor( colors[color] );
 			CG_DrawField( 0, y, 3, value );
