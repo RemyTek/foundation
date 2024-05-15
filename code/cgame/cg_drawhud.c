@@ -439,7 +439,7 @@ static void CG_HDrawStatusBar( int superhud ) {
 				
 			trap_R_SetColor( colors[color] );	
 			if ( hud[superhud].element == StatusBar_AmmoCount) {
-				if ( value > 0 ) {
+				if ( value > 0 && value < 999 ) {
 					CG_HDrawField ( hud[superhud].rect[0], hud[superhud].rect[1], 3, value, superhud);
 				}
 				return;
@@ -1861,13 +1861,20 @@ void CG_HDrawWeaponSideBar(int superhud ) {
 			if ( cg.snap->ps.ammo[i] < 0 ) {
 				//Gauntlet would print -1.. do this as a sanity check.
 				Com_sprintf( ammo, 5, "");
-			} else if ( cg.snap->ps.ammo[i] >= 999 ) {
+			} /*else if ( cg.snap->ps.ammo[i] >= 999 ) {
 				//Instagib would print 169, no need for it anyway.
 				Com_sprintf(ammo, 5, "999");
-			} else {
+			}*/ else {
 				Com_sprintf(ammo, 5, "%i", cg.snap->ps.ammo[i]);
 			}
-			CG_DrawStringExt( textx, texty, ammo, colorWhite, qfalse, qtrue, hud[superhud].fontsize[0], hud[superhud].fontsize[1], 3, 0, superhud);
+
+            if( cg.snap->ps.ammo[i] >= 999 ) {
+                CG_DrawPic( iconx, icony, hud[superhud].fontsize[0], hud[superhud].fontsize[1], cgs.media.infiniteammoShader );
+            }
+
+            else {
+                CG_DrawStringExt( textx, texty, ammo, colorWhite, qfalse, qtrue, hud[superhud].fontsize[0], hud[superhud].fontsize[1], 3, 0, superhud);
+            }
 
 			//Calculate position for the next weapon
 			if ( hud[superhud].textalign == 1 ) {

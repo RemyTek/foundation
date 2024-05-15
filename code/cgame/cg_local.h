@@ -798,6 +798,7 @@ typedef struct {
 	qhandle_t	lagometerShader;
 	qhandle_t	backTileShader;
 	qhandle_t	noammoShader;
+    qhandle_t   infiniteammoShader;
 
 	qhandle_t	smokePuffShader;
 	qhandle_t	smokePuffRageProShader;
