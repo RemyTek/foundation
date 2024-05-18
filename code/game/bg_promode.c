@@ -550,9 +550,14 @@ void core_Weapon(void) {
 	case WP_PLASMAGUN:
 		addTime = 100;
 		break;
-	case WP_RAILGUN:
-		addTime = 1500;
-		break;
+    case WP_RAILGUN:
+        if( pm->fastRail >= 2 )
+        {
+            addTime = 1000;
+        } else {
+            addTime = 1250;
+        }
+        break;
 	case WP_BFG:
 		addTime = 200;
 		break;

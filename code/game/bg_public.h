@@ -196,8 +196,12 @@ typedef struct {
 	int			pmove_fixed;
 	int			pmove_msec;
 
-	int			grapplePull;
+	int         grapplePull;
     int         movetype;  //physics type
+
+    //fast rail and fast weapon switch
+    int         fastRail;
+    int         fastWeaponSwitch;
 
 	// callbacks to test the world
 	// these will be different functions during game and cgame

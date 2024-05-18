@@ -1495,7 +1495,8 @@ static void PM_BeginWeaponChange( int weapon ) {
 
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
-	pm->ps->weaponTime += 200;
+	//pm->ps->weaponTime += 200;
+	pm->ps->weaponTime += pm->fastWeaponSwitch > 0 ? 0 : 200;
 	PM_StartTorsoAnim( TORSO_DROP );
 }
 
@@ -1520,7 +1521,8 @@ static void PM_FinishWeaponChange( void ) {
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
 	pm->ps->eFlags &= ~EF_FIRING;
-	pm->ps->weaponTime += 250;
+	//pm->ps->weaponTime += 250;
+	pm->ps->weaponTime += pm->fastWeaponSwitch > 0 ? 0 : 250;
 	PM_StartTorsoAnim( TORSO_RAISE );
 }
 
@@ -1646,7 +1648,8 @@ void PM_Weapon( void ) {
 	// check for out of ammo
 	if ( ! pm->ps->ammo[ pm->ps->weapon ] ) {
 		PM_AddEvent( EV_NOAMMO );
-		pm->ps->weaponTime += 500;
+		//pm->ps->weaponTime += 500;
+		pm->ps->weaponTime += pm->fastWeaponSwitch > 1 ? 100 : 500;
 		return;
 	}
 
@@ -1682,7 +1685,17 @@ void PM_Weapon( void ) {
 		addTime = 100;
 		break;
 	case WP_RAILGUN:
-		addTime = 1500;
+		if( pm->fastRail >= 2 )
+		{
+			addTime = 1000;
+		} else if ( pm->fastRail == 1 )
+		{
+			addTime = 1250;
+		}
+		else {
+			addTime = 1500;
+		}
+		
 		break;
 	case WP_BFG:
 		addTime = 200;
