@@ -1374,7 +1374,8 @@ static const char *voteCommands[] = {
 	"g_warmup",
 	"timelimit",
 	"fraglimit",
-	"capturelimit"
+	"capturelimit",
+    "g_promode"
 };
 
 
@@ -1420,7 +1421,7 @@ static qboolean ValidVoteCommand( int clientNum, char *command )
 			" g_gametype <n|ffa|duel|tdm|ctf>\n"
 			" map_restart, map <mapname>, rotate [round], nextmap\n"
 			" kick <player>, clientkick <clientnum>\n"
-			" g_unlagged <0|1>, g_warmup <-1|0|seconds>\n"
+			" g_unlagged <0|1>, g_warmup <1|0|seconds>, g_promode <0|1>\n"
 			" timelimit <time>, fraglimit <frags>, capturelimit <captures>.\n\"" );
 		return qfalse;
 	}
