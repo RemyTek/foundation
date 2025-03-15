@@ -1268,6 +1268,7 @@ void q3a_move(pmove_t* pmove) {
 
 	if(pml.ladder) {
 		PM_LadderMove();
+		return;
 	}
 
 	if (pm->ps->powerups[PW_FLIGHT]) {
