@@ -49,6 +49,11 @@ float phy_water_scale;  // phy_swimScale;
 float       phy_water_friction;
 float       phy_slick_accel;
 
+//ladders
+float	pm_ladderScale = 0.50f;	// set max movement speed to half of normal when on a ladder.
+float	pm_ladderAccelerate = 3000.0f;	// acceleration to friction ratio 1:1
+float	pm_ladderfriction = 3000.0f;	//friction high enough so you don't slip down.
+
 void phy_PmoveSingle(pmove_t* pmove);
 
 // Initialize Physics Values
@@ -361,6 +366,7 @@ void core_Friction(void) {
 		return;
 	}
 	drop = 0;
+
 	// apply ground friction
 
 	if (pm->waterlevel <= 1) {
@@ -589,6 +595,89 @@ void core_Weapon(void) {
 		addTime /= 1.3;
 	}
 	pm->ps->weaponTime += addTime;
+}
+
+/*
+===================
+PM_LadderMove()
+by: Calrathan [Arthur Tomlin]
+
+Right now all I know is that this works for VERTICAL ladders. 
+Ladders with angles on them (urban2 for AQ2) haven't been tested.
+===================
+*/
+void PM_LadderMove( void ) {
+    int i;
+    vec3_t wishvel;
+    float wishspeed;
+    vec3_t wishdir;
+    float scale;
+    float vel;
+
+    PM_Friction ();
+
+    scale = PM_CmdScale( &pm->cmd );
+
+    // user intentions [what the user is attempting to do]
+    if ( !scale ) { 
+        wishvel[0] = 0;
+        wishvel[1] = 0;
+        wishvel[2] = 0;
+    }
+    else {   // if they're trying to move... lets calculate it
+        for (i=0 ; i<3 ; i++)
+            wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove +
+                         scale * pml.right[i]*pm->cmd.rightmove; 
+        wishvel[2] += scale * pm->cmd.upmove;
+    }
+
+    VectorCopy (wishvel, wishdir);
+    wishspeed = VectorNormalize(wishdir);
+
+    if ( wishspeed > pm->ps->speed * pm_ladderScale ) {
+        wishspeed = pm->ps->speed * pm_ladderScale;
+    }
+
+    PM_Accelerate (wishdir, wishspeed, pm_ladderAccelerate);
+
+    // This SHOULD help us with sloped ladders, but it remains untested.
+    if ( pml.groundPlane && DotProduct( pm->ps->velocity,
+        pml.groundTrace.plane.normal ) < 0 ) {
+        vel = VectorLength(pm->ps->velocity);
+        // slide along the ground plane [the ladder section under our feet] 
+        PM_ClipVelocity (pm->ps->velocity, pml.groundTrace.plane.normal, 
+            pm->ps->velocity, OVERCLIP );
+
+        VectorNormalize(pm->ps->velocity);
+        VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
+    }
+
+    PM_SlideMove( qfalse ); // move without gravity
+}
+
+
+/*
+=============
+CheckLadder [ ARTHUR TOMLIN ]
+=============
+*/
+void CheckLadder( void )
+{
+    vec3_t flatforward,spot;
+    trace_t trace;
+    pml.ladder = qfalse;
+    // check for ladder
+    flatforward[0] = pml.forward[0];
+    flatforward[1] = pml.forward[1];
+    flatforward[2] = 0;
+    VectorNormalize (flatforward);
+    VectorMA (pm->ps->origin, 1, flatforward, spot);
+    pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, spot,
+        pm->ps->clientNum, MASK_PLAYERSOLID);
+
+    if ((trace.fraction < 1) && (trace.surfaceFlags & SURF_LADDER))
+        pml.ladder = qtrue;
+
 }
 
 //================
@@ -1173,6 +1262,13 @@ void q3a_move(pmove_t* pmove) {
 	// do deadmove  :moved to top
 	// drop timers
 	PM_DropTimers();
+
+	//check for ladder
+	CheckLadder();
+
+	if(pml.ladder) {
+		PM_LadderMove();
+	}
 
 	if (pm->ps->powerups[PW_FLIGHT]) {
 		PM_FlyMove();  // flight powerup doesn't allow jump and has different friction
