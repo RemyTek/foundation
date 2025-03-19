@@ -82,6 +82,8 @@ G_CVAR( g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse, qfalse )
 G_CVAR( g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse, qfalse )
 
 G_CVAR( g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( g_allowKill, "g_allowKill", "1", CVAR_ARCHIVE, 0, qfalse, qfalse )
+
 G_CVAR( g_listEntity, "g_listEntity", "0", 0, 0, qfalse, qfalse )
 
 G_CVAR( g_unlagged, "g_unlagged", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse, qfalse )
@@ -129,6 +131,15 @@ G_CVAR( g_startAmmoLG, "g_startAmmoLG", "60", 0, 0, qfalse, qfalse )
 G_CVAR( g_startAmmoRG, "g_startAmmoRG", "10", 0, 0, qfalse, qfalse )
 G_CVAR( g_startAmmoPG, "g_startAmmoPG", "30", 0, 0, qfalse, qfalse )
 G_CVAR( g_startAmmoBFG, "g_startAmmoBFG", "15", 0, 0, qfalse, qfalse )
+
+G_CVAR( g_maxAmmoMG, "g_maxAmmoMG", "150", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoSG, "g_maxAmmoSG", "25", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoGL, "g_maxAmmoGL", "25", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoRL, "g_maxAmmoRL", "25", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoLG, "g_maxAmmoLG", "150", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoRG, "g_maxAmmoRG", "25", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoPG, "g_maxAmmoPG", "150", 0, 0, qfalse, qfalse )
+G_CVAR( g_maxAmmoBFG, "g_maxAmmoBFG", "30", 0, 0, qfalse, qfalse )
 
 G_CVAR( g_damageG, "g_damageG", "50", 0, 0, qfalse, qfalse )
 

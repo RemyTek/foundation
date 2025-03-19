@@ -305,19 +305,84 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
 static void Add_Ammo( gentity_t *ent, int weapon, int count )
 {
-	// if ammo already above limit from /give cheat don't bother
-	if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT )
-		return;
+    // if ammo already above limit from /give cheat don't bother
+    if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT ) {
+        return;
+    }
 
-	if ( weapon == WP_GAUNTLET || weapon == WP_GRAPPLING_HOOK ) {
-		ent->client->ps.ammo[weapon] = -1;
-		return;
-	}
+    if ( weapon == WP_GAUNTLET || weapon == WP_GRAPPLING_HOOK ) {
+        ent->client->ps.ammo[weapon] = -1;
+        return;
+    }
 
-	ent->client->ps.ammo[weapon] += count;
-	if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT ) {
-		ent->client->ps.ammo[weapon] = AMMO_HARD_LIMIT;
-	}
+    // Add ammo and enforce weapon-specific caps
+    switch ( weapon ) {
+        case WP_MACHINEGUN:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoMG.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoMG.integer;
+            }
+            break;
+
+        case WP_SHOTGUN:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoSG.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoSG.integer;
+            }
+            break;
+
+        case WP_GRENADE_LAUNCHER:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoGL.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoGL.integer;
+            }
+            break;
+
+        case WP_ROCKET_LAUNCHER:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoRL.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoRL.integer;
+            }
+            break;
+
+        case WP_LIGHTNING:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoLG.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoLG.integer;
+            }
+            break;
+
+        case WP_RAILGUN:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoRG.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoRG.integer;
+            }
+            break;
+
+        case WP_PLASMAGUN:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoPG.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoPG.integer;
+            }
+            break;
+
+        case WP_BFG:
+            ent->client->ps.ammo[weapon] += count;
+            if ( ent->client->ps.ammo[weapon] > g_maxAmmoBFG.integer ) {
+                ent->client->ps.ammo[weapon] = g_maxAmmoBFG.integer;
+            }
+            break;
+
+        default:
+            // For any other weapons, just add the ammo
+            ent->client->ps.ammo[weapon] += count;
+            break;
+    }
+
+    // Enforce the global hard limit
+    if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT ) {
+        ent->client->ps.ammo[weapon] = AMMO_HARD_LIMIT;
+    }
 }
 
 

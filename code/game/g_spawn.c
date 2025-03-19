@@ -286,6 +286,26 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 		return qfalse;
 	}
 
+	//check for collision between green and yellow armors
+	if (!Q_stricmp(ent->classname, "item_armor_combat")) {
+        int i, j;
+        gentity_t *comp;
+        gentity_t *other;
+        for (i = MAX_CLIENTS; i < level.num_entities; i++) {
+            for (j = MAX_CLIENTS; j < level.num_entities; j++) {
+                comp = &g_entities[j];
+                other = &g_entities[i];
+                if (other == comp) {
+                    continue;
+                }
+                if (VectorCompare(comp->r.currentOrigin, other->r.currentOrigin) &&
+                    (!Q_stricmp(other->classname, "item_armor_jacket") || !Q_stricmp(other->classname, "item_armor_green"))) {
+                    G_FreeEntity(ent);
+                }
+            }
+        }
+    }
+
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
 		if ( !strcmp(item->classname, ent->classname) ) {

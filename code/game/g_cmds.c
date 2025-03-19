@@ -539,7 +539,7 @@ void Cmd_Kill_f( gentity_t *ent ) {
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		return;
 	}
-	if (ent->health <= 0) {
+	if (ent->health <= 0 || !g_allowKill.integer ) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
@@ -1995,6 +1995,8 @@ void ClientCommand( int clientNum ) {
 		Cmd_SetViewpos_f( ent );
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
+	else if ( Q_stricmp( cmd, "drop" ) == 0 )
+		Cmd_Drop_f( ent );
 	else
 		trap_SendServerCommand( clientNum, va( "print \"unknown cmd %s\n\"", cmd ) );
 }

@@ -502,6 +502,100 @@ qboolean G_RemovePowerup ( gitem_t *item ) {
 	return qfalse;
 }
 
+qboolean is_spectator( gclient_t *client ) {
+	if ( client == NULL ) return qfalse;
+	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) return qtrue;
+	if ( client->ps.persistant[ PERS_TEAM ] == TEAM_SPECTATOR ) return qtrue;
+	if ( client->sess.spectatorState == SPECTATOR_FOLLOW ) return qtrue;
+	return qfalse;
+}
+
+/*
+=================
+Cmd_Drop_f
+=================
+*/
+void Cmd_Drop_f( gentity_t *ent ) {
+	char	*name;
+	gitem_t	*it;
+	gentity_t	*drop;
+	int	quantity;
+	int	j;
+
+	if ( is_spectator( ent->client ) ) {
+		return;
+	}
+	if ( ent->health <= 0 ) {
+		return;
+	}
+	name = (char *)ConcatArgs(1);
+	it = BG_FindItem( name );
+	if ( !Registered( it ) ) {
+		return;
+	}
+
+	j = it->giTag;
+	switch ( it->giType ) {
+	case IT_WEAPON:
+		if ( g_dmflags.integer & 256 ) {
+			return;
+		}
+		if ( !( ent->client->ps.stats[ STAT_WEAPONS ] & ( 1 << j ) ) ) {
+			return;
+		}
+		if ( ent->client->ps.weaponstate != WEAPON_READY ) {
+			return;
+		}
+		if ( j == ent->s.weapon ) {
+			return;
+		}
+		if ( j > WP_MACHINEGUN && j != WP_GRAPPLING_HOOK && ent->client->ps.ammo[ j ] ) {
+			drop = Drop_Item( ent, it, 0 );
+			drop->count = 1;
+			drop->s.otherEntityNum = ent->s.clientNum + 1;
+			ent->client->ps.stats[ STAT_WEAPONS ] &= ~( 1 << j );
+			ent->client->ps.ammo[ j ] -= 1;
+		}
+		break;
+	case IT_AMMO:
+		quantity = ent->client->ps.ammo[ j ];
+		if ( !quantity ) {
+			return;
+		}
+		if ( quantity > it->quantity ) {
+			quantity = it->quantity;
+		}
+		drop = Drop_Item( ent, it, 0 );
+		drop->count = quantity;
+		drop->s.otherEntityNum = ent->s.clientNum + 1;
+		ent->client->ps.ammo[ j ] -= quantity;
+		break;
+	case IT_POWERUP:
+		if ( ent->client->ps.powerups[ j ] > level.time ) {
+			drop = Drop_Item( ent, it, 0 );
+			drop->count = ( ent->client->ps.powerups[ j ] - level.time ) / 1000;
+			if ( drop->count < 1 ) {
+				drop->count = 1;
+			}
+			drop->s.otherEntityNum = ent->s.clientNum + 1;
+			ent->client->ps.powerups[ j ] = 0;
+		}
+		break;
+	case IT_HOLDABLE:
+		if ( j == HI_KAMIKAZE ) {
+			return;
+		}
+		if ( bg_itemlist[ ent->client->ps.stats[ STAT_HOLDABLE_ITEM ] ].giTag == j ) {
+			drop = Drop_Item( ent, it, 0 );
+			drop->s.otherEntityNum = ent->s.clientNum + 1;
+			ent->client->ps.stats[ STAT_HOLDABLE_ITEM ] = 0;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 /*
 =================
 G_SetInfiniteAmmo

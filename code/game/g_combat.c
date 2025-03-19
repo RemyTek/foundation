@@ -74,60 +74,137 @@ TossClientItems
 Toss the weapon and powerups for the killed player
 =================
 */
+// void TossClientItems( gentity_t *self ) {
+// 	gitem_t		*item;
+// 	int			weapon;
+// 	float		angle;
+// 	int			i;
+// 	gentity_t	*drop;
+
+// 	// drop the weapon if not a gauntlet or machinegun
+// 	weapon = self->s.weapon;
+
+// 	// make a special check to see if they are changing to a new
+// 	// weapon that isn't the mg or gauntlet.  Without this, a client
+// 	// can pick up a weapon, be killed, and not drop the weapon because
+// 	// their weapon change hasn't completed yet and they are still holding the MG.
+// 	if ( weapon == WP_MACHINEGUN || weapon == WP_GRAPPLING_HOOK ) {
+// 		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
+// 			weapon = self->client->pers.cmd.weapon;
+// 		}
+// 		if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+// 			weapon = WP_NONE;
+// 		}
+// 	}
+
+// 	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
+// 		self->client->ps.ammo[ weapon ] && !g_instagib.integer ) {
+// 		// find the item type for this weapon
+// 		item = BG_FindItemForWeapon( weapon );
+
+// 		// spawn the item
+// 		drop = Drop_Item( self, item, 0 );
+
+// 		// for pickup prediction
+// 		drop->s.time2 = item->quantity;
+// 	}
+
+// 	// drop all the powerups if not in teamplay
+// 	if ( g_gametype.integer != GT_TEAM ) {
+// 		angle = 45;
+// 		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
+// 			if ( self->client->ps.powerups[ i ] > level.time ) {
+// 				item = BG_FindItemForPowerup( i );
+// 				if ( !item ) {
+// 					continue;
+// 				}
+// 				drop = Drop_Item( self, item, angle );
+// 				// decide how many seconds it has left
+// 				drop->count = ( self->client->ps.powerups[ i ] - level.time ) / 1000;
+// 				if ( drop->count < 1 ) {
+// 					drop->count = 1;
+// 				}
+// 				// for pickup prediction
+// 				drop->s.time2 = drop->count;
+// 				angle += 45;
+// 			}
+// 		}
+// 	}
+// }
+
+/*
+=================
+TossClientItems
+
+Toss the weapon and powerups for the killed player
+=================
+*/
 void TossClientItems( gentity_t *self ) {
 	gitem_t		*item;
-	int			weapon;
+	//int			weapon; //qlone - conditional weapon toss
 	float		angle;
 	int			i;
 	gentity_t	*drop;
 
-	// drop the weapon if not a gauntlet or machinegun
-	weapon = self->s.weapon;
+	if ( g_tossWeapon.integer ) { //qlone - conditional weapon toss
+		int weapon;
+		// drop the weapon if not a gauntlet or machinegun
+		weapon = self->s.weapon;
 
-	// make a special check to see if they are changing to a new
-	// weapon that isn't the mg or gauntlet.  Without this, a client
-	// can pick up a weapon, be killed, and not drop the weapon because
-	// their weapon change hasn't completed yet and they are still holding the MG.
-	if ( weapon == WP_MACHINEGUN || weapon == WP_GRAPPLING_HOOK ) {
-		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
-			weapon = self->client->pers.cmd.weapon;
+		// make a special check to see if they are changing to a new
+		// weapon that isn't the mg or gauntlet.  Without this, a client
+		// can pick up a weapon, be killed, and not drop the weapon because
+		// their weapon change hasn't completed yet and they are still holding the MG.
+		if ( weapon == WP_MACHINEGUN || weapon == WP_GRAPPLING_HOOK ) {
+			if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
+				weapon = self->client->pers.cmd.weapon;
+			}
+			if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+				weapon = WP_NONE;
+			}
 		}
-		if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
-			weapon = WP_NONE;
+
+		if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
+				self->client->ps.ammo[ weapon ] ) {
+			// find the item type for this weapon
+			item = BG_FindItemForWeapon( weapon );
+
+			// spawn the item
+			drop = Drop_Item( self, item, 0 );
+
+			// for pickup prediction
+			drop->s.time2 = item->quantity;
 		}
-	}
-
-	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
-		self->client->ps.ammo[ weapon ] && !g_instagib.integer ) {
-		// find the item type for this weapon
-		item = BG_FindItemForWeapon( weapon );
-
-		// spawn the item
-		drop = Drop_Item( self, item, 0 );
-
-		// for pickup prediction
-		drop->s.time2 = item->quantity;
-	}
+	} //qlone - conditional weapon toss
 
 	// drop all the powerups if not in teamplay
-	if ( g_gametype.integer != GT_TEAM ) {
-		angle = 45;
-		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
-			if ( self->client->ps.powerups[ i ] > level.time ) {
-				item = BG_FindItemForPowerup( i );
-				if ( !item ) {
-					continue;
-				}
-				drop = Drop_Item( self, item, angle );
-				// decide how many seconds it has left
-				drop->count = ( self->client->ps.powerups[ i ] - level.time ) / 1000;
-				if ( drop->count < 1 ) {
-					drop->count = 1;
-				}
-				// for pickup prediction
-				drop->s.time2 = drop->count;
-				angle += 45;
+
+	for ( i = 1; i < HI_NUM_HOLDABLE; i++ ) {
+		if ( i == HI_KAMIKAZE ) continue;
+		if ( bg_itemlist[ self->client->ps.stats[ STAT_HOLDABLE_ITEM ] ].giTag == i ) {
+			item = BG_FindItemForHoldable( i );
+			if ( !item ) break;
+			drop = Drop_Item( self, item, 45 );
+			break;
+		}
+	}
+
+	angle = 45;
+	for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
+		if ( self->client->ps.powerups[ i ] > level.time ) {
+			item = BG_FindItemForPowerup( i );
+			if ( !item ) {
+				continue;
 			}
+			drop = Drop_Item( self, item, angle );
+			// decide how many seconds it has left
+			drop->count = ( self->client->ps.powerups[ i ] - level.time ) / 1000;
+			if ( drop->count < 1 ) {
+				drop->count = 1;
+			}
+			// for pickup prediction
+			drop->s.time2 = drop->count;
+			angle += 45;
 		}
 	}
 }
