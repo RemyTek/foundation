@@ -57,6 +57,24 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //======================================================================
 
+int GenerateRandomSpawnTime() {
+    static unsigned int seed = 0; // Static seed to maintain state between calls
+    int randomValue;
+	int serverId;
+
+	serverId = trap_Cvar_VariableIntegerValue("sv_serverid");
+	
+	if (seed == 0) {
+        //seed = level.time; // Initialize seed with the current game time
+		seed = serverId;
+    }
+    seed = (214013 * seed + 2531011); // Linear congruential generator
+    randomValue = (seed >> 16) & 0x7FFF; // Extract a pseudo-random value
+
+    // Scale the random value to the range [30000, 60000]
+    return 30000 + (randomValue % (60000 - 30000 + 1));
+}
+
 int SpawnTime( gentity_t *ent, qboolean firstSpawn ) 
 {
 	if ( !ent->item )
@@ -112,7 +130,10 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 
 	case IT_POWERUP:
 		if ( firstSpawn )
-			return SPAWN_POWERUP;
+			if ( g_randomPU.integer )
+				return GenerateRandomSpawnTime();
+			else
+				return SPAWN_POWERUP;
 		if ( g_gametype.integer == GT_TEAM )
 			return g_powerupTeamRespawn.value * 1000;
 		else

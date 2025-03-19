@@ -190,6 +190,7 @@ G_CVAR( g_removeitem, "removeitem", "0", 0, 0, qfalse, qfalse )
 G_CVAR( g_removepowerup, "removepowerup", "0", 0, 0, qfalse, qfalse )
 G_CVAR( g_removeweapon, "removeweapon", "0", 0, 0, qfalse, qfalse )
 G_CVAR( g_wpflags, "wpflags", "0", 0, 0, qfalse, qfalse )
+G_CVAR( g_randomPU, "g_randomPU", "0", CVAR_ARCHIVE, 0, qfalse, qfalse )
 
 G_CVAR( g_1FRespawn, "g_1FRespawn", "0", 0, 0, qfalse, qfalse)
 
