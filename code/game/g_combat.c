@@ -191,20 +191,24 @@ void TossClientItems( gentity_t *self ) {
 
 	angle = 45;
 	for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
-		if ( self->client->ps.powerups[ i ] > level.time ) {
-			item = BG_FindItemForPowerup( i );
-			if ( !item ) {
-				continue;
+		if ( g_dropPowerups.integer ) {
+			if ( self->client->ps.powerups[ i ] > level.time ) {
+				item = BG_FindItemForPowerup( i );
+				if ( !item ) {
+					continue;
+				}
+				drop = Drop_Item( self, item, angle );
+				// decide how many seconds it has left
+				drop->count = ( self->client->ps.powerups[ i ] - level.time ) / 1000;
+				if ( drop->count < 1 ) {
+					drop->count = 1;
+				}
+				// for pickup prediction
+				drop->s.time2 = drop->count;
+				angle += 45;
 			}
-			drop = Drop_Item( self, item, angle );
-			// decide how many seconds it has left
-			drop->count = ( self->client->ps.powerups[ i ] - level.time ) / 1000;
-			if ( drop->count < 1 ) {
-				drop->count = 1;
-			}
-			// for pickup prediction
-			drop->s.time2 = drop->count;
-			angle += 45;
+		} else {
+			self->client->ps.powerups[ i ] = 0;
 		}
 	}
 }
