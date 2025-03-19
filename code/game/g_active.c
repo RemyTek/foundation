@@ -767,6 +767,12 @@ void ClientThink_real( gentity_t *ent ) {
 	if (client->pers.connected != CON_CONNECTED) {
 		return;
 	}
+
+	//lock player to no more than 250 fps
+	if ( trap_Cvar_VariableIntegerValue("com_maxfps") > 250 ) {
+		trap_Cvar_Set("com_maxfps", "250");
+	}
+
 	// mark the time, so the connection sprite can be removed
 	ucmd = &ent->client->pers.cmd;
 
