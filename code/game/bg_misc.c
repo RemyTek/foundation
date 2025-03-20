@@ -79,22 +79,6 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
-/*QUAKED item_armor_jacket (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-{
-	"item_armor_jacket", 
-	"sound/misc/ar2_pkup.wav",
-	{ "models/powerups/armor/armor_grn.md3",
-	0, 0, 0},
-/* icon */		"icons/iconr_green",
-/* pickup */	"Light Armor",
-	25,
-	IT_ARMOR,
-	0,
-/* precache */ "",
-/* sounds */ ""
-},
-
 /*QUAKED item_armor_combat (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -669,6 +653,22 @@ Only in CTF games
 /* precache */ "",
 /* sounds */ ""
 	},
+
+/*QUAKED item_armor_jacket (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+*/
+{
+	"item_armor_jacket", 
+	"sound/misc/ar2_pkup.wav",
+	{ "models/powerups/armor/armor_grn.md3",
+	0, 0, 0},
+/* icon */		"icons/iconr_green",
+/* pickup */	"Light Armor",
+	25,
+	IT_ARMOR,
+	0,
+/* precache */ "",
+/* sounds */ ""
+},
 
 #ifdef MISSIONPACK
 /*QUAKED holdable_kamikaze (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
