@@ -1742,6 +1742,20 @@ static void CheckExitRules( void ) {
 		return;
 	}
 
+	//mercy limit
+	if ( g_mercylimit.integer ) {
+		if ( level.teamScores[TEAM_RED] - level.teamScores[TEAM_BLUE] >= g_mercylimit.integer ) {
+			G_BroadcastServerCommand( -1, "print \"Red hit the mercylimit.\n\"");
+			LogExit( "Mercylimit hit." );
+			return;
+		}
+		if ( level.teamScores[TEAM_BLUE] - level.teamScores[TEAM_RED] >= g_mercylimit.integer ) {
+			G_BroadcastServerCommand( -1, "print \"Blue hit the mercylimit.\n\"");
+			LogExit( "Mercylimit hit." );
+			return;
+		}
+	}
+
 	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer ) {
 		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
