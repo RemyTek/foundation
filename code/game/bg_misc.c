@@ -1001,6 +1001,63 @@ gitem_t	*BG_FindItemForWeapon( weapon_t weapon ) {
 
 /*
 ===============
+BG_FindAmmoForWeapon
+
+===============
+*/
+gitem_t	*BG_FindAmmoForWeapon( weapon_t weapon ) {
+	gitem_t	*it;
+	
+	for ( it = bg_itemlist + 1 ; it->classname ; it++) {
+		if ( it->giType == IT_AMMO && it->giTag == weapon ) {
+			return it;
+		}
+	}
+
+	Com_Error( ERR_DROP, "Couldn't find item for weapon %i", weapon);
+	return NULL;
+}
+
+/*
+===============
+BG_FindArmorForQuantity
+
+===============
+*/
+gitem_t	*BG_FindArmorForQuantity( int quantity ) {
+	gitem_t	*it;
+	
+	for ( it = bg_itemlist + 1 ; it->classname ; it++) {
+		if ( it->giType == IT_ARMOR && it->quantity == quantity ) {
+			return it;
+		}
+	}
+
+	Com_Error( ERR_DROP, "Couldn't find armoritem for quantity %i", quantity);
+	return NULL;
+}
+
+/*
+===============
+BG_FindHealthForQuantity
+
+===============
+*/
+gitem_t	*BG_FindHealthForQuantity( int quantity ) {
+	gitem_t	*it;
+	
+	for ( it = bg_itemlist + 1 ; it->classname ; it++) {
+		if ( it->giType == IT_HEALTH && it->quantity == quantity ) {
+			return it;
+		}
+	}
+
+	Com_Error( ERR_DROP, "Couldn't find healthitem for quantity %i", quantity);
+	return NULL;
+}
+
+/*
+===============
 BG_FindItem
 
 ===============
@@ -1015,6 +1072,23 @@ gitem_t	*BG_FindItem( const char *pickupName ) {
 
 	return NULL;
 }
+
+/*
+===============
+BG_FindItemShort
+
+===============
+*/
+// gitem_t	*BG_FindItemShort( const char *pickupName ) {
+// 	gitem_t	*it;
+	
+// 	for ( it = bg_itemlist + 1 ; it->classname ; it++ ) {
+// 		if ( !Q_stricmp( it->shortPickup_name, pickupName ) )
+// 			return it;
+// 	}
+
+// 	return NULL;
+// }
 
 /*
 ============

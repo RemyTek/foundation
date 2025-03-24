@@ -425,45 +425,46 @@ static int Pickup_Ammo( gentity_t *ent, gentity_t *other )
 //======================================================================
 
 
-static int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
-	int		quantity;
+static int Pickup_Weapon(gentity_t *ent, gentity_t *other) {
+    int quantity;
 
-	if ( ent->count < 0 ) {
-		quantity = 0; // None for you, sir!
-	} else {
-		if ( ent->count ) {
-			quantity = ent->count;
-		} else {
-			quantity = ent->item->quantity;
-		}
+    // Check if the weapon is a dropped item
+    if (ent->flags & FL_DROPPED_ITEM) {
+        // Use the ammo count from the dropped weapon
+        quantity = ent->ammoCount;
+    } else {
+        // Use the default ammo count for spawned weapons
+        if (ent->count < 0) {
+            quantity = 0; // None for you, sir!
+        } else if (ent->count) {
+            quantity = ent->count;
+        } else {
+            quantity = ent->item->quantity;
+        }
 
-		// dropped items and teamplay weapons always have full ammo
-		if ( ! (ent->flags & FL_DROPPED_ITEM) && g_gametype.integer != GT_TEAM ) {
-			// respawning rules
-			// drop the quantity if the already have over the minimum
-			if ( other->client->ps.ammo[ ent->item->giTag ] < quantity ) {
-				quantity = quantity - other->client->ps.ammo[ ent->item->giTag ];
-			} else {
-				quantity = 1;		// only add a single shot
-			}
-		}
-	}
+        // In non-teamplay, adjust the ammo count based on respawning rules
+        if (!(ent->flags & FL_DROPPED_ITEM) && g_gametype.integer != GT_TEAM) {
+            if (other->client->ps.ammo[ent->item->giTag] < quantity) {
+                quantity = quantity - other->client->ps.ammo[ent->item->giTag];
+            } else {
+                quantity = 1; // Only add a single shot
+            }
+        }
+    }
 
-	// add the weapon
-	other->client->ps.stats[STAT_WEAPONS] |= ( 1 << ent->item->giTag );
+    // Add the weapon to the player's inventory
+    other->client->ps.stats[STAT_WEAPONS] |= (1 << ent->item->giTag);
 
-	Add_Ammo( other, ent->item->giTag, quantity );
+    // Add the ammo to the player's inventory
+    Add_Ammo(other, ent->item->giTag, quantity);
 
-	if (ent->item->giTag == WP_GAUNTLET || ent->item->giTag == WP_GRAPPLING_HOOK)
-		other->client->ps.ammo[ent->item->giTag] = -1; // unlimited ammo
+    // Special case for weapons with unlimited ammo
+    if (ent->item->giTag == WP_GAUNTLET || ent->item->giTag == WP_GRAPPLING_HOOK) {
+        other->client->ps.ammo[ent->item->giTag] = -1; // Unlimited ammo
+    }
 
-	// team deathmatch has slow weapon respawns
-	//if ( g_gametype.integer == GT_TEAM ) {
-	//	return g_weaponTeamRespawn.integer;
-	//} else {
-	//	return g_weaponRespawn.integer;
-	//}
-	return SpawnTime( ent, qfalse );
+    // Return the respawn time for the weapon
+    return SpawnTime(ent, qfalse);
 }
 
 
@@ -819,6 +820,128 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 	return dropped;
 }
 
+gentity_t *LaunchItemPowerup( gitem_t *item, vec3_t origin, vec3_t velocity, int powerupTimeLeft ) {
+	gentity_t	*dropped;
+
+	dropped = G_Spawn();
+
+	dropped->s.eType = ET_ITEM;
+	dropped->s.modelindex = item - bg_itemlist;	// store item number in modelindex
+	dropped->s.modelindex2 = 1; // This is non-zero is it's a dropped item
+
+	dropped->classname = item->classname;
+	dropped->item = item;
+	VectorSet (dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
+	VectorSet (dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+	dropped->r.contents = CONTENTS_TRIGGER;
+
+	dropped->touch = Touch_Item;
+
+	G_SetOrigin( dropped, origin );
+	dropped->s.pos.trType = TR_GRAVITY;
+	dropped->s.pos.trTime = level.time;
+	VectorCopy( velocity, dropped->s.pos.trDelta );
+
+	dropped->s.eFlags |= EF_BOUNCE_HALF;
+	dropped->think = G_FreeEntity;
+	dropped->nextthink = level.time + 30000;
+
+	dropped->flags = FL_DROPPED_ITEM;
+
+	dropped->powerupTimeLeft = powerupTimeLeft;
+
+	trap_LinkEntity (dropped);
+
+	return dropped;
+}
+
+/*
+================
+LaunchItem
+
+Spawns an item and tosses it forward
+================
+*/
+gentity_t *LaunchItemWeapon( gitem_t *item, vec3_t origin, vec3_t velocity, int ammoCount, int dropTime ) {
+	gentity_t	*dropped;
+
+	dropped = G_Spawn();
+
+	dropped->s.eType = ET_ITEM;
+	dropped->s.modelindex = item - bg_itemlist;	// store item number in modelindex
+	dropped->s.modelindex2 = 1; // This is non-zero is it's a dropped item
+
+	dropped->classname = item->classname;
+	dropped->item = item;
+	VectorSet (dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
+	VectorSet (dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+	dropped->r.contents = CONTENTS_TRIGGER;
+
+	dropped->touch = Touch_Item;
+
+	G_SetOrigin( dropped, origin );
+	dropped->s.pos.trType = TR_GRAVITY;
+	dropped->s.pos.trTime = level.time;
+	VectorCopy( velocity, dropped->s.pos.trDelta );
+
+	dropped->s.eFlags |= EF_BOUNCE_HALF;
+	
+	dropped->think = G_FreeEntity;
+	dropped->nextthink = level.time + 30000;
+
+	dropped->flags = FL_DROPPED_ITEM;
+	
+	dropped->dropTime = dropTime;
+	dropped->ammoCount = ammoCount;
+
+	trap_LinkEntity(dropped);
+
+	return dropped;
+}
+
+/*
+================
+LaunchItem
+
+Spawns an item and tosses it forward
+================
+*/
+gentity_t *LaunchItemTime( gitem_t *item, vec3_t origin, vec3_t velocity, int dropTime ) {
+	gentity_t	*dropped;
+
+	dropped = G_Spawn();
+
+	dropped->s.eType = ET_ITEM;
+	dropped->s.modelindex = item - bg_itemlist;	// store item number in modelindex
+	dropped->s.modelindex2 = 1; // This is non-zero is it's a dropped item
+
+	dropped->classname = item->classname;
+	dropped->item = item;
+	VectorSet (dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
+	VectorSet (dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+	dropped->r.contents = CONTENTS_TRIGGER;
+
+	dropped->touch = Touch_Item;
+
+	G_SetOrigin( dropped, origin );
+	dropped->s.pos.trType = TR_GRAVITY;
+	dropped->s.pos.trTime = level.time;
+	VectorCopy( velocity, dropped->s.pos.trDelta );
+
+	dropped->s.eFlags |= EF_BOUNCE_HALF;
+	
+	dropped->think = G_FreeEntity;
+	dropped->nextthink = level.time + 30000;
+
+	dropped->flags = FL_DROPPED_ITEM;
+	
+	dropped->dropTime = dropTime;
+
+	trap_LinkEntity(dropped);
+
+	return dropped;
+}
+
 /*
 ================
 Drop_Item
@@ -839,6 +962,185 @@ gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle ) {
 	velocity[2] += 200 + crandom() * 50;
 	
 	return LaunchItem( item, ent->s.pos.trBase, velocity );
+}
+
+gentity_t *Drop_Item_Powerup( gentity_t *ent, gitem_t *item, float angle, int time ) {
+	vec3_t	velocity;
+	vec3_t	angles;
+	vec3_t position;
+
+	VectorCopy( ent->s.apos.trBase, angles );
+	angles[YAW] += angle;
+	angles[PITCH] = 0;	// always forward
+
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 0, velocity );
+	VectorAdd( velocity, ent->s.pos.trBase, position );
+
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 150, velocity );
+	velocity[2] += 200 + crandom() * 50;
+
+	item->lastDrop = level.time;
+
+	ent->client->lastDrop = item->pickup_name;
+
+	return LaunchItemPowerup( item, position, velocity, time );
+}
+
+gentity_t *Drop_Item_Armor( gentity_t *ent, gitem_t *item, float angle ) {
+	vec3_t	velocity;
+	vec3_t	angles;
+	vec3_t position;
+	int	dropTime;
+
+	VectorCopy( ent->s.apos.trBase, angles );
+	angles[YAW] += angle;
+	angles[PITCH] = 0;	// always forward
+
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 0, velocity );
+	VectorAdd( velocity, ent->s.pos.trBase, position );
+	
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 150, velocity );
+	velocity[2] += 200 + crandom() * 50;
+	
+	if( ent->client->ps.stats[STAT_ARMOR] < item->quantity )
+	    return NULL;
+	
+	ent->client->ps.stats[STAT_ARMOR] -= item->quantity;
+	
+	dropTime = level.time;
+	
+	ent->client->lastDrop = item->pickup_name;
+	
+	return LaunchItemTime( item, position, velocity, dropTime );
+}
+
+gentity_t *Drop_Item_Health( gentity_t *ent, gitem_t *item, float angle ) {
+	vec3_t	velocity;
+	vec3_t	angles;
+	vec3_t position;
+	int	dropTime;
+
+	VectorCopy( ent->s.apos.trBase, angles );
+	angles[YAW] += angle;
+	angles[PITCH] = 0;	// always forward
+
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 0, velocity );
+	VectorAdd( velocity, ent->s.pos.trBase, position );
+	
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 150, velocity );
+	velocity[2] += 200 + crandom() * 50;
+	
+	if( ent->client->ps.stats[STAT_HEALTH] <= item->quantity || ent->health <= item->quantity)
+	    return NULL;
+	
+	ent->client->ps.stats[STAT_HEALTH] -= item->quantity;
+	ent->health -= item->quantity;
+	
+	dropTime = level.time;
+	
+	ent->client->lastDrop = item->pickup_name;
+	
+	return LaunchItemTime( item, position, velocity, dropTime );
+}
+
+gentity_t *Drop_Item_Ammo( gentity_t *ent, gitem_t *item, float angle ) {
+	vec3_t	velocity;
+	vec3_t	angles;
+	vec3_t position;
+	int	dropTime;
+
+	VectorCopy( ent->s.apos.trBase, angles );
+	angles[YAW] += angle;
+	angles[PITCH] = 0;	// always forward
+
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 0, velocity );
+	VectorAdd( velocity, ent->s.pos.trBase, position );
+	
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 150, velocity );
+	velocity[2] += 200 + crandom() * 50;
+	
+	if( ent->client->ps.ammo[item->giTag] < item->quantity )
+	    return NULL;
+	
+	ent->client->ps.ammo[item->giTag/*ent->s.weapon*/] -= item->quantity;
+	
+	dropTime = level.time;
+	
+	ent->client->lastDrop = item->pickup_name;
+	
+	return LaunchItemTime( item, position, velocity, dropTime );
+}
+
+//TODO: Switch to next weapon
+
+gentity_t *Drop_Item_Weapon( gentity_t *ent, gitem_t *item, float angle ) {
+    vec3_t velocity;
+    vec3_t angles;
+    vec3_t position;
+    int ammoCount;
+    int dropTime;
+
+    // Get the player's current view angles
+    VectorCopy(ent->s.apos.trBase, angles);
+    angles[YAW] += angle; // Adjust the angle for the drop direction
+    angles[PITCH] = 0;    // Always drop forward, not up or down
+
+    // Calculate the forward direction and position in front of the player
+    AngleVectors(angles, velocity, NULL, NULL);
+    VectorScale(velocity, 150, velocity); // Move the drop position slightly forward
+    VectorAdd(ent->s.pos.trBase, velocity, position); // Position in front of the player
+
+    // Add upward velocity to the drop
+    velocity[2] += 200 + crandom() * 50;
+
+    // Get the ammo count for the weapon being dropped
+    ammoCount = ent->client->ps.ammo[item->giTag];
+
+    // Remove the weapon and its ammo from the player
+    ent->client->ps.ammo[item->giTag] = 0;
+    ent->client->ps.stats[STAT_WEAPONS] &= ~(1 << item->giTag);
+
+    // Set the drop time
+    dropTime = level.time;
+
+    // Store the name of the last dropped item
+    ent->client->lastDrop = item->pickup_name;
+
+    // Launch the weapon item
+    return LaunchItemWeapon(item, position, velocity, ammoCount, dropTime);
+}
+
+gentity_t *Drop_Item_Flag( gentity_t *ent, gitem_t *item, float angle ) {
+	vec3_t	velocity;
+	vec3_t	angles;
+	vec3_t position;
+
+	VectorCopy( ent->s.apos.trBase, angles );
+	angles[YAW] += angle;
+	angles[PITCH] = 0;	// always forward
+
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 0, velocity );
+	VectorAdd( velocity, ent->s.pos.trBase, position );
+	
+	AngleVectors( angles, velocity, NULL, NULL );
+	VectorScale( velocity, 150, velocity );
+	velocity[2] += 200 + crandom() * 50;
+	
+	item->lastDrop = level.time;
+	
+	ent->client->lastDrop = item->pickup_name;
+	
+	
+	return LaunchItem( item, position, velocity );
 }
 
 

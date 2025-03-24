@@ -672,6 +672,8 @@ typedef struct gitem_s {
 
 	char		const *precaches;		// string of all models and images this item will use
 	char		const *sounds;		// string of all sounds this item will use
+	char		*shortPickupName;	// for printing on pickup
+	int			lastDrop;
 } gitem_t;
 
 // included in both the game dll and the client
@@ -679,7 +681,11 @@ extern	gitem_t	bg_itemlist[];
 extern	int		bg_numItems;
 
 gitem_t	*BG_FindItem( const char *pickupName );
+gitem_t	*BG_FindItemShort( const char *pickupName );
 gitem_t	*BG_FindItemForWeapon( weapon_t weapon );
+gitem_t	*BG_FindAmmoForWeapon( weapon_t weapon );
+gitem_t	*BG_FindArmorForQuantity( int quantity );
+gitem_t	*BG_FindHealthForQuantity( int quantity );
 gitem_t	*BG_FindItemForPowerup( powerup_t pw );
 gitem_t	*BG_FindItemForHoldable( holdable_t pw );
 #define	ITEM_INDEX(x) ((x)-bg_itemlist)

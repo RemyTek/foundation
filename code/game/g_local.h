@@ -176,6 +176,11 @@ struct gentity_s {
 
 	gitem_t		*item;			// for bonus items
 
+	//drops
+	int		dropTime;
+	int		ammoCount;
+	int     powerupTimeLeft;
+
 	// team for spawn spot
 	team_t		fteam;
 
@@ -348,6 +353,9 @@ struct gclient_s {
 	int			historyHead;
 	int			frameOffset;
 	int			lastUpdateFrame;
+
+	//drops
+	char		*lastDrop;
 
 	// hitsounds
 	struct {

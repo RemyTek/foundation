@@ -1853,7 +1853,199 @@ static void Cmd_SetViewpos_f( gentity_t *ent ) {
 	TeleportPlayer( ent, origin, angles );
 }
 
+void Cmd_DropPowerup_f( gentity_t *ent ) {
+	int now;
+	int timeLeft;
+	int pw;
 
+	if ( !( g_itemDrop.integer & 32 ) ) {
+		return;
+	}
+
+	if ( ent->client->ps.pm_type == PM_DEAD ) {
+		return;
+	}
+
+	now = (level.time - ( level.time % 1000 )); // Current time rounded to the second
+
+	// We go through the powerups in the sequence:
+	// quad -> battlesuit -> haste -> invis -> regen -> flight
+	// Only one powerup is dropped at a time.
+	for (pw = PW_QUAD; pw <= PW_FLIGHT; pw++) {
+		if ( ent->client->ps.powerups[pw] ) {
+			BG_FindItemForPowerup( pw );
+			timeLeft = (ent->client->ps.powerups[pw] - now)/1000; // Time left for powerup
+			if (timeLeft < 0) {
+				timeLeft = 0;
+			}
+
+			Drop_Item_Powerup( ent, BG_FindItemForPowerup( pw ), 0, timeLeft);
+			ent->client->ps.powerups[pw] = 0;
+
+			return;
+		}
+	}
+}
+
+void Cmd_DropArmor_f( gentity_t *ent ) {
+    gitem_t		*item;
+    char arg1[128];
+    int amount;
+
+    if ( !( g_itemDrop.integer & 16 ) )
+        return;
+
+    if ( ent->client->ps.pm_type == PM_DEAD )
+        return;
+    
+    if( trap_Argc() > 1 ){
+	trap_Argv( 1, arg1, sizeof( arg1 ) );
+	amount = atoi(arg1);     
+    } else
+	amount = 50;
+  
+    if( amount >= 100 )
+	amount = 100;
+    else if( amount >= 50 )
+	amount = 50;
+    //else if( amount >= 25 )
+	 //amount = 25;
+    else 
+	amount = 5;
+    
+    item = BG_FindArmorForQuantity( amount );
+    
+    Drop_Item_Armor( ent, item, 0 );
+}
+
+void Cmd_DropHealth_f( gentity_t *ent ) {
+    gitem_t		*item;
+    char arg1[128];
+    int amount;
+
+    if ( !( g_itemDrop.integer & 8 ) )
+        return;
+
+    if ( ent->client->ps.pm_type == PM_DEAD )
+        return;
+    
+    if( trap_Argc() > 1 ){
+	trap_Argv( 1, arg1, sizeof( arg1 ) );
+	amount = atoi(arg1);     
+    } else
+	amount = 25;
+  
+    if( amount >= 100 )
+	amount = 100;
+    else if( amount >= 50 )
+	amount = 50;
+    else if( amount >= 25 )
+	amount = 25;
+    else 
+	amount = 5;
+    
+    item = BG_FindHealthForQuantity( amount );
+    
+    Drop_Item_Health( ent, item, 0 );
+}
+
+void Cmd_DropAmmo_f( gentity_t *ent ) {
+    gitem_t		*item;
+    int			weapon;
+    char arg1[128];
+
+    if ( !( g_itemDrop.integer & 4 ) )
+        return;
+
+    if ( ent->client->ps.pm_type == PM_DEAD )
+        return;
+    
+    if( trap_Argc() > 1 ){
+	trap_Argv( 1, arg1, sizeof( arg1 ) );
+	weapon = atoi(arg1);     
+    } else
+	weapon = ent->s.weapon;
+  
+    if ( weapon <= WP_GAUNTLET || weapon >= WP_NUM_WEAPONS )
+        return;
+    
+    item = BG_FindAmmoForWeapon( weapon );
+    if ( ( ent->client->ps.stats[STAT_WEAPONS] & ( 1 << item->giTag ) ) ) {
+        Drop_Item_Ammo( ent, item, 0 );
+    }
+}
+
+/*
+=================
+Cmd_DropWeapon_f
+=================
+*/
+static void Cmd_DropWeapon_f( gentity_t *ent ) {
+    gitem_t		*item;
+    int			weapon;
+    char arg1[128];
+
+    if ( !( g_itemDrop.integer & 2 ) )
+        return;
+
+    if ( ent->client->ps.pm_type == PM_DEAD )
+        return;
+    
+    if( trap_Argc() > 1 ){
+	trap_Argv( 1, arg1, sizeof( arg1 ) );
+	weapon = atoi(arg1);     
+    } else
+	weapon = ent->s.weapon;
+  
+    if ( weapon <= WP_MACHINEGUN || weapon >= WP_NUM_WEAPONS )
+        return;
+
+    item = BG_FindItemForWeapon( weapon );
+    if ( ( ent->client->ps.stats[STAT_WEAPONS] & ( 1 << item->giTag ) ) ) {
+        Drop_Item_Weapon( ent, item, 0 );
+    }
+}
+
+/*
+=================
+Cmd_DropFlag_f
+=================
+*/
+static void Cmd_DropFlag_f( gentity_t *other ) {
+
+    if ( !( g_itemDrop.integer & 1 ) )
+        return;
+
+    if ( other->client->ps.pm_type == PM_DEAD )
+        return;
+
+    if ( other->client->ps.powerups[PW_NEUTRALFLAG] ) {
+        Drop_Item_Flag( other, BG_FindItemForPowerup( PW_NEUTRALFLAG ), 0 );
+        other->client->ps.powerups[PW_NEUTRALFLAG] = 0;
+    }
+    else if ( other->client->ps.powerups[PW_REDFLAG] ) {
+        Drop_Item_Flag( other, BG_FindItemForPowerup( PW_REDFLAG ), 0 );
+        other->client->ps.powerups[PW_REDFLAG] = 0;
+    }
+    else if ( other->client->ps.powerups[PW_BLUEFLAG] ) {
+        Drop_Item_Flag( other, BG_FindItemForPowerup( PW_BLUEFLAG ), 0 );
+        other->client->ps.powerups[PW_BLUEFLAG] = 0;
+    }
+}
+
+/*
+=================
+Cmd_Drop_f
+=================
+*/
+static void Cmd_Drop_f( gentity_t *ent ) {
+
+    if ( ( ent->client->ps.powerups[PW_NEUTRALFLAG] || ent->client->ps.powerups[PW_REDFLAG] || ent->client->ps.powerups[PW_BLUEFLAG] ) && g_itemDrop.integer & 1 )
+        Cmd_DropFlag_f( ent );
+    else if ( g_itemDrop.integer & 2 )
+        Cmd_DropWeapon_f( ent );
+
+}
 
 /*
 =================
@@ -1997,6 +2189,18 @@ void ClientCommand( int clientNum ) {
 		Cmd_Stats_f( ent );
 	else if ( Q_stricmp( cmd, "drop" ) == 0 )
 		Cmd_Drop_f( ent );
+	else if ( Q_stricmp( cmd, "dropflag" ) == 0 )
+		Cmd_DropFlag_f( ent );
+	else if ( Q_stricmp( cmd, "dropweapon" ) == 0 )
+		Cmd_DropWeapon_f( ent );
+	else if ( Q_stricmp( cmd, "drophealth" ) == 0 )
+		Cmd_DropHealth_f( ent );
+	else if ( Q_stricmp( cmd, "droparmor" ) == 0 )
+		Cmd_DropArmor_f( ent );
+	else if ( Q_stricmp( cmd, "dropammo" ) == 0 )
+		Cmd_DropAmmo_f( ent );
+	else if ( Q_stricmp( cmd, "droppowerup" ) == 0 )
+		Cmd_DropPowerup_f( ent );
 	else
 		trap_SendServerCommand( clientNum, va( "print \"unknown cmd %s\n\"", cmd ) );
 }

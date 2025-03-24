@@ -110,6 +110,7 @@ G_CVAR( g_instagib, "g_instagib", "0", CVAR_SYSTEMINFO | CVAR_LATCH, 0, qtrue, q
 G_CVAR( g_railJump, "g_railJump", "0", CVAR_ARCHIVE, 0, qtrue, qtrue )
 G_CVAR( g_railJumpDamage, "g_railJumpDamage", "100", CVAR_ARCHIVE, 0, qtrue, qtrue )
 G_CVAR( g_noSelfDamage, "g_noSelfDamage", "0", CVAR_ARCHIVE, 0, qtrue,qtrue )
+G_CVAR( g_itemDrop, "g_itemDrop", "0", CVAR_SYSTEMINFO, 0, qfalse,qfalse )
 
 G_CVAR( g_startArmor, "g_startArmor", "0", 0, 0, qfalse, qfalse )
 G_CVAR( g_startHealth, "g_startHealth", "0", 0, 0, qfalse, qfalse )
@@ -183,7 +184,6 @@ G_CVAR( g_splashRadiusPL, "g_splashRadiusPL", "150", 0, 0, qfalse, qfalse )
 G_CVAR( g_damageCG, "g_damageCG", "7", 0, 0, qfalse, qfalse )
 #endif
 
-G_CVAR( g_tossWeapon, "g_tossWeapon", "1", CVAR_ARCHIVE, 0, qtrue, qtrue )
 G_CVAR( g_startingWeapon, "g_startingWeapon", "", 0, 0, qfalse, qfalse )
 
 G_CVAR( g_removeammo, "removeammo", "0", 0, 0, qfalse, qfalse )
