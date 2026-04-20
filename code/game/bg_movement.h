@@ -1,3 +1,6 @@
+#ifndef BG_MOVEMENT_H
+#define BG_MOVEMENT_H
+
 #include "bg_pmove.h"
 
 // Physics variables
@@ -13,7 +16,7 @@ extern float phy_spectator_friction;
 
 // New variables
 extern float phy_crouch_scale;  // Default renamed
-// extern int   df_promode;             // pm->movetype; // Physics type selection
+// extern int   g_movementType;         // pm->movetype; // Physics type selection
 // Ground
 extern float phy_ground_basespeed;  // Movement speed on the ground (aka maxspeed). Equivalent to the default g_speed
 extern float phy_ground_accel;      // Acceleration when on the ground. sv_accelerate
@@ -51,17 +54,45 @@ extern float phy_water_friction;
 // Slick
 extern float phy_water_friction;
 extern float phy_slick_accel;
+// Jump behavior flags
+extern qboolean phy_autohop;
+extern qboolean phy_bunnyhop;
+extern qboolean phy_double_jump;
+extern qboolean phy_chain_jump;
+extern float    phy_chain_jump_velocity;
+extern qboolean phy_step_jump;
+extern float    phy_step_jump_velocity;
+extern qboolean phy_crouchstepjump;
+extern qboolean phy_ramp_jump;
+extern float    phy_ramp_jump_scale;
+extern float    phy_jump_velocity_max;
+extern float    phy_jump_scale_add;
+extern float    phy_jump_time_threshold;
+extern float    phy_jump_time_threshold_offset;
+extern float    phy_jump_time_delta_min;
+// Water wade scale
+extern float phy_water_wade_scale;
+// Velocity ground-hit threshold
+extern float phy_velocity_gh;
+// Crouchslide
+extern qboolean phy_crouch_slide;
+extern float    phy_crouch_slide_friction;
+extern int      phy_crouch_slide_time;
 
 // Physics indexes
 #define VQ3 0  // VQ3
 #define CPM 1  // CPM
 #define CQ3 2  // CQ3
+#define VQL 3  // VQL
+#define PQL 4  // PQL
 
 // Initialize
 void phy_init(int movetype);  // Calls all other initializer functions
 void cpm_init(void);
 void vq3_init(void);
 void cq3_init(void);
+void vql_init(void);
+void pql_init(void);
 
 // Movement
 void phy_PmoveSingle(pmove_t* pmove);  // Core movement entrypoint
@@ -69,6 +100,8 @@ void phy_move(pmove_t* pmove);         // Calls all other movement functions
 void cpm_move(pmove_t* pmove);
 void vq3_move(pmove_t* pmove);
 void cq3_move(pmove_t* pmove);
+void vql_move(pmove_t* pmove);
+void pql_move(pmove_t* pmove);
 
 // Core functions (common to all/most)
 void     core_Accelerate(vec3_t wishdir, float wishspeed, float accel, float basespeed);
@@ -84,3 +117,5 @@ void VectorReflect(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
 void VectorReflect2D(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
 void VectorReflectOS(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
 void VectorReflectBC(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
+
+#endif  // BG_MOVEMENT_H

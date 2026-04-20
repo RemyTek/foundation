@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
+#include "bg_movement.h"
 
 
 /*
@@ -131,7 +132,7 @@ void P_WorldEffects( gentity_t *ent ) {
 				// don't play a normal pain sound
 				ent->pain_debounce_time = level.time + 200;
 
-				G_Damage (ent, NULL, NULL, NULL, NULL, 
+				G_Damage (ent, NULL, NULL, NULL, NULL,
 					ent->damage, DAMAGE_NO_ARMOR, MOD_WATER);
 			}
 		}
@@ -143,7 +144,7 @@ void P_WorldEffects( gentity_t *ent ) {
 	//
 	// check for sizzle damage (move to pmove?)
 	//
-	if (waterlevel && 
+	if (waterlevel &&
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
 		if (ent->health > 0
 			&& ent->pain_debounce_time <= level.time	) {
@@ -152,12 +153,12 @@ void P_WorldEffects( gentity_t *ent ) {
 				G_AddEvent( ent, EV_POWERUP_BATTLESUIT, 0 );
 			} else {
 				if (ent->watertype & CONTENTS_LAVA) {
-					G_Damage (ent, NULL, NULL, NULL, NULL, 
+					G_Damage (ent, NULL, NULL, NULL, NULL,
 						30*waterlevel, 0, MOD_LAVA);
 				}
 
 				if (ent->watertype & CONTENTS_SLIME) {
-					G_Damage (ent, NULL, NULL, NULL, NULL, 
+					G_Damage (ent, NULL, NULL, NULL, NULL,
 						10*waterlevel, 0, MOD_SLIME);
 				}
 			}
@@ -368,8 +369,8 @@ qboolean ClientInactivityTimer( gclient_t *client ) {
 		// gameplay, everyone isn't kicked
 		client->inactivityTime = level.time + 60 * 1000;
 		client->inactivityWarning = qfalse;
-	} else if ( client->pers.cmd.forwardmove || 
-		client->pers.cmd.rightmove || 
+	} else if ( client->pers.cmd.forwardmove ||
+		client->pers.cmd.rightmove ||
 		client->pers.cmd.upmove ||
 		(client->pers.cmd.buttons & BUTTON_ATTACK) ) {
 		client->inactivityTime = level.time + g_inactivity.integer * 1000;
@@ -928,6 +929,10 @@ void ClientThink_real( gentity_t *ent ) {
 	else {
 		pm.tracemask = MASK_PLAYERSOLID;
 	}
+	// Allow movement tuning to disable player collision when requested.
+	if (pmove_noPlayerClip.integer > 0) {
+		pm.tracemask &= ~CONTENTS_BODY;
+	}
 	pm.trace = trap_Trace;
 	pm.pointcontents = trap_PointContents;
 	pm.debugLevel = g_debugMove.integer;
@@ -936,12 +941,61 @@ void ClientThink_real( gentity_t *ent ) {
 	pm.pmove_msec = pmove_msec.integer;
 	pm.grapplePull = g_grapplePull.integer;
 	pm.fastWeaponSwitch = g_fastWeaponSwitch.integer;
+	pm.movetype = g_moveType.integer;
 	pm.fastRail = g_fastRail.integer;
 
-	VectorCopy( client->ps.origin, client->oldOrigin );
+	// Force physics init for this movetype, then apply server-side pmove_* overrides.
+	// This runs every frame so cvar changes take effect immediately.
+	{
+		static int lastMoveType = -1;
+		if (lastMoveType != pm.movetype) {
+			phy_initialized = qfalse;
+			lastMoveType = pm.movetype;
+		}
+		if (!phy_initialized) {
+			phy_init(pm.movetype);
+		}
 
-	//pass promode phyiscs through pm
-	pm.movetype = g_promode.integer;
+#define PHYSF(cvar, global) if (atof((cvar).string) >= 0.0f) { (global) = atof((cvar).string); }
+#define PHYSI(cvar, global) if (atoi((cvar).string) >= 0) { (global) = atoi((cvar).string); }
+#define PHYSB(cvar, global) if ((cvar).integer >= 0) { (global) = (cvar).integer ? qtrue : qfalse; }
+		PHYSF( pmove_AirAccel,                        phy_air_accel              )
+		PHYSB( pmove_AirControl,                      phy_aircontrol             )
+		PHYSF( pmove_AirStopAccel,                    phy_airstopaccelerate      )
+		PHYSB( pmove_AutoHop,                         phy_autohop                )
+		PHYSB( pmove_BunnyHop,                        phy_bunnyhop               )
+		PHYSB( pmove_ChainJump,                       phy_chain_jump             )
+		PHYSF( pmove_ChainJumpVelocity,               phy_chain_jump_velocity    )
+		PHYSF( pmove_CircleStrafeFriction,            phy_friction               )
+		PHYSB( pmove_CrouchSlide,                     phy_crouch_slide           )
+		PHYSF( pmove_CrouchSlideFriction,             phy_crouch_slide_friction  )
+		PHYSI( pmove_CrouchSlideTime,                 phy_crouch_slide_time      )
+		PHYSB( pmove_CrouchStepJump,                  phy_crouchstepjump         )
+		PHYSB( pmove_DoubleJump,                      phy_double_jump            )
+		PHYSF( pmove_JumpTimeDeltaMin,                phy_jump_time_delta_min    )
+		PHYSF( pmove_JumpVelocity,                    phy_jump_velocity          )
+		PHYSF( pmove_JumpVelocityMax,                 phy_jump_velocity_max      )
+		PHYSF( pmove_JumpVelocityScaleAdd,            phy_jump_scale_add         )
+		PHYSF( pmove_JumpVelocityTimeThreshold,       phy_jump_time_threshold    )
+		PHYSF( pmove_JumpVelocityTimeThresholdOffset, phy_jump_time_threshold_offset )
+		PHYSB( pmove_RampJump,                        phy_ramp_jump              )
+		PHYSF( pmove_RampJumpScale,                   phy_ramp_jump_scale        )
+		PHYSF( pmove_StepHeight,                      phy_step_size              )
+		PHYSB( pmove_StepJump,                        phy_step_jump              )
+		PHYSF( pmove_StepJumpVelocity,                phy_step_jump_velocity     )
+		PHYSF( pmove_StrafeAccel,                     phy_airstrafe_accel        )
+		PHYSF( pmove_Velocity_gh,                     phy_velocity_gh            )
+		PHYSF( pmove_WalkAccel,                       phy_ground_accel           )
+		PHYSF( pmove_WalkFriction,                    phy_friction               )
+		PHYSF( pmove_WaterSwimScale,                  phy_water_scale            )
+		PHYSF( pmove_WaterWadeScale,                  phy_water_wade_scale       )
+		PHYSF( pmove_WishSpeed,                       phy_wishspeed              )
+#undef PHYSF
+#undef PHYSI
+#undef PHYSB
+	}
+
+	VectorCopy( client->ps.origin, client->oldOrigin );
 
 #ifdef MISSIONPACK
 		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {
@@ -1016,12 +1070,12 @@ void ClientThink_real( gentity_t *ent ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
-			if ( g_forcerespawn.integer > 0 && 
+			if ( g_forcerespawn.integer > 0 &&
 				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
 				respawn( ent );
 				return;
 			}
-		
+
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 				respawn( ent );

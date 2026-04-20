@@ -52,10 +52,40 @@ typedef struct {
 	vec3_t		previous_origin;
 	vec3_t		previous_velocity;
 	int			previous_waterlevel;
+
+	qboolean	sliding;     // qtrue while crouchslide is active
+	int			slideTime;   // ms remaining on active crouchslide
 } pml_t;
 
 extern	pmove_t		*pm;
 extern	pml_t		pml;
+
+extern int		modePromodePhysKoeff;
+extern float	modePromode_pm_airaccelerate_1;
+extern int		modePredictionKoeff2;
+extern float	modePromode_pm_airaccelerate_2;
+extern float	modeWishspeedLimit;
+extern int		modePredictionKoeff1;
+extern float	modeSwimScale1;
+extern float	modeSwimScale2;
+extern float	modeShotgunKoeff;
+extern int		modeShotgunNumberOfPellets;
+extern float	modeUnused8;
+extern int		modeMaxAmmoShotgun;
+extern int		modeGrenadeTime;
+extern int		modeMaxAmmoGrenade;
+extern int		modeMaxAmmoRocket;
+extern int		modeMaxAmmoRail;
+extern int		modeBeginWeaponChangeTime;
+extern int		modeFinishWeaponChangeTime;
+extern int		modePMNoAmmoTime;
+extern int		pm_armorPromode;
+extern int		modeHitLevelSounds;
+extern int		modePickupDistance;
+extern int		modeUnknown2;
+extern int		modeUnknown3;
+extern int		modeUnknown4;
+extern int		modeShotgunPromode;
 
 // movement parameters
 extern	float	pm_stopspeed;

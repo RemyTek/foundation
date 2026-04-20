@@ -1,6 +1,6 @@
 QA_SRC = \
  g_main $(QADIR)/g_syscalls.asm \
- bg_misc bg_lib bg_pmove bg_promode bg_slidemove \
+ bg_misc bg_lib bg_pmove bg_movement bg_slidemove \
  q_math q_shared \
  ai_dmnet ai_dmq3 ai_team ai_main ai_chat ai_cmd ai_vcmd \
  g_active g_arenas g_bot g_client g_cmds g_combat g_items g_mem g_misc \
@@ -8,11 +8,34 @@ QA_SRC = \
  g_trigger g_unlagged g_utils g_weapon \
 
 CG_SRC = \
+ cg_be_stats cg_be_util cg_bescoreboard cg_chatfilter \
+ cg_cherryhud cg_cherryhud_element_decor cg_cherryhud_elements cg_cherryhud_layout \
+ cg_cherryhud_lexer cg_cherryhud_lexer_commands cg_cherryhud_lexer_parser \
+ cg_cherryhud_private cg_cherryhud_tablebuilder cg_cherryhud_util \
  cg_main $(CGDIR)/cg_syscalls.asm \
- cg_consolecmds cg_draw cg_drawtools cg_effects cg_ents cg_event cg_info \
- cg_localents cg_marks cg_players cg_playerstate cg_predict cg_scoreboard \
- cg_servercmds cg_snapshot cg_view cg_weapons \
- bg_slidemove bg_pmove bg_promode bg_lib bg_misc \
+ cg_consolecmds cg_crosshair cg_customloc cg_cvardescriptions cg_draw cg_drawtools \
+ cg_effects cg_ents cg_event cg_info cg_localents cg_localevents cg_l_crc_compat cg_marks cg_ospconfig \
+ cg_osphud cg_osputil cg_players cg_playerscolors cg_playerstate cg_predict \
+ cg_qcommon_compat cg_scoreboard cg_servercmds cg_snapshot cg_superhud \
+ cg_superhud_configparser cg_superhud_element_ammomessage cg_superhud_element_attacker_icon \
+ cg_superhud_element_attacker_name cg_superhud_element_chat cg_superhud_element_flagstatus \
+ cg_superhud_element_followmessage cg_superhud_element_fps cg_superhud_element_fragmessage \
+ cg_superhud_element_gametime cg_superhud_element_gametype cg_superhud_element_grid \
+ cg_superhud_element_itempickup cg_superhud_element_itempickupicon cg_superhud_element_localtime \
+ cg_superhud_element_location cg_superhud_element_name cg_superhud_element_ng \
+ cg_superhud_element_ngp cg_superhud_element_obituaries cg_superhud_element_player_name \
+ cg_superhud_element_player_stats cg_superhud_element_powerup cg_superhud_element_pred \
+ cg_superhud_element_rankmessage cg_superhud_element_reward cg_superhud_element_sbab \
+ cg_superhud_element_sbac cg_superhud_element_sbai cg_superhud_element_sbamb \
+ cg_superhud_element_sbamc cg_superhud_element_sbami cg_superhud_element_sbhb \
+ cg_superhud_element_sbhc cg_superhud_element_sbhi cg_superhud_element_score \
+ cg_superhud_element_spawnprotect cg_superhud_element_specmessage cg_superhud_element_spectators \
+ cg_superhud_element_speed cg_superhud_element_target_name cg_superhud_element_target_status \
+ cg_superhud_element_team cg_superhud_element_teamcount cg_superhud_element_tempAcc \
+ cg_superhud_element_thawtime cg_superhud_element_vmw cg_superhud_element_warmupinfo \
+ cg_superhud_element_warnlast cg_superhud_element_weapon_stats cg_superhud_element_weaponlist \
+ cg_superhud_private cg_superhud_util cg_unlagged cg_view cg_weapons \
+ bg_slidemove bg_pmove bg_movement bg_lib bg_misc \
  q_math q_shared \
 
 UI_SRC = \
