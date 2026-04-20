@@ -28,6 +28,11 @@ void CG_SHUDElementWarnLastRoutine(void* context)
 
 	qboolean showLast = (cg.lastPlayerWarning && cg.snap->ps.pm_type != PM_INTERMISSION);
 
+	if (!cg_drawLast.integer)
+	{
+		return;
+	}
+
 	if (showLast != lastPlayerState)
 	{
 		lastPlayerState = showLast;

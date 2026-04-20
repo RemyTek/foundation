@@ -721,7 +721,6 @@ void CG_PredictPlayerState(void)
 	cg_pmove.pmove_msec = pmove_msec.integer;
 	cg_pmove.grapplePull = cgs.g_grapplePull;
 	cg_pmove.crouchSlide = cgs.pmove_crouchSlide;
-	cg_pmove.movetype = cgs.g_moveType;
 
 	// run cmds
 	moved = qfalse;

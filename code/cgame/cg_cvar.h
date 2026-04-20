@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // Usage:
 //   #define EXTERN_CG_CVAR  -> generates extern declarations (in cg_local.h)
 //   #define DECLARE_CG_CVAR -> generates definitions         (in cg_main.c)
+//   #define CG_CVAR_LIST    -> generates cvarTable[] entries (in cg_main.c)
 //
 // Each entry:  CG_CVAR( c_variableName, "cvarName", "defaultValue", cvarFlags )
 
@@ -36,8 +37,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CG_CVAR( vmCvar, cvarName, defaultString, cvarFlags ) vmCvar_t vmCvar;
 #endif
 
+#ifdef CG_CVAR_LIST
+#define CG_CVAR( vmCvar, cvarName, defaultString, cvarFlags ) { &vmCvar, cvarName, defaultString, cvarFlags },
+#endif
+
 // OSP/BE metadata
-CG_CVAR( osp_client,   "osp_client",       "",  CVAR_USERINFO | CVAR_ROM )
+CG_CVAR( osp_client,   "osp_client",       "1008_OSP2_"OSP_VERSION,  CVAR_USERINFO | CVAR_ROM )
 CG_CVAR( osp_hidden,   "osp_print_issues", "0", CVAR_ARCHIVE )
 CG_CVAR( osp_debug,    "osp_debug",        "0", CVAR_ARCHIVE )
 
@@ -65,6 +70,8 @@ CG_CVAR( cg_drawIcons,                   "cg_drawIcons",                   "1", 
 CG_CVAR( cg_drawAmmoWarning,             "cg_drawAmmoWarning",             "1",     CVAR_ARCHIVE )
 CG_CVAR( cg_drawAttacker,                "cg_drawAttacker",                "1",     CVAR_ARCHIVE )
 CG_CVAR( cg_drawRewards,                 "cg_drawRewards",                 "1",     CVAR_ARCHIVE )
+CG_CVAR( cg_drawSpawnProtection,         "cg_drawSpawnProtection",         "1",     CVAR_ARCHIVE )
+CG_CVAR( cg_drawLast,                    "cg_drawLast",                    "1",     CVAR_ARCHIVE )
 
 // Crosshair
 CG_CVAR( cg_drawCrosshair,               "cg_drawCrosshair",                "16",   CVAR_ARCHIVE )

@@ -549,7 +549,7 @@ void CG_HitDamage(playerState_t* ps, playerState_t* ops)
 {
 	int atta, hits, damage;
 
-  // // Early return if damage info is not allowed and not in moveType/cq3
+	// // Early return if damage info is not allowed and not in promode/cq3
 	// if (!(BE_IsDamageInfoAllowed()) && !(cgs.osp.server_mode == OSP_SERVER_MODE_PROMODE) && !(cgs.osp.server_mode == OSP_SERVER_MODE_CQ3))
 	// {
 	// 	return;

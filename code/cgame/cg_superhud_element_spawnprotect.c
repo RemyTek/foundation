@@ -27,6 +27,11 @@ void CG_SHUDElementSpawnProtectRoutine(void* context)
 
 	element->ctx.text = NULL;
 
+	if (!cg_drawSpawnProtection.integer)
+	{
+		return;
+	}
+
 	if (!cg_enableOSPHUD.integer && !cg_shud.integer)
 	{
 		return;
@@ -52,14 +57,14 @@ void CG_SHUDElementSpawnProtectRoutine(void* context)
 			clientInfo_t* ci = &cgs.clientinfo[trace.entityNum];
 			if (ci->infoValid && ci->team != cg.snap->ps.persistant[PERS_TEAM])
 			{
-				if (cg_entities[trace.entityNum].currentState.eFlags & EF_SPAWNPROTECTION)
+				if (cg_entities[trace.entityNum].currentState.powerups & (1 << PW_SPAWNPROTECTION))
 				{
 					element->ctx.text = "SPAWN PROTECTION";
 				}
 			}
 		}
 
-		if (cg.snap->ps.eFlags & EF_SPAWNPROTECTION)
+		if (cg.snap->ps.powerups[PW_SPAWNPROTECTION] > cg.time)
 		{
 			element->ctx.text = "SPAWN PROTECTION";
 		}

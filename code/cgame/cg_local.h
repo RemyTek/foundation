@@ -882,6 +882,8 @@ typedef struct
 	qhandle_t   quadShader;
 	qhandle_t   redQuadShader;
 	qhandle_t   quadWeaponShader;
+	qhandle_t   spawnProtectionShader;
+	qhandle_t   spawnProtectionWeaponShader;
 	qhandle_t   invisShader;
 	qhandle_t   regenShader;
 	qhandle_t   battleSuitShader;
@@ -1495,7 +1497,6 @@ typedef struct
 
 	//pmove
 	unsigned int    pmove_crouchSlide;
-	int             g_moveType;
 
 	//freeze
 	unsigned int    autoThawTime;

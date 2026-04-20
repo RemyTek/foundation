@@ -2286,10 +2286,15 @@ static void CG_PlayerPowerups(centity_t* cent)
 		return;
 	}
 
-	// quad gives a dlight
+	// quad gives a blue dlight
 	if (powerups & (1 << PW_QUAD))
 	{
 		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 0.2f, 0.2f, 1);
+	}
+	// spawn protection gives a red dlight
+	if (powerups & (1 << PW_SPAWNPROTECTION))
+	{
+		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 1, 0.2f, 0.2f);
 	}
 
 	// flight plays a looped sound
@@ -2954,6 +2959,11 @@ void CG_AddRefEntityWithPowerups(refEntity_t* ent, entityState_t* state, int tea
 				ent->customShader = cgs.media.redQuadShader;
 			else
 				ent->customShader = cgs.media.quadShader;
+			trap_R_AddRefEntityToScene(ent);
+		}
+		if (state->powerups & (1 << PW_SPAWNPROTECTION))
+		{
+			ent->customShader = cgs.media.spawnProtectionShader;
 			trap_R_AddRefEntityToScene(ent);
 		}
 		if (state->powerups & (1 << PW_REGEN))

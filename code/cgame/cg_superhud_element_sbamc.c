@@ -6,6 +6,8 @@ typedef struct
 {
 	superhudConfig_t config;
 	superhudTextContext_t ctx;
+	qhandle_t infiniteShader;
+	superhudDrawContext_t infiniteDraw;
 } shudElementStatusbarAmmoCount;
 
 void* CG_SHUDElementSBAmCCreate(const superhudConfig_t* config)
@@ -13,6 +15,8 @@ void* CG_SHUDElementSBAmCCreate(const superhudConfig_t* config)
 	shudElementStatusbarAmmoCount* element;
 
 	SHUD_ELEMENT_INIT(element, config);
+
+	element->infiniteShader = trap_R_RegisterShader("icons/infinite");
 
 	//load defaults
 	if (!element->config.color.isSet)
@@ -80,9 +84,36 @@ void CG_SHUDElementSBAmCRoutine(void* context)
 
 	Vector4Copy(finalColor, element->ctx.color);
 
-	element->ctx.text = va(element->config.text.value, ammo > 0 ? ammo : 0);
+	if (ammo > 500)
+	{
+		float iconSize = element->config.fontsize.isSet ? element->config.fontsize.value[1] : 20.0f;
+		float iconX = element->config.rect.value[0] - iconSize * 0.5f;
+		float iconY = element->ctx.coord.named.y;
+		// Mirror the vertical alignment the text renderer applies via DS_ flags
+		if (element->ctx.flags & DS_VCENTER)
+			iconY -= iconSize * 0.5f;
+		else if (element->ctx.flags & DS_VTOP)
+			iconY -= iconSize;
 
-	CG_SHUDTextPrintNew(&element->config, &element->ctx, qfalse);
+		memset(&element->infiniteDraw, 0, sizeof(element->infiniteDraw));
+		element->infiniteDraw.coord.named.x = iconX;
+		element->infiniteDraw.coord.named.y = iconY;
+		element->infiniteDraw.coord.named.w = iconSize;
+		element->infiniteDraw.coord.named.h = iconSize;
+		element->infiniteDraw.coordPicture.named.x = 0.0f;
+		element->infiniteDraw.coordPicture.named.y = 0.0f;
+		element->infiniteDraw.coordPicture.named.w = 1.0f;
+		element->infiniteDraw.coordPicture.named.h = 1.0f;
+		element->infiniteDraw.image = element->infiniteShader;
+		Vector4Set(element->infiniteDraw.color, 1, 1, 1, 1);
+
+		CG_SHUDDrawStretchPic(element->infiniteDraw.coord, element->infiniteDraw.coordPicture, element->infiniteDraw.color, element->infiniteDraw.image);
+	}
+	else
+	{
+		element->ctx.text = va(element->config.text.value, ammo > 0 ? ammo : 0);
+		CG_SHUDTextPrintNew(&element->config, &element->ctx, qfalse);
+	}
 }
 
 void CG_SHUDElementSBAmCDestroy(void* context)
