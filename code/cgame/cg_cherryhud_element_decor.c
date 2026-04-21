@@ -659,17 +659,19 @@ static void CG_CHUDDecorGetGameMapName(cherryhudDecorElement_t* element) {
 }
 
 static void CG_CHUDDecorGetGameType(cherryhudDecorElement_t* element) {
+	// Indices match the gametype enum: GT_FFA=0..GT_RTF=7; 8/9 are freeze variants
 	const char* gametypeNames[] = {
-		"Free for all",
-		"Tournament",
-		"Single Player",
-		"Team Deathmatch",
-		"Capture The flag",
-		"Clan Arena",
-		"Return The Flag",   // GT_RTF
-		"Freeze tag CTF",    // GT_CTF + isFreeze
-		"Freeze Tag",        // GT_TEAM + isFreeze
-		"Unknown"
+		"Free for all",    // 0 GT_FFA
+		"Tournament",      // 1 GT_TOURNAMENT
+		"Single Player",   // 2 GT_SINGLE_PLAYER
+		"Team Deathmatch", // 3 GT_TEAM
+		"Capture The Flag",// 4 GT_CTF
+		"Clan Arena",      // 5 GT_CA
+		"Attack & Defend", // 6 GT_CTFS
+		"Return The Flag", // 7 GT_RTF
+		"Freeze tag CTF",  // 8 GT_CTF + isFreeze
+		"Freeze Tag",      // 9 GT_TEAM + isFreeze
+		"Unknown"          // 10
 	};
 
 	int gt;
@@ -678,16 +680,16 @@ static void CG_CHUDDecorGetGameType(cherryhudDecorElement_t* element) {
 	gt = cgs.gametype;
 	isFreeze = cgs.osp.gameTypeFreeze;
 
-	if (gt >= 0 && gt < 9) {
+	if (gt >= 0 && gt < GT_MAX_GAME_TYPE) {
 		if (isFreeze && gt == GT_TEAM) {
-			Q_strncpyz(element->displayText, gametypeNames[8], sizeof(element->displayText));
+			Q_strncpyz(element->displayText, gametypeNames[9], sizeof(element->displayText));
 		} else if (isFreeze && gt == GT_CTF) {
-			Q_strncpyz(element->displayText, gametypeNames[7], sizeof(element->displayText));
+			Q_strncpyz(element->displayText, gametypeNames[8], sizeof(element->displayText));
 		} else {
 			Q_strncpyz(element->displayText, gametypeNames[gt], sizeof(element->displayText));
 		}
 	} else {
-		Q_strncpyz(element->displayText, gametypeNames[9], sizeof(element->displayText));
+		Q_strncpyz(element->displayText, gametypeNames[10], sizeof(element->displayText));
 	}
 	element->textCtx.text = element->displayText;
 }

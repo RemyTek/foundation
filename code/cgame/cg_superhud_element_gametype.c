@@ -93,6 +93,10 @@ void CG_SHUDElementGameTypeRoutine(void* context)
 			{
 				text = "Capture the Flag";
 			}
+			else if (cgs.gametype == GT_CTFS)
+			{
+				text = "Attack & Defend";
+			}
 			else if (cgs.gametype == GT_RTF)
 			{
 				text = "Return The Flag";

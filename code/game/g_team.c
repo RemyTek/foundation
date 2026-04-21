@@ -233,12 +233,20 @@ static void Team_SetFlagStatus( team_t team, flagStatus_t status ) {
 	}
 
 	if ( modified ) {
-		char st[4];
+		char st[5];
 
-		if ( g_gametype.integer == GT_CTF ) {
+		if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_RTF ) {
 			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
 			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
 			st[2] = '\0';
+		} else if ( g_gametype.integer == GT_CTFS ) {
+			// format: rba  r=redflag status, b=blueflag status, a=attacking team (1=RED,2=BLUE)
+			int atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+			              ? TEAM_RED : TEAM_BLUE;
+			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
+			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
+			st[2] = '0' + atkTeam;
+			st[3] = '\0';
 		} else {	// GT_1FCTF
 			st[0] = oneFlagStatusRemap[teamgame.flagStatus];
 			st[1] = '\0';
@@ -648,6 +656,7 @@ static void Team_TakeFlagSound( gentity_t *ent, team_t team ) {
 	else {
 		te->s.eventParm = GTS_BLUE_TAKEN;
 	}
+	te->s.otherEntityNum = ENTITYNUM_NONE; // no specific bonus toucher
 	te->r.svFlags |= SVF_BROADCAST;
 }
 
@@ -715,6 +724,13 @@ void Team_DroppedFlagThink(gentity_t *ent) {
 	}
 	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
 		team = TEAM_FREE;
+	}
+
+	// GT_CTFS (Attack & Defend): dropped flag never auto-returns on timer.
+	// It stays on the map and is only cleaned up by Team_ResetFlags at round
+	// start or by out-of-bounds removal via Team_FreeEntity.
+	if ( g_gametype.integer == GT_CTFS ) {
+		return;
 	}
 
 	Team_ReturnFlagSound( Team_ResetFlag( team ), team );

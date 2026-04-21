@@ -1148,6 +1148,12 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 						// Local player just picked up the enemy flag.
 						trap_S_StartLocalSound(cgs.media.youHaveFlagSound, CHAN_ANNOUNCER);
 					}
+					else if (es->otherEntityNum < MAX_CLIENTS &&
+					         es->otherEntityNum == (unsigned)cg.snap->ps.clientNum)
+					{
+						// threewave post-elim bonus touch: this player touched the flag for +1 (no possession)
+						CG_AddBufferedSound( cgs.media.youHaveFlagSound );
+					}
 					else if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED)
 					{
 						// A teammate took the enemy flag.
@@ -1165,6 +1171,12 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 					{
 						// Local player just picked up the enemy flag.
 						trap_S_StartLocalSound(cgs.media.youHaveFlagSound, CHAN_ANNOUNCER);
+					}
+					else if (es->otherEntityNum < MAX_CLIENTS &&
+					         es->otherEntityNum == (unsigned)cg.snap->ps.clientNum)
+					{
+						// threewave post-elim bonus touch: this player touched the flag for +1 (no possession)
+						CG_AddBufferedSound( cgs.media.youHaveFlagSound );
 					}
 					else if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE)
 					{

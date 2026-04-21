@@ -1076,9 +1076,15 @@ SortRanks
 */
 static int QDECL SortRanks( const void *a, const void *b ) {
 	gclient_t	*ca, *cb;
+	team_t		caTeam, cbTeam;
 
 	ca = &level.clients[*(int *)a];
 	cb = &level.clients[*(int *)b];
+
+	/* In GT_CTFS, dead humans round-spectate with their real team stored in
+	   atdDeadSpecTeam. Keep them ranked with their team by score. */
+	caTeam = ( ca->atdDeadSpecTeam != TEAM_FREE ) ? ca->atdDeadSpecTeam : ca->sess.sessionTeam;
+	cbTeam = ( cb->atdDeadSpecTeam != TEAM_FREE ) ? cb->atdDeadSpecTeam : cb->sess.sessionTeam;
 
 	// sort special clients last
 	if ( ca->sess.spectatorState == SPECTATOR_SCOREBOARD || ca->sess.spectatorClient < 0 ) {
@@ -1097,7 +1103,7 @@ static int QDECL SortRanks( const void *a, const void *b ) {
 	}
 
 	// then spectators
-	if ( ca->sess.sessionTeam == TEAM_SPECTATOR && cb->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( caTeam == TEAM_SPECTATOR && cbTeam == TEAM_SPECTATOR ) {
 		if ( ca->sess.spectatorTime > cb->sess.spectatorTime ) {
 			return -1;
 		}
@@ -1106,10 +1112,10 @@ static int QDECL SortRanks( const void *a, const void *b ) {
 		}
 		return 0;
 	}
-	if ( ca->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( caTeam == TEAM_SPECTATOR ) {
 		return 1;
 	}
-	if ( cb->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( cbTeam == TEAM_SPECTATOR ) {
 		return -1;
 	}
 

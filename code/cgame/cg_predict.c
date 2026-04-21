@@ -468,6 +468,18 @@ static void CG_TouchItem(centity_t* cent)
 
 	item = &bg_itemlist[ cent->currentState.modelindex ];
 
+	// GT_CTFS: only the attacking team can pick up flags; also block prediction
+	// during the dead window (round ended, warmup not yet started) to prevent
+	// the predict->server-reject flicker and phantom pickup sound.
+	if ( cgs.gametype == GT_CTFS && item->giType == IT_TEAM ) {
+		if ( !cgs.atdRoundStartTime && !cgs.atdRoundRespawned ) {
+			return;
+		}
+		if ( cg.predictedPlayerState.persistant[PERS_TEAM] != cgs.atdAttackingTeam ) {
+			return;
+		}
+	}
+
 	// Special case for flags.
 	// We don't predict touching our own flag
 	if (cgs.gametype == GT_CTF || cgs.gametype == GT_RTF)

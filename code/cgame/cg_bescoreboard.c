@@ -29,18 +29,20 @@ int ScoreSort_Compare(const void *a, const void *b)
 #define SCALE_SMALL   0.8f
 #define SCALE_TINY    0.55f
 
-// Game type names array
+// Game type names array — indices must match the gametype enum in bg_public.h:
+// GT_FFA=0 GT_TOURNAMENT=1 GT_SINGLE_PLAYER=2 GT_TEAM=3 GT_CTF=4 GT_CA=5 GT_CTFS=6 GT_RTF=7
 const char* gametypeNames[] = {
-    "Free for all",
-    "Tournament",
-    "Single Player",
-    "Team Deathmatch",
-    "Capture The flag",
-    "Clan Arena",
-    "Return The Flag",    // GT_RTF
-    "Freeze tag CTF",     // GT_CTF + isFreeze
-    "Freeze Tag",         // GT_TEAM + isFreeze
-    "^1Unknown^7"         // Unknown
+    "Free for all",    // 0 GT_FFA
+    "Tournament",      // 1 GT_TOURNAMENT
+    "Single Player",   // 2 GT_SINGLE_PLAYER
+    "Team Deathmatch", // 3 GT_TEAM
+    "Capture The Flag",// 4 GT_CTF
+    "Clan Arena",      // 5 GT_CA
+    "Attack & Defend", // 6 GT_CTFS
+    "Return The Flag", // 7 GT_RTF
+    "Freeze tag CTF",  // 8 GT_CTF + isFreeze
+    "Freeze Tag",      // 9 GT_TEAM + isFreeze
+    "^1Unknown^7"      // 10
 };
 
 // Scoreboard character structure for fonts
@@ -1182,14 +1184,14 @@ static void CG_DrawScoreboardFrameUnified(short isTeamMode, short forceDouble, i
     // Build gametype string based on game type and freeze mode
     if (gt >= 0 && gt < GT_MAX_GAME_TYPE) {
         if (isFreeze && gt == GT_TEAM) {
-            Q_strncpyz(gametypeStr, gametypeNames[8], sizeof(gametypeStr));
+            Q_strncpyz(gametypeStr, gametypeNames[9], sizeof(gametypeStr));
         } else if (isFreeze && gt == GT_CTF) {
-            Q_strncpyz(gametypeStr, gametypeNames[7], sizeof(gametypeStr));
+            Q_strncpyz(gametypeStr, gametypeNames[8], sizeof(gametypeStr));
         } else {
             Q_strncpyz(gametypeStr, gametypeNames[gt], sizeof(gametypeStr));
         }
     } else {
-        Q_strncpyz(gametypeStr, gametypeNames[9], sizeof(gametypeStr));
+        Q_strncpyz(gametypeStr, gametypeNames[10], sizeof(gametypeStr));
     }
 
     // Count players and spectators

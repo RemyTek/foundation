@@ -2281,10 +2281,10 @@ void CG_DrawWarmup(void)
 			{
 				text = "Capture the Flag";
 			}
-				else if (cgs.gametype == GT_RTF)
-				{
-					text = "Return The Flag";
-				}
+			else if (cgs.gametype == GT_RTF)
+			{
+				text = "Return The Flag";
+			}
 			else if (cgs.gametype == GT_CTFS)
 			{
 				text = "Attack & Defend";
@@ -3592,6 +3592,14 @@ static void CG_Draw2D(void)
 		}
 		CG_DrawFlagPOIs();
 		CG_DrawTeammatePOIs();
+		// GT_CTFS: draw per-round scores during inter-round warmup
+		if ( cgs.gametype == GT_CTFS &&
+		     cgs.atdCompletedRounds > 0 &&
+		     ( cgs.atdRoundStartTime || cgs.atdRoundRespawned ) &&
+		     !cg.intermissionStarted ) {
+			CG_DrawATDRoundScores( 1.0f );
+		}
+		CG_DrawATDRoundCountdown();
 		return;
 	}
 
@@ -3604,6 +3612,14 @@ static void CG_Draw2D(void)
 		}
 		CG_DrawFlagPOIs();
 		CG_DrawTeammatePOIs();
+		// GT_CTFS: draw per-round scores during inter-round warmup
+		if ( cgs.gametype == GT_CTFS &&
+		     cgs.atdCompletedRounds > 0 &&
+		     ( cgs.atdRoundStartTime || cgs.atdRoundRespawned ) &&
+		     !cg.intermissionStarted ) {
+			CG_DrawATDRoundScores( 1.0f );
+		}
+		CG_DrawATDRoundCountdown();
 		return;
 	}
 

@@ -1074,6 +1074,7 @@ void ClientThink_real( gentity_t *ent ) {
 				ent->client->ps.pm_type = PM_SPINTERMISSION;
 			}
 		}
+#endif
 		/* ATD inter-round freeze (GT_CTFS only): set PM_FREEZE so the snapshot sent to
 		   clients also carries PM_FREEZE, freezing client-side prediction too.
 		   pm_type is reset to PM_NORMAL every frame at the top of ClientThink_real,
@@ -1117,9 +1118,6 @@ void ClientThink_real( gentity_t *ent ) {
 		} else {
 			Pmove( &pm );
 		}
-#else
-		Pmove (&pm);
-#endif
 
 	// save results of pmove
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {

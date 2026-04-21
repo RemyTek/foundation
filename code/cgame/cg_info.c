@@ -277,6 +277,12 @@ void CG_DrawInformation(void)
 		case GT_CTF:
 			s = "Capture The Flag";
 			break;
+		case GT_CA:
+			s = "Clan Arena";
+			break;
+		case GT_CTFS:
+			s = "Attack & Defend";
+			break;
 		case GT_RTF:
 			s = "Return The Flag";
 			break;

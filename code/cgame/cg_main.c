@@ -606,7 +606,7 @@ static void CG_RegisterSounds(void)
 		cgs.media.takenYourTeamSound = trap_S_RegisterSound("sound/teamplay/flagtaken_yourteam.wav", qtrue);
 		cgs.media.takenOpponentSound = trap_S_RegisterSound("sound/teamplay/flagtaken_opponent.wav", qtrue);
 
-		if (cgs.gametype == GT_CTF || cgs.gametype == GT_RTF || cg_buildScript.integer)
+		if (cgs.gametype == GT_CTF || cgs.gametype == GT_RTF || cgs.gametype == GT_CTFS || cg_buildScript.integer)
 		{
 			cgs.media.redFlagReturnedSound = trap_S_RegisterSound("sound/teamplay/voc_red_returned.wav", qtrue);
 			cgs.media.blueFlagReturnedSound = trap_S_RegisterSound("sound/teamplay/voc_blue_returned.wav", qtrue);
@@ -984,10 +984,10 @@ static void CG_RegisterGraphics(void)
 		cgs.media.blueCubeModel = trap_R_RegisterModel("models/powerups/orb/b_orb.md3");
 	}
 
-	if (cgs.gametype == GT_CTF || cgs.gametype == GT_RTF || cg_buildScript.integer)
+	if (cgs.gametype == GT_CTF || cgs.gametype == GT_RTF || cgs.gametype == GT_CTFS || cg_buildScript.integer)
 	{
-		cgs.media.redFlagModel = trap_R_RegisterModel("models/flags/r_flag.md3");
-		cgs.media.blueFlagModel = trap_R_RegisterModel("models/flags/b_flag.md3");
+		cgs.media.redFlagModel   = trap_R_RegisterModel("models/flags/r_flag.md3");
+		cgs.media.blueFlagModel  = trap_R_RegisterModel("models/flags/b_flag.md3");
 		cgs.media.redFlagModel2  = trap_R_RegisterModel("models/flag3/r_flag3.md3");
 		cgs.media.blueFlagModel2 = trap_R_RegisterModel("models/flag3/b_flag3.md3");
 		cgs.media.neutralFlagModel2 = trap_R_RegisterModel("models/flag3/n_flag3.md3");

@@ -634,6 +634,15 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	if (other->health < 1)
 		return;		// dead people can't pickup
 
+	// GT_CTFS: only the attacking team can pick up flags
+	if ( g_gametype.integer == GT_CTFS && ent->item && ent->item->giType == IT_TEAM ) {
+		int atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+		             ? TEAM_RED : TEAM_BLUE;
+		if ( other->client->sess.sessionTeam != atkTeam ) {
+			return;
+		}
+	}
+
 	// the same pickup rules are used for client side and server side
 	if ( !BG_CanItemBeGrabbed( g_gametype.integer, &ent->s, &other->client->ps, qfalse ) ) {
 		return;
@@ -803,7 +812,7 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 #ifdef MISSIONPACK
 	if ((g_gametype.integer == GT_CTF || g_gametype.integer == GT_1FCTF)			&& item->giType == IT_TEAM) { // Special case for CTF flags
 #else
-	if (g_gametype.integer == GT_CTF && item->giType == IT_TEAM) { // Special case for CTF flags
+	if ((g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTFS) && item->giType == IT_TEAM) { // Special case for CTF flags
 #endif
 		dropped->think = Team_DroppedFlagThink;
 		dropped->nextthink = level.time + 30000;
@@ -1214,6 +1223,11 @@ void FinishSpawningItem( gentity_t *ent ) {
 		return;
 	}
 
+	// flags must be visible to all clients regardless of PVS
+	if ( ent->item && ent->item->giType == IT_TEAM ) {
+		ent->r.svFlags |= SVF_BROADCAST;
+	}
+
 	trap_LinkEntity( ent );
 }
 
@@ -1233,7 +1247,7 @@ void G_CheckTeamItems( void ) {
 	// Set up team stuff
 	Team_InitGame();
 
-	if( g_gametype.integer == GT_CTF ) {
+	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTFS ) {
 		gitem_t	*item;
 
 		// check for the two flags
@@ -1405,6 +1419,13 @@ void G_SpawnItem( gentity_t *ent, gitem_t *item ) {
 	RegisterItem( item );
 
 	if ( G_ItemDisabled( item ) ) {
+		ent->tag = TAG_DONTSPAWN;
+		return;
+	}
+
+	// GT_CTFS (Attack & Defend): only the two CTF flags should exist on the map.
+	// Remove all weapons, pickups, powerups, holdables, ammo, and health.
+	if ( g_gametype.integer == GT_CTFS && item->giType != IT_TEAM ) {
 		ent->tag = TAG_DONTSPAWN;
 		return;
 	}

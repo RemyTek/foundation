@@ -1826,6 +1826,20 @@ static void CG_PlayerAnimation(centity_t* cent, int* legsOld, int* legs, float* 
 
 	ci = &cgs.clientinfo[ clientNum ];
 
+	// GT_CTFS: force idle/stand animations during the inter-round warmup freeze window
+	if ( cgs.gametype == GT_CTFS && cgs.atdRoundRespawned && cg.time >= cgs.atdRoundFreezeTime
+	     && !( cent->currentState.eFlags & EF_DEAD ) ) {
+		CG_RunLerpFrame( ci, &cent->pe.legs,  LEGS_IDLE,   1 );
+		CG_RunLerpFrame( ci, &cent->pe.torso, TORSO_STAND, 1 );
+		*legsOld       = cent->pe.legs.oldFrame;
+		*legs          = cent->pe.legs.frame;
+		*legsBackLerp  = cent->pe.legs.backlerp;
+		*torsoOld      = cent->pe.torso.oldFrame;
+		*torso         = cent->pe.torso.frame;
+		*torsoBackLerp = cent->pe.torso.backlerp;
+		return;
+	}
+
 	// do the shuffle turn frames locally
 	if (cent->pe.legs.yawing && (cent->currentState.legsAnim & ~ANIM_TOGGLEBIT) == LEGS_IDLE)
 	{
@@ -2326,7 +2340,10 @@ static void CG_PlayerPowerups(centity_t* cent)
 	// neutralflag
 	if (powerups & (1 << PW_NEUTRALFLAG))
 	{
-		CG_TrailItem(cent, cgs.media.neutralFlagModel);
+		if (cg_flagStyle.integer == 2)
+			CG_TrailItem(cent, cgs.media.neutralFlagModel2);
+		else
+			CG_TrailItem(cent, cgs.media.neutralFlagModel);
 		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 1.0, 1.0, 1.0);
 	}
 
