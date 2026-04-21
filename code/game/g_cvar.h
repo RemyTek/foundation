@@ -173,6 +173,8 @@ G_CVAR( g_damageBFG, "g_damageBFG", "100", 0, 0, qfalse, qfalse )
 G_CVAR( g_splashDamageBFG, "g_splashDamageBFG", "100", 0, 0, qfalse, qfalse )
 G_CVAR( g_splashRadiusBFG, "g_splashRadiusBFG", "120", 0, 0, qfalse, qfalse )
 
+G_CVAR( g_spawnProtection, "g_spawnProtection", "0", CVAR_ARCHIVE, 0, qfalse, qfalse )
+
 #ifdef MISSIONPACK
 G_CVAR( g_startAmmoNG, "g_startAmmoNG", "20", 0, 0, qfalse, qfalse )
 G_CVAR( g_startAmmoPL, "g_startAmmoPL", "10", 0, 0, qfalse, qfalse )
