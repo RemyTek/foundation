@@ -150,9 +150,18 @@ void TossClientItems(gentity_t *self) {
     int i;
     gentity_t *drop;
 
-    // GT_CTFS: players do not drop weapons on death.
+    // GT_CTFS: players do not drop weapons on death, but DO drop the flag.
     if ( g_gametype.integer == GT_CTFS ) {
-        // still clear all powerups (flag drop handled by flag code)
+        // Drop any carried flag as a world entity before clearing powerups
+        for ( i = PW_REDFLAG; i <= PW_BLUEFLAG; i++ ) {
+            if ( self->client->ps.powerups[i] ) {
+                item = BG_FindItemForPowerup( i );
+                if ( item ) {
+                    Drop_Item( self, item, 0 );
+                }
+            }
+        }
+        // Clear all powerups (no other drops in GT_CTFS)
         for ( i = 1; i < PW_NUM_POWERUPS; i++ ) {
             self->client->ps.powerups[i] = 0;
         }

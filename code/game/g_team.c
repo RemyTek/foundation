@@ -587,7 +587,7 @@ static gentity_t *Team_ResetFlag( team_t team ) {
 
 
 void Team_ResetFlags( void ) {
-	if( g_gametype.integer == GT_CTF ) {
+	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTFS ) {
 		Team_ResetFlag( TEAM_RED );
 		Team_ResetFlag( TEAM_BLUE );
 	}

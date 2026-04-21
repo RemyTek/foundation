@@ -1261,10 +1261,11 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 			}
 		}
 #endif
-		if( gametype == GT_CTF ) {
+		if( gametype == GT_CTF || gametype == GT_CTFS ) {
 			// ent->modelindex2 is non-zero on items if they are dropped
 			// we need to know this because we can pick up our dropped flag (and return it)
 			// but we can't pick up our flag at base
+			// GT_CTFS: same grab rules as GT_CTF; server-side enforces attacker-only restriction
 			if (ps->persistant[PERS_TEAM] == TEAM_RED) {
 				if (item->giTag == PW_BLUEFLAG ||
 					(item->giTag == PW_REDFLAG && ent->modelindex2) ||
