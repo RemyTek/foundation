@@ -1,8 +1,8 @@
 tag_weapon,
-u_arms,fullBright
-u_lten,fullBright
-u_neck,fullBright
-u_rten,fullBright
-u_torso,fullBright
+u_arms,fBright
+u_lten,fBright
+u_neck,fBright
+u_rten,fBright
+u_torso,fBright
 tag_head,
 tag_torso,

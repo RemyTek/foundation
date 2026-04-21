@@ -1,0 +1,205 @@
+female
+
+yes
+{
+	sound/voices/female4/re_01.wav	"Affirmative"
+	sound/voices/female4/re_02.wav	"Roger"
+}
+
+no
+{
+	sound/voices/female4/re_03.wav	"Negative"
+}
+
+praise
+{
+	sound/voices/female4/tt_01.wav	"Thanks for the thaw!"
+	sound/voices/female4/tt_02.wav	"Thank you!"
+}
+
+onfollow
+{
+	sound/voices/female4/tt_03.wav	"I'm following."
+}
+
+help
+{
+	sound/voices/female4/gs_01.wav	"I'm frozen!"
+	sound/voices/female4/gs_02.wav	"Someone unfreeze me."
+}
+
+helping
+{
+	sound/voices/female4/voc_01.wav	"I'm coming to help!"
+	sound/voices/female4/voc_02.wav	"I'm on my way!"
+}
+
+getflag
+{
+	sound/voices/female4/voc_01.wav	"I'm going for the flag!"
+	sound/voices/female4/voc_02.wav	"I'm on my way to get the flag!"
+}
+
+offense
+{
+	sound/voices/female4/re_01.wav	"I'm on offense."
+	sound/voices/female4/re_02.wav	"Going on offense."
+}
+
+defend
+{
+	sound/voices/female4/re_01.wav	"I'm defending."
+	sound/voices/female4/re_02.wav	"On defense."
+}
+
+defendflag
+{
+	sound/voices/female4/re_01.wav	"Defending the flag."
+}
+
+patrol
+{
+	sound/voices/female4/re_02.wav	"On patrol."
+}
+
+followme
+{
+	sound/voices/female4/voc_01.wav	"Follow me!"
+}
+
+returnflag
+{
+	sound/voices/female4/voc_01.wav	"I'm returning the flag!"
+	sound/voices/female4/voc_02.wav	"Going for the flag!"
+}
+
+followflagcarrier
+{
+	sound/voices/female4/tt_03.wav	"Following the flag carrier."
+}
+
+ongetflag
+{
+	sound/voices/female4/voc_02.wav	"I'm getting the flag!"
+}
+
+onoffense
+{
+	sound/voices/female4/re_01.wav	"I'm on offense."
+}
+
+ondefense
+{
+	sound/voices/female4/re_02.wav	"I'm on defense."
+}
+
+onpatrol
+{
+	sound/voices/female4/re_02.wav	"I'm on patrol."
+}
+
+oncamp
+{
+	sound/voices/female4/re_01.wav	"I'm in position."
+}
+
+onfollowcarrier
+{
+	sound/voices/female4/tt_03.wav	"I'm following the carrier."
+}
+
+onreturnflag
+{
+	sound/voices/female4/voc_01.wav	"I'm returning the flag!"
+}
+
+inposition
+{
+	sound/voices/female4/re_01.wav	"I'm in position."
+	sound/voices/female4/re_02.wav	"Ready."
+}
+
+ihaveflag
+{
+	sound/voices/female4/voc_01.wav	"I have the flag!"
+	sound/voices/female4/voc_02.wav	"I've got it!"
+}
+
+baseattack
+{
+	sound/voices/female4/gs_01.wav	"The base is under attack!"
+	sound/voices/female4/gs_02.wav	"Base attack!"
+}
+
+enemyhasflag
+{
+	sound/voices/female4/gs_02.wav	"The enemy has our flag!"
+}
+
+startleader
+{
+	sound/voices/female4/re_01.wav	"I'm the team leader."
+}
+
+stopleader
+{
+	sound/voices/female4/re_03.wav	"I resign leadership."
+}
+
+trash
+{
+	sound/voices/female4/tt_01.wav	"Haha!"
+	sound/voices/female4/tt_02.wav	"Yeah!"
+}
+
+whoisleader
+{
+	sound/voices/female4/re_02.wav	"Who is the leader?"
+}
+
+wantondefense
+{
+	sound/voices/female4/voc_01.wav	"I want to be on defense."
+}
+
+wantonoffense
+{
+	sound/voices/female4/voc_02.wav	"I want to be on offense."
+}
+
+wantonpatrol
+{
+	sound/voices/female4/voc_01.wav	"I'll go on patrol."
+}
+
+camp
+{
+	sound/voices/female4/re_01.wav	"I'll camp here."
+}
+
+harvest
+{
+	sound/voices/female4/voc_01.wav	"I'm going for it!"
+}
+
+kill_insult
+{
+	sound/voices/female4/tt_01.wav	"Haha!"
+	sound/voices/female4/tt_02.wav	"Too easy!"
+}
+
+taunt
+{
+	sound/voices/female4/tt_01.wav	"Hahaha!"
+	sound/voices/female4/tt_02.wav	"You call that fighting?"
+}
+
+death_insult
+{
+	sound/voices/female4/re_03.wav	"That was lucky."
+}
+
+kill_gauntlet
+{
+	sound/voices/female4/tt_01.wav	"Gauntleted!"
+}
