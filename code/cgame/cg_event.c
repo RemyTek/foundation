@@ -1039,14 +1039,6 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 			CG_MissileHitWall(es->weapon, 0, position, dir, IMPACTSOUND_METAL);
 			break;
 
-		case EV_GRAPPLE_HIT:
-			DEBUGNAME("EV_GRAPPLE_HIT");
-			break;
-
-		case EV_GRAPPLE_FIRE:
-			DEBUGNAME("EV_GRAPPLE_FIRE");
-			break;
-
 		case EV_RAILTRAIL:
 			DEBUGNAME("EV_RAILTRAIL");
 			cent->currentState.weapon = WP_RAILGUN;
@@ -1336,14 +1328,6 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 #ifdef MISSIONPACK
 			CG_VoiceChatLocal( SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_PATROL );
 #endif
-			break;
-
-		case EV_FREEZE_TIME:
-			DEBUGNAME("EV_FREEZE_TIME");
-			if (CG_OSPIsGameTypeFreeze() && es->eventParm == cg.clientNum)
-			{
-				cg.thawTime = es->time;
-			}
 			break;
 
 		default:
