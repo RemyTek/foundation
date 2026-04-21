@@ -1094,7 +1094,7 @@ typedef struct
 	sfxHandle_t count1Sound;
 	sfxHandle_t countFightSound;
 	sfxHandle_t countPrepareSound;
-
+   sfxHandle_t countRoundBeginsInSound;
 	qhandle_t cursor;
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
@@ -1113,6 +1113,8 @@ typedef struct
 	sfxHandle_t lastStandingSound;
 
 } cgMedia_t;
+
+qboolean CG_ATDRoundScoreboardVisible( void );
 
 // Flag POI system
 void CG_DrawFlagPOIs( void );
@@ -1504,6 +1506,21 @@ typedef struct
 	//fps cap
 	unsigned int    fpsCap;
 
+	// GT_CTFS (Attack & Defend) round scoreboard
+	sfxHandle_t     atdAttackSound;         // "attack the flag" cue
+	sfxHandle_t     atdDefendSound;         // "defend the flag" cue
+	sfxHandle_t     atd30SecWarningSound;   // 30-second round warning
+
+	int             atdRoundTimelimit;      // round time limit in seconds
+	int             atdAttackingTeam;       // TEAM_RED or TEAM_BLUE (from CS_FLAGSTATUS[2])
+	int             atdCompletedRounds;     // number of completed half-rounds
+	int             atdRoundOffset;         // absolute half-index of atdRoundScoresRed[0]
+	int             atdRoundScoresRed[MAX_ATD_ROUNDS_WINDOW];
+	int             atdRoundScoresBlue[MAX_ATD_ROUNDS_WINDOW];
+	int             atdRoundStartTime;      // cg.time when the current round went live
+	qboolean        atdRoundRespawned;      // players have been respawned for warmup
+	int             atdRoundFreezeTime;     // cg.time after which freeze + anim freeze apply
+
 } cgs_t;
 
 //==============================================================================
@@ -1729,6 +1746,7 @@ void CG_DrawActive(stereoFrame_t stereoView);
 void CG_DrawFlagModel(float x, float y, float w, float h, int team, qboolean force2D);
 void CG_DrawTeamBackground(int x, int y, int w, int h, float alpha, int team);
 void CG_OwnerDraw(float x, float y, float w, float h, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, float scale, vec4_t color, qhandle_t shader, int textStyle);
+void CG_Text_RegisterFont( void );
 void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char* text, float adjust, int limit, int style);
 int CG_Text_Width(const char* text, float scale, int limit);
 int CG_Text_Height(const char* text, float scale, int limit);
@@ -1965,6 +1983,7 @@ void CG_DrawOldTourneyScoreboard(void);
 void CG_BEStatsShowStatsInfo(void);
 qboolean CG_OSPDrawScoretable(void);
 qboolean CG_BEDrawTeamScoretable(void);
+void CG_DrawATDRoundScores( float fade );
 
 
 extern int customScoreboardColorIsSet;

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 // cg_scoreboard -- draw the scoreboard on top of the game screen
 #include "cg_local.h"
+#include "../../ui/menudef.h"
 
 vec4_t scoreboard_rtColor = {1, 0, 0, 1};
 vec4_t scoreboard_btColor = {0, 0, 1, 1};
@@ -2052,3 +2053,121 @@ qboolean CG_BEDrawTeamScoretable(void)
 	return qtrue;
 }
 
+/*
+=================
+CG_DrawATDRoundScores
+
+Draws the round-score panel during inter-round warmup.
+Geometry (640x120 panel centred vertically on the 480px screen):
+
+  x=2..85   (84px)  label column  — wide enough for the longest team name
+  x=86..87  (2px)   left divider
+  x=88..587 (500px) 10 round columns × 50px each  (scroll when >10 rounds)
+  x=588..589 (2px)  right divider before T column
+  x=590..635 (46px) T (total) column — fixed, always shows full-game totals
+  x=636..638         right border
+
+  Numbers are centered within their column cell.
+  Shows "-" for unplayed rounds; oldest round drops off the left once the
+  visible window exceeds DISP_COLS.  The T column always shows cgs.scores1/2.
+=================
+*/
+void CG_DrawATDRoundScores( float fade ) {
+	static const float	SCALE_NUM  = 0.28f;
+	static const float	SCALE_LBL  = 0.33f;
+	static const float	COL_PITCH  = 50.0f;
+	static const float	COL0_LEFT  = 88.0f;
+	static const float	TCOL_LEFT  = 590.0f;
+	static const float	TCOL_W     = 46.0f;
+	static const float	LABEL_X    = 5.0f;
+	static const float	PANEL_H    = 120.0f;
+	static const float	PANEL_Y    = ( 480.0f - 120.0f ) * 0.5f;
+	static const int	DISP_COLS  = 10;
+
+	int		completedHalves, completedFull, windowStart;
+	int		i, half0, half1;
+	float	textH, cx, baseY;
+	vec4_t	cBg, cBorder, cWhite, cRed, cBlu;
+	const char	*s;
+
+	(void)LABEL_X; /* used only for layout reference */
+
+	completedHalves = cgs.atdCompletedRounds;
+	if ( completedHalves <= 0 ) {
+		return;
+	}
+
+	completedFull = ( completedHalves + 1 ) / 2;
+	windowStart   = completedFull > DISP_COLS ? completedFull - DISP_COLS : 0;
+
+	textH = (float)CG_Text_Height( "R", SCALE_NUM, 0 );
+
+	cBg[0]     = 0.0f;  cBg[1]     = 0.0f;  cBg[2]     = 0.0f;  cBg[3]     = 0.7f * fade;
+	cBorder[0] = 1.0f;  cBorder[1] = 1.0f;  cBorder[2] = 1.0f;  cBorder[3] = fade;
+	cWhite[0]  = 1.0f;  cWhite[1]  = 1.0f;  cWhite[2]  = 1.0f;  cWhite[3]  = fade;
+	cRed[0]    = 1.0f;  cRed[1]    = 0.3f;  cRed[2]    = 0.3f;  cRed[3]    = fade;
+	cBlu[0]    = 0.4f;  cBlu[1]    = 0.6f;  cBlu[2]    = 1.0f;  cBlu[3]    = fade;
+
+	CG_FillRect( 0,   PANEL_Y,            640,  PANEL_H,       cBg );
+	CG_DrawRect( 2,   PANEL_Y + 2,        636,  PANEL_H - 4,   1.0f, cBorder );
+	CG_FillRect( 86,  PANEL_Y + 2,        2,    PANEL_H - 4,   cBorder );
+	CG_FillRect( 588, PANEL_Y + 2,        2,    PANEL_H - 4,   cBorder );
+	CG_FillRect( 2,   PANEL_Y + 40,       636,  2,             cBorder );
+
+	/* header row */
+	baseY = PANEL_Y + 10.0f + ( 20.0f + textH ) * 0.5f;
+	cx = 2.0f + ( 84.0f - (float)CG_Text_Width( "Round", SCALE_NUM, 0 ) ) * 0.5f;
+	CG_Text_Paint( cx, baseY, SCALE_NUM, cWhite, "Round", 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+	for ( i = 0; i < DISP_COLS; i++ ) {
+		s  = va( "%i", windowStart + i + 1 );
+		cx = COL0_LEFT + (float)i * COL_PITCH
+		     + ( COL_PITCH - (float)CG_Text_Width( s, SCALE_NUM, 0 ) ) * 0.5f;
+		CG_Text_Paint( cx, baseY, SCALE_NUM, cWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+	}
+	s  = "T";
+	cx = TCOL_LEFT + ( TCOL_W - (float)CG_Text_Width( s, SCALE_NUM, 0 ) ) * 0.5f;
+	CG_Text_Paint( cx, baseY, SCALE_NUM, cWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+
+	/* red row */
+	baseY = PANEL_Y + 55.0f + ( 20.0f + textH ) * 0.5f;
+	s = cgs.redTeam[0] ? cgs.redTeam : DEFAULT_REDTEAM_NAME;
+	cx = 2.0f + ( 84.0f - (float)CG_Text_Width( s, SCALE_LBL, 0 ) ) * 0.5f;
+	CG_Text_Paint( cx, baseY, SCALE_LBL, cRed, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+	for ( i = 0; i < DISP_COLS; i++ ) {
+		half0 = ( windowStart + i ) * 2;
+		{
+			int localIdx0 = half0 - cgs.atdRoundOffset;
+			s  = ( ( windowStart + i ) < completedFull && half0 < completedHalves
+			       && localIdx0 >= 0 && localIdx0 < MAX_ATD_ROUNDS_WINDOW )
+			     ? va( "%i", cgs.atdRoundScoresRed[localIdx0] ) : "-";
+		}
+		cx = COL0_LEFT + (float)i * COL_PITCH
+		     + ( COL_PITCH - (float)CG_Text_Width( s, SCALE_NUM, 0 ) ) * 0.5f;
+		CG_Text_Paint( cx, baseY, SCALE_NUM, cRed, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+	}
+	s  = cgs.scores1 != SCORE_NOT_PRESENT ? va( "%i", cgs.scores1 ) : "-";
+	cx = TCOL_LEFT + ( TCOL_W - (float)CG_Text_Width( s, SCALE_NUM, 0 ) ) * 0.5f;
+	CG_Text_Paint( cx, baseY, SCALE_NUM, cRed, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+
+	/* blue row */
+	baseY = PANEL_Y + 85.0f + ( 20.0f + textH ) * 0.5f;
+	s = cgs.blueTeam[0] ? cgs.blueTeam : DEFAULT_BLUETEAM_NAME;
+	cx = 2.0f + ( 84.0f - (float)CG_Text_Width( s, SCALE_LBL, 0 ) ) * 0.5f;
+	CG_Text_Paint( cx, baseY, SCALE_LBL, cBlu, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+	for ( i = 0; i < DISP_COLS; i++ ) {
+		half0 = ( windowStart + i ) * 2;
+		half1 = half0 + 1;
+		{
+			int localIdx1 = half1 - cgs.atdRoundOffset;
+			s  = ( ( windowStart + i ) < completedFull && half1 < completedHalves
+			       && localIdx1 >= 0 && localIdx1 < MAX_ATD_ROUNDS_WINDOW )
+			     ? va( "%i", cgs.atdRoundScoresBlue[localIdx1] ) : "-";
+		}
+		cx = COL0_LEFT + (float)i * COL_PITCH
+		     + ( COL_PITCH - (float)CG_Text_Width( s, SCALE_NUM, 0 ) ) * 0.5f;
+		CG_Text_Paint( cx, baseY, SCALE_NUM, cBlu, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+	}
+	s  = cgs.scores2 != SCORE_NOT_PRESENT ? va( "%i", cgs.scores2 ) : "-";
+	cx = TCOL_LEFT + ( TCOL_W - (float)CG_Text_Width( s, SCALE_NUM, 0 ) ) * 0.5f;
+	CG_Text_Paint( cx, baseY, SCALE_NUM, cBlu, s, 0, 0, ITEM_TEXTSTYLE_SHADOWED );
+}

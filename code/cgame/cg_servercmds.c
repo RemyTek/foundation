@@ -179,6 +179,7 @@ void CG_ParseServerinfo(void)
 	cgs.fraglimit = atoi(Info_ValueForKey(info, "fraglimit"));
 	cgs.capturelimit = atoi(Info_ValueForKey(info, "capturelimit"));
 	cgs.timelimit = atoi(Info_ValueForKey(info, "timelimit"));
+	cgs.atdRoundTimelimit = atoi( Info_ValueForKey( info, "roundtimelimit" ) );
 	cgs.maxclients = atoi(Info_ValueForKey(info, "sv_maxclients"));
 	cgs.g_grappleDelayTime = atoi(Info_ValueForKey(info, "g_grappleDelayTime"));
 	cgs.g_grapplePull = atoi(Info_ValueForKey(info, "g_grapplePull"));
@@ -194,6 +195,45 @@ void CG_ParseServerinfo(void)
 	trap_Cvar_Set("g_redTeam", cgs.redTeam);
 	Q_strncpyz(cgs.blueTeam, Info_ValueForKey(info, "g_blueTeam"), sizeof(cgs.blueTeam));
 	trap_Cvar_Set("g_blueTeam", cgs.blueTeam);
+}
+
+/*
+==================
+CG_ParseATDRoundScores
+
+Parses the CS_ATD_ROUNDSCORES configstring ("r0 b0 r1 b1 ...") into
+cgs.atdRoundScoresRed/Blue and sets cgs.atdCompletedRounds.
+==================
+*/
+static void CG_ParseATDRoundScores( const char *str ) {
+	int   r = 0;
+	char  buf[12 + MAX_ATD_ROUNDS_WINDOW * 24];
+	char *tok;
+
+	cgs.atdCompletedRounds = 0;
+	cgs.atdRoundOffset     = 0;
+	Com_Memset( cgs.atdRoundScoresRed,  0, sizeof( cgs.atdRoundScoresRed  ) );
+	Com_Memset( cgs.atdRoundScoresBlue, 0, sizeof( cgs.atdRoundScoresBlue ) );
+
+	if ( !str || !*str ) {
+		return;
+	}
+
+	Q_strncpyz( buf, str, sizeof( buf ) );
+	/* First token is the absolute index of the first pair in this window. */
+	tok = strtok( buf, " " );
+	if ( !tok ) return;
+	cgs.atdRoundOffset = atoi( tok );
+	tok = strtok( NULL, " " );
+	while ( tok && r < MAX_ATD_ROUNDS_WINDOW ) {
+		cgs.atdRoundScoresRed[r]  = atoi( tok );
+		tok = strtok( NULL, " " );
+		if ( !tok ) break;
+		cgs.atdRoundScoresBlue[r] = atoi( tok );
+		tok = strtok( NULL, " " );
+		r++;
+	}
+	cgs.atdCompletedRounds = cgs.atdRoundOffset + r;
 }
 
 /*
@@ -215,10 +255,20 @@ static void CG_ParseWarmup(void)
 	{
 		// Очистка новой статистики
 		memset(&cgs.be.newStats, 0, sizeof(cgs.be.newStats));
+
+		/* GT_CTFS round start: play team-specific audio cue */
+		if ( cgs.gametype == GT_CTFS && cg.snap &&
+		     cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
+			if ( cg.snap->ps.persistant[PERS_TEAM] == cgs.atdAttackingTeam ) {
+				trap_S_StartLocalSound( cgs.atdAttackSound, CHAN_ANNOUNCER );
+			} else {
+				trap_S_StartLocalSound( cgs.atdDefendSound, CHAN_ANNOUNCER );
+			}
+		}
 	}
 	else if (warmup > 0 && cg.warmup <= 0)
 	{
-		{
+		if ( cgs.gametype != GT_CTFS ) {
 			trap_S_StartLocalSound(cgs.media.countPrepareSound, CHAN_ANNOUNCER);
 		}
 	}
@@ -245,6 +295,16 @@ void CG_SetConfigValues(void)
 		s = CG_ConfigString(CS_FLAGSTATUS);
 		cgs.redflag = s[0] - '0';
 		cgs.blueflag = s[1] - '0';
+	}
+	else if ( cgs.gametype == GT_CTFS ) {
+		s = CG_ConfigString( CS_FLAGSTATUS );
+		cgs.redflag          = s[0] - '0';
+		cgs.blueflag         = s[1] - '0';
+		cgs.atdAttackingTeam = s[2] - '0';
+		CG_ParseATDRoundScores( CG_ConfigString( CS_ATD_ROUNDSCORES ) );
+		cgs.atdRoundStartTime  = atoi( CG_ConfigString( CS_ATD_ROUNDSTART ) );
+		cgs.atdRoundFreezeTime = atoi( CG_ConfigString( CS_ATD_RESPAWNED ) );
+		cgs.atdRoundRespawned  = cgs.atdRoundFreezeTime > 0;
 	}
 	cg.warmup = atoi(CG_ConfigString(CS_WARMUP));
 }
@@ -377,6 +437,14 @@ static void CG_ConfigStringModified(void)
 		CG_ScoresDown_f();
 		// cgs.be.newStats.drawWindow = qtrue;
 	}
+	else if ( num == CS_ATD_ROUNDSCORES ) {
+		CG_ParseATDRoundScores( str );
+	} else if ( num == CS_ATD_ROUNDSTART ) {
+		cgs.atdRoundStartTime = atoi( str );
+	} else if ( num == CS_ATD_RESPAWNED ) {
+		cgs.atdRoundFreezeTime = atoi( str );
+		cgs.atdRoundRespawned  = cgs.atdRoundFreezeTime > 0;
+	}
 	else if (num >= CS_MODELS && num < CS_MODELS + MAX_MODELS)
 	{
 		cgs.gameModels[ num - CS_MODELS ] = trap_R_RegisterModel(str);
@@ -406,6 +474,12 @@ static void CG_ConfigStringModified(void)
 				cgs.osp.redflag = str[2] - '0';
 				cgs.osp.blueflag = str[3] - '0';
 			}
+		}
+		else if ( cgs.gametype == GT_CTFS ) {
+			// format is rba: r=redflag, b=blueflag, a=attacking team
+			cgs.redflag          = str[0] - '0';
+			cgs.blueflag         = str[1] - '0';
+			cgs.atdAttackingTeam = str[2] - '0';
 		}
 	}
 	else if (num == CS_OSP_ALLOW_PMOVE)

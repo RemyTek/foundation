@@ -316,6 +316,10 @@ void CG_DrawCrosshair(void)
 		return;
 	}
 
+	if ( CG_ATDRoundScoreboardVisible() ) {
+		return;
+	}
+
 	if (ch_drawSpeed.integer == 2)
 	{
 		CG_DrawCrosshairSpeed();

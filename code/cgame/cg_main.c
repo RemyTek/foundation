@@ -571,12 +571,19 @@ static void CG_RegisterSounds(void)
 	cgs.media.twoFragSound = trap_S_RegisterSound("sound/feedback/2_frags.wav", qtrue);
 	cgs.media.threeFragSound = trap_S_RegisterSound("sound/feedback/3_frags.wav", qtrue);
 
-	cgs.media.count3Sound = trap_S_RegisterSound("sound/feedback/three.wav", qtrue);
-	cgs.media.count2Sound = trap_S_RegisterSound("sound/feedback/two.wav", qtrue);
-	cgs.media.count1Sound = trap_S_RegisterSound("sound/feedback/one.wav", qtrue);
+	if ( cgs.gametype == GT_CTFS ) {
+		cgs.media.count3Sound = trap_S_RegisterSound( "sound/vo_evil/three.wav", qtrue );
+		cgs.media.count2Sound = trap_S_RegisterSound( "sound/vo_evil/two.wav", qtrue );
+		cgs.media.count1Sound = trap_S_RegisterSound( "sound/vo_evil/one.wav", qtrue );
+	} else {
+		cgs.media.count3Sound = trap_S_RegisterSound("sound/feedback/three.wav", qtrue);
+		cgs.media.count2Sound = trap_S_RegisterSound("sound/feedback/two.wav", qtrue);
+		cgs.media.count1Sound = trap_S_RegisterSound("sound/feedback/one.wav", qtrue);
+	}
 
 	cgs.media.countFightSound = trap_S_RegisterSound("sound/feedback/fight.wav", qtrue);
 	cgs.media.countPrepareSound = trap_S_RegisterSound("sound/feedback/prepare.wav", qtrue);
+	cgs.media.countRoundBeginsInSound = trap_S_RegisterSound( "sound/vo_evil/round_begins_in.wav", qtrue );
 
 	if (cgs.gametype >= GT_TEAM || cg_buildScript.integer)
 	{
@@ -605,6 +612,13 @@ static void CG_RegisterSounds(void)
 			cgs.media.blueFlagReturnedSound = trap_S_RegisterSound("sound/teamplay/voc_blue_returned.wav", qtrue);
 			cgs.media.enemyTookYourFlagSound = trap_S_RegisterSound("sound/teamplay/voc_enemy_flag.wav", qtrue);
 			cgs.media.yourTeamTookEnemyFlagSound = trap_S_RegisterSound("sound/teamplay/voc_team_flag.wav", qtrue);
+		}
+
+		if (cgs.gametype == GT_CTFS || cg_buildScript.integer)
+		{
+			cgs.atdAttackSound       = trap_S_RegisterSound( "sound/vo_evil/attack_the_flag.wav", qtrue );
+			cgs.atdDefendSound       = trap_S_RegisterSound( "sound/vo_evil/defend_the_flag.wav", qtrue );
+			cgs.atd30SecWarningSound = trap_S_RegisterSound( "sound/vo_evil/30_second_warning.wav", qtrue );
 		}
 
 		cgs.media.youHaveFlagSound = trap_S_RegisterSound("sound/teamplay/voc_you_flag.wav", qtrue);
@@ -786,6 +800,8 @@ static void CG_RegisterGraphics(void)
 	// clear any references to old media
 	memset(&cg.refdef, 0, sizeof(cg.refdef));
 	trap_R_ClearScene();
+
+	CG_Text_RegisterFont();
 
 	CG_LoadingString(cgs.mapname);
 

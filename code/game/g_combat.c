@@ -57,6 +57,11 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	if ( level.warmupTime ) {
 		return;
 	}
+	// no frag scoring between round end and the next round going live (GT_CTFS)
+	if ( g_gametype.integer == GT_CTFS &&
+	     level.atdRoundNumber != level.atdRoundNumberStarted ) {
+		return;
+	}
 	// show score plum
 	ScorePlum(ent, origin, score);
 	//
@@ -144,6 +149,15 @@ void TossClientItems(gentity_t *self) {
     float angle;
     int i;
     gentity_t *drop;
+
+    // GT_CTFS: players do not drop weapons on death.
+    if ( g_gametype.integer == GT_CTFS ) {
+        // still clear all powerups (flag drop handled by flag code)
+        for ( i = 1; i < PW_NUM_POWERUPS; i++ ) {
+            self->client->ps.powerups[i] = 0;
+        }
+        return;
+    }
 
     // Drop the weapon if enabled
     if (g_itemDrop.integer & 2) { // qlone - conditional weapon toss
@@ -533,6 +547,99 @@ void G_GenericDeathCleanup( gentity_t *self ) {
 
 /*
 ==================
+G_LastAliveOnTeam
+
+Returns the client number of the sole surviving player on the given team,
+or -1 if there are zero or more than one alive players on that team.
+==================
+*/
+int G_LastAliveOnTeam( team_t team ) {
+	int        i;
+	int        aliveCount = 0;
+	int        lastAlive  = -1;
+	gclient_t *cl;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		cl = &level.clients[i];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( cl->sess.sessionTeam != team ) {
+			continue;
+		}
+		if ( cl->atdDeadSpecTeam != TEAM_FREE ) {
+			continue; /* dead human in ATD dead-spec */
+		}
+		if ( g_entities[i].health <= 0 ) {
+			continue; /* dead bot */
+		}
+		aliveCount++;
+		lastAlive = i;
+	}
+
+	return ( aliveCount == 1 ) ? lastAlive : -1;
+}
+
+/*
+==================
+G_CheckLastTeamStanding
+
+Called after a player dies in GT_CTFS.  If exactly one teammate remains
+alive, plays the last_standing sound to that player and spectators following them.
+==================
+*/
+void G_CheckLastTeamStanding( gentity_t *self ) {
+	int        i;
+	int        lastAlive;
+	team_t     myTeam;
+	gclient_t *cl;
+
+	if ( g_gametype.integer != GT_CTFS ) {
+		return;
+	}
+	if ( level.warmupTime != 0 ) {
+		return;
+	}
+	if ( level.atdRoundNumber != level.atdRoundNumberStarted ) {
+		return;
+	}
+
+	if ( self->client->atdDeadSpecTeam != TEAM_FREE ) {
+		myTeam = self->client->atdDeadSpecTeam;
+	} else {
+		myTeam = self->client->sess.sessionTeam;
+		if ( myTeam == TEAM_SPECTATOR || myTeam == TEAM_FREE ) {
+			return;
+		}
+	}
+
+	lastAlive = G_LastAliveOnTeam( myTeam );
+	if ( lastAlive < 0 ) {
+		return;
+	}
+
+	G_ATDClientSound( lastAlive, "sound/vo_evil/last_standing.wav" );
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		if ( i == lastAlive ) {
+			continue;
+		}
+		cl = &level.clients[i];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( cl->sess.spectatorState != SPECTATOR_FOLLOW ) {
+			continue;
+		}
+		if ( cl->sess.spectatorClient != lastAlive ) {
+			continue;
+		}
+		G_ATDClientSound( i, "sound/vo_evil/last_standing.wav" );
+	}
+}
+
+/*
+==================
 player_die
 ==================
 */
@@ -784,6 +891,22 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 #endif
 	}
 
+	/* GT_CTFS: move dead human players into free-spectate mode for the round.
+	   Bots are excluded — moving them to TEAM_SPECTATOR confuses bot replacement.
+	   The original sessionTeam is saved in atdDeadSpecTeam so the warmup
+	   respawn can restore it. */
+	if ( g_gametype.integer == GT_CTFS &&
+	     level.warmupTime == 0 &&
+	     level.atdRoundNumber == level.atdRoundNumberStarted &&
+	     !( self->r.svFlags & SVF_BOT ) ) {
+		team_t	origTeam = self->client->sess.sessionTeam;
+		self->client->sess.sessionTeam    = TEAM_SPECTATOR;
+		self->client->sess.spectatorState = SPECTATOR_FREE;
+		self->client->atdDeadSpecTeam     = origTeam;
+		G_ATDCycleTeammateFollow( self );
+	}
+	G_CheckLastTeamStanding( self );
+
 	trap_LinkEntity (self);
 
 }
@@ -951,16 +1074,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( level.intermissionQueued ) {
 		return;
 	}
-#ifdef MISSIONPACK
-	if ( targ->client && mod != MOD_JUICED) {
-		if ( targ->client->invulnerabilityTime > level.time) {
-			if ( dir && point ) {
-				G_InvulnerabilityEffect( targ, dir, point, impactpoint, bouncedir );
-			}
-			return;
-		}
+	// GT_CTFS: no damage to players while the round hasn't gone live yet
+	if ( g_gametype.integer == GT_CTFS && targ->client &&
+	     level.atdRoundNumber != level.atdRoundNumberStarted ) {
+		return;
 	}
-#endif
 	if ( !inflictor ) {
 		inflictor = &g_entities[ENTITYNUM_WORLD];
 	}

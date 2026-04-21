@@ -42,11 +42,17 @@ gentity_t	*neutralObelisk;
 
 static void Team_SetFlagStatus( team_t team, flagStatus_t status );
 
+void Team_DirtyFlagStatus( void ) {
+	teamgame.redStatus  = -1;
+	teamgame.blueStatus = -1;
+}
+
 void Team_InitGame( void ) {
 	memset(&teamgame, 0, sizeof teamgame);
 
 	switch( g_gametype.integer ) {
 	case GT_CTF:
+	case GT_CTFS:
 		teamgame.redStatus = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_RED, FLAG_ATBASE );
 		teamgame.blueStatus = -1; // Invalid to force update
@@ -111,7 +117,7 @@ void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... ) {
 	char		msg[1024];
 	va_list		argptr;
 	char		*p;
-	
+
 	va_start (argptr,fmt);
 	if ( ED_vsprintf( msg, fmt, argptr ) >= sizeof( msg ) ) {
 		G_Error ( "PrintMsg overrun" );
@@ -162,7 +168,8 @@ void AddTeamScore( vec3_t origin, team_t team, int score ) {
 		eventParm = ( team == TEAM_RED ) ? GTS_REDTEAM_SCORED : GTS_BLUETEAM_SCORED;
 	}
 
-	if ( eventParm != -1 ) {
+	/* GT_CTFS has no score-change audio announcements (no "red leads" etc.) */
+	if ( eventParm != -1 && g_gametype.integer != GT_CTFS ) {
 		te = G_TempEntity(origin, EV_GLOBAL_TEAM_SOUND );
 		te->r.svFlags |= SVF_BROADCAST;
 		te->s.eventParm = eventParm;
@@ -320,7 +327,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 #ifdef MISSIONPACK
 	if (g_gametype.integer == GT_1FCTF) {
 		enemy_flag_pw = PW_NEUTRALFLAG;
-	} 
+	}
 #endif
 
 	// did the attacker frag the flag carrier?
@@ -407,7 +414,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 
 	// we have to find the flag and carrier entities
 
-#ifdef MISSIONPACK	
+#ifdef MISSIONPACK
 	if( g_gametype.integer == GT_OBELISK ) {
 		// find the team obelisk
 		switch (attacker->client->sess.sessionTeam) {
@@ -416,11 +423,11 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 			break;
 		case TEAM_BLUE:
 			c = "team_blueobelisk";
-			break;		
+			break;
 		default:
 			return;
 		}
-		
+
 	} else if (g_gametype.integer == GT_HARVESTER ) {
 		// find the center obelisk
 		c = "team_neutralobelisk";
@@ -433,7 +440,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 		break;
 	case TEAM_BLUE:
 		c = "team_CTF_blueflag";
-		break;		
+		break;
 	default:
 		return;
 	}
@@ -743,7 +750,7 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 
 	if ( ent->flags & FL_DROPPED_ITEM ) {
 		// hey, its not home.  return it by teleporting it back
-		PrintMsg( NULL, "%s" S_COLOR_WHITE " returned the %s flag!\n", 
+		PrintMsg( NULL, "%s" S_COLOR_WHITE " returned the %s flag!\n",
 			cl->pers.netname, TeamName(team));
 		AddScore(other, ent->r.currentOrigin, CTF_RECOVERY_BONUS);
 		other->client->pers.teamState.flagrecovery++;
@@ -793,8 +800,13 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 	}
 #endif
 
-	// Increase the team's score
-	AddTeamScore(ent->s.pos.trBase, other->client->sess.sessionTeam, 1);
+	// Increase the team's score — GT_CTFS awards 3 pts for a cap (2 with g_threewave) and ends the round
+	if ( g_gametype.integer == GT_CTFS ) {
+		int capScore = ( g_threewave.integer ) ? 2 : 3;
+		AddTeamScore(ent->s.pos.trBase, other->client->sess.sessionTeam, capScore);
+	} else {
+		AddTeamScore(ent->s.pos.trBase, other->client->sess.sessionTeam, 1);
+	}
 	Team_ForceGesture(other->client->sess.sessionTeam);
 
 	other->client->pers.teamState.captures++;
@@ -808,6 +820,37 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 	AddScore(other, ent->r.currentOrigin, CTF_CAPTURE_BONUS);
 
 	Team_CaptureFlagSound( ent, team );
+
+	// GT_CTFS: cap ends the round immediately
+	if ( g_gametype.integer == GT_CTFS ) {
+		team_t	atkTeam = other->client->sess.sessionTeam;
+		/* g_threewave safe carrier bonus: same player who first picked up from base,
+		   held the flag for at least 8 seconds. Awards +1 team point. */
+		if ( g_threewave.integer &&
+		     other->s.clientNum == level.atdFlagToucherNum &&
+		     level.atdFlagToucherNum >= 0 &&
+		     ( level.time - (int)other->client->pers.teamState.flagsince ) >= 8000 ) {
+			AddTeamScore( ent->s.pos.trBase, atkTeam, 1 );
+			trap_SendServerCommand( other->s.clientNum,
+				"cp \"Safe Carrier!\n+1 Bonus Point\"" );
+			G_BroadcastServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " is a Safe Carrier! Attackers score 1 bonus point!\n\"",
+				cl->pers.netname ) );
+			other->client->ps.eFlags &= ~EF_AWARDS;
+			other->client->ps.eFlags |= EF_AWARD_DEFEND;
+			other->client->rewardTime = level.time + REWARD_SPRITE_TIME;
+		}
+		G_BroadcastServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " captured the flag! Attackers score!\n\"",
+			cl->pers.netname ) );
+		G_ATDEndRound();
+		/* Only play round-win sound when the game didn't just end.
+		   G_ATDEndRound -> LogExit sets level.intermissionQueued; if set,
+		   G_ATDEndRound already played the game-over sound. */
+		if ( !level.intermissionQueued ) {
+			G_ATDGlobalSound( atkTeam == TEAM_RED
+				? "sound/vo_evil/red_wins_round.wav"
+				: "sound/vo_evil/blue_wins_round.wav" );
+		}
+	}
 
 	// Ok, let's do the player loop, hand out the bonuses
 	for (i = 0; i < level.maxclients; i++) {
@@ -823,7 +866,7 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 				AddScore(player, ent->r.currentOrigin, CTF_TEAM_BONUS);
 #endif
 			// award extra points for capture assists
-			if (player->client->pers.teamState.lastreturnedflag + 
+			if (player->client->pers.teamState.lastreturnedflag +
 				CTF_RETURN_FLAG_ASSIST_TIMEOUT > level.time) {
 				AddScore (player, ent->r.currentOrigin, CTF_RETURN_FLAG_ASSIST_BONUS);
 				other->client->pers.teamState.assists++;
@@ -834,8 +877,8 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 				player->client->ps.eFlags |= EF_AWARD_ASSIST;
 				player->client->rewardTime = level.time + REWARD_SPRITE_TIME;
 
-			} 
-			if (player->client->pers.teamState.lastfraggedcarrier + 
+			}
+			if (player->client->pers.teamState.lastfraggedcarrier +
 				CTF_FRAG_CARRIER_ASSIST_TIMEOUT > level.time) {
 				AddScore(player, ent->r.currentOrigin, CTF_FRAG_CARRIER_ASSIST_BONUS);
 				other->client->pers.teamState.assists++;
@@ -887,6 +930,17 @@ static int Team_TouchEnemyFlag( gentity_t *ent, gentity_t *other, team_t team ) 
 
 	AddScore(other, ent->r.currentOrigin, CTF_FLAG_BONUS);
 #endif
+
+	// GT_CTFS (Attack & Defend): 1 point for the initial flag pickup from base only.
+	if ( g_gametype.integer == GT_CTFS && !( ent->flags & FL_DROPPED_ITEM ) && !level.atdTouchScored ) {
+		level.atdTouchScored = qtrue;
+		level.atdFlagToucherNum = other->s.clientNum;
+		AddTeamScore( ent->s.pos.trBase, other->client->sess.sessionTeam, 1 );
+		G_BroadcastServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " touched the flag! Attackers score 1 point!\n\"",
+			cl->pers.netname ) );
+		CalculateRanks();
+	}
+
 	cl->pers.teamState.flagsince = level.time;
 	Team_TakeFlagSound( ent, team );
 
@@ -897,6 +951,47 @@ static int Team_TouchEnemyFlag( gentity_t *ent, gentity_t *other, team_t team ) 
 int Pickup_Team( gentity_t *ent, gentity_t *other ) {
 	int team;
 	gclient_t *cl = other->client;
+
+	/* GT_CTFS: block all flag touch logic unless the round is actively live.
+	   This prevents end-of-round/inter-round race pickups from corrupting state. */
+	if ( g_gametype.integer == GT_CTFS ) {
+		if ( level.intermissiontime || level.intermissionQueued ) {
+			return 0;
+		}
+		if ( level.atdRoundNumber != level.atdRoundNumberStarted ) {
+			return 0;
+		}
+		if ( level.time < level.atdRoundStartTime ) {
+			return 0;
+		}
+		/* g_threewave post-elimination touch window: defenders are all dead and
+		   the 3-second grace period is active. Allow attackers to touch the base
+		   flag once for +1 bonus point. The flag does NOT enter their possession. */
+		if ( g_threewave.integer && level.atdElimTime > 0 ) {
+			team_t atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+			               ? TEAM_RED : TEAM_BLUE;
+			int flagTeamTag = -1;
+			if ( strcmp(ent->classname, "team_CTF_redflag") == 0 )
+				flagTeamTag = TEAM_RED;
+			else if ( strcmp(ent->classname, "team_CTF_blueflag") == 0 )
+				flagTeamTag = TEAM_BLUE;
+			if ( cl->sess.sessionTeam == atkTeam && !level.atdElimTouchScored
+			     && !(ent->flags & FL_DROPPED_ITEM) && flagTeamTag >= 0 ) {
+				gentity_t *te;
+				level.atdElimTouchScored = qtrue;
+				AddTeamScore( ent->s.pos.trBase, atkTeam, 1 );
+				G_BroadcastServerCommand( -1, va( "print \"%s" S_COLOR_WHITE
+					" touches the flag! Attackers score 1 bonus point!\n\"",
+					cl->pers.netname ) );
+				te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
+				te->s.eventParm = ( flagTeamTag == TEAM_BLUE ) ? GTS_RED_TAKEN : GTS_BLUE_TAKEN;
+				te->s.otherEntityNum = other->s.clientNum;
+				te->r.svFlags |= SVF_BROADCAST;
+				CalculateRanks();
+			}
+			return 0; /* never give the flag to the player during elim window */
+		}
+	}
 
 #ifdef MISSIONPACK
 	if( g_gametype.integer == GT_OBELISK ) {
@@ -941,6 +1036,19 @@ int Pickup_Team( gentity_t *ent, gentity_t *other ) {
 		return 0;
 	}
 #endif
+	// GT_CTFS (Attack & Defend): only the attacking team may touch any flag.
+	if ( g_gametype.integer == GT_CTFS ) {
+		int atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+		             ? TEAM_RED : TEAM_BLUE;
+		if ( cl->sess.sessionTeam != atkTeam ) {
+			return 0; // defenders can't pick up or return any flag
+		}
+		// attackers: touch own base flag to cap, or enemy flag to pick up
+		if ( team == cl->sess.sessionTeam ) {
+			return Team_TouchOurFlag( ent, other, team );
+		}
+		return Team_TouchEnemyFlag( ent, other, team );
+	}
 	// GT_CTF
 	if( team == cl->sess.sessionTeam) {
 		return Team_TouchOurFlag( ent, other, team );
@@ -1000,7 +1108,7 @@ qboolean Team_GetLocationMsg(gentity_t *ent, char *loc, int loclen)
 	gentity_t *best;
 
 	best = Team_GetLocation( ent );
-	
+
 	if (!best)
 		return qfalse;
 
@@ -1055,7 +1163,12 @@ __rescan:
 		if ( checkTelefrag && SpotWouldTelefrag( spot ) )
 			continue;
 		if ( checkState ) {
-			if ( teamstate == TEAM_BEGIN ) {
+			// GT_CTFS only uses base CTF spawn points (team_CTF_redplayer /
+			// team_CTF_blueplayer, count == 0); never the mid-map respawn points.
+			if ( g_gametype.integer == GT_CTFS ) {
+				if ( spot->count != 0 )
+					continue;
+			} else if ( teamstate == TEAM_BEGIN ) {
 				if ( spot->count != 0 )
 					continue;
 			} else {
@@ -1160,8 +1273,8 @@ void TeamplayInfoMessage( gentity_t *ent ) {
 			if (a < 0) a = 0;
 
 			j = BG_sprintf( entry, " %i %i %i %i %i %i",
-//				level.sortedClients[i], player->client->pers.teamState.location, h, a, 
-				i, player->client->pers.teamState.location, h, a, 
+//				level.sortedClients[i], player->client->pers.teamState.location, h, a,
+				i, player->client->pers.teamState.location, h, a,
 				player->client->ps.weapon, player->s.powerups);
 			if ( stringlength + j >= sizeof( string ) )
 				break;
@@ -1339,7 +1452,7 @@ static void ObeliskTouch( gentity_t *self, gentity_t *other, trace_t *trace ) {
 	other->client->ps.eFlags |= EF_AWARD_CAP;
 	other->client->rewardTime = level.time + REWARD_SPRITE_TIME;
 	other->client->ps.persistant[PERS_CAPTURES] += tokens;
-	
+
 	other->client->ps.generic1 = 0;
 	CalculateRanks();
 

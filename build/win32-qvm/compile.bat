@@ -15,7 +15,7 @@ set cc1=%tooldir%q3lcc -DQ3_VM -DCGAME  -S -Wf-g -I%cgamedir% -I%gamedir% %1
 set cc2=%tooldir%q3lcc -DQ3_VM -DQAGAME -S -Wf-g -I%gamedir% %1
 set cc3=%tooldir%q3lcc -DQ3_VM -DQ3UI   -S -Wf-g -I%uidir% -I%gamedir% %1
 
-rem its important to set -vq3 flag for new q3asm 
+rem its important to set -vq3 flag for new q3asm
 rem or qvm's will not run on original 1.32c binaries
 set as1=%tooldir%q3asm -vq3 -r -m -v -o cgame -f %~dp0\cgame
 set as2=%tooldir%q3asm -vq3 -r -m -v -o qagame -f %~dp0\game
@@ -31,9 +31,43 @@ mkdir vm\cgame
 cd vm\cgame
 @if errorlevel 1 goto quit
 
+%cc1% %cgamedir%\cg_be_stats.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_be_util.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_bescoreboard.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_chatfilter.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_element_decor.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_elements.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_layout.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_lexer.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_lexer_commands.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_lexer_parser.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_private.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_tablebuilder.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cherryhud_util.c
+@if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_main.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_consolecmds.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_crosshair.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_customloc.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_cvardescriptions.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_draw.c
 @if errorlevel 1 goto quit
@@ -49,19 +83,143 @@ cd vm\cgame
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_localents.c
 @if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_localevents.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_l_crc_compat.c
+@if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_marks.c
 @if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_ospconfig.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_osphud.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_osputil.c
+@if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_players.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_playerscolors.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_playerstate.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_predict.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_qcommon_compat.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_scoreboard.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_servercmds.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_snapshot.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_configparser.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_ammomessage.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_attacker_icon.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_attacker_name.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_chat.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_flagstatus.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_followmessage.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_fps.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_fragmessage.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_gametime.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_gametype.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_grid.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_itempickup.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_itempickupicon.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_localtime.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_location.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_name.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_ng.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_ngp.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_obituaries.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_player_name.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_player_stats.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_powerup.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_pred.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_rankmessage.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_reward.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbab.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbac.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbai.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbamb.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbamc.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbami.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbhb.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbhc.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_sbhi.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_score.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_spawnprotect.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_specmessage.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_spectators.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_speed.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_target_name.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_target_status.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_team.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_teamcount.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_tempAcc.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_thawtime.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_vmw.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_warmupinfo.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_warnlast.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_weapon_stats.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_element_weaponlist.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_private.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_superhud_util.c
+@if errorlevel 1 goto quit
+%cc1% %cgamedir%\cg_unlagged.c
 @if errorlevel 1 goto quit
 %cc1% %cgamedir%\cg_view.c
 @if errorlevel 1 goto quit
@@ -72,9 +230,9 @@ cd vm\cgame
 @if errorlevel 1 goto quit
 %cc1% %gamedir%\bg_misc.c
 @if errorlevel 1 goto quit
-%cc1% %gamedir%\bg_promode.c
-@if errorlevel 1 goto quit
 %cc1% %gamedir%\bg_pmove.c
+@if errorlevel 1 goto quit
+%cc1% %gamedir%\bg_movement.c
 @if errorlevel 1 goto quit
 %cc1% %gamedir%\bg_slidemove.c
 @if errorlevel 1 goto quit
@@ -101,11 +259,11 @@ mkdir vm\game
 cd vm\game
 @if errorlevel 1 goto quit
 
-%cc2% %gamedir%\g_main.c 
+%cc2% %gamedir%\g_main.c
 @if errorlevel 1 goto quit
-%cc2% %gamedir%\ai_chat.c 
+%cc2% %gamedir%\ai_chat.c
 @if errorlevel 1 goto quit
-%cc2% %gamedir%\ai_cmd.c 
+%cc2% %gamedir%\ai_cmd.c
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\ai_dmnet.c
 @if errorlevel 1 goto quit
@@ -119,15 +277,17 @@ cd vm\game
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\bg_lib.c
 @if errorlevel 1 goto quit
-%cc2% %gamedir%\bg_misc.c 
-@if errorlevel 1 goto quit
-%cc2% %gamedir%\bg_promode.c
+%cc2% %gamedir%\bg_misc.c
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\bg_pmove.c
 @if errorlevel 1 goto quit
-%cc2% %gamedir%\bg_slidemove.c 
+%cc2% %gamedir%\bg_movement.c
+@if errorlevel 1 goto quit
+%cc2% %gamedir%\bg_slidemove.c
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\g_active.c
+@if errorlevel 1 goto quit
+%cc2% %gamedir%\g_and.c
 @if errorlevel 1 goto quit
 %cc2% %gamedir%\g_arenas.c
 @if errorlevel 1 goto quit
@@ -268,10 +428,10 @@ cd vm\ui
 @if errorlevel 1 goto quit
 %cc3% %uidir%\ui_teamorders.c
 @if errorlevel 1 goto quit
-%cc3% %uidir%\ui_video.c  
+%cc3% %uidir%\ui_video.c
 @if errorlevel 1 goto quit
 
-%cc3% %gamedir%\bg_lib.c 
+%cc3% %gamedir%\bg_lib.c
 @if errorlevel 1 goto quit
 %cc3% %gamedir%\bg_misc.c
 @if errorlevel 1 goto quit

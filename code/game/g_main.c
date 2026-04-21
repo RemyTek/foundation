@@ -844,6 +844,7 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// make sure we have flags for CTF, etc
 	if( g_gametype.integer >= GT_TEAM ) {
+		G_ATDInitGame();
 		G_CheckTeamItems();
 	}
 
@@ -1790,7 +1791,7 @@ static void CheckExitRules( void ) {
 		}
 	}
 
-	if ( g_gametype.integer >= GT_CTF && g_capturelimit.integer ) {
+	if ( g_gametype.integer >= GT_CTF && g_gametype.integer != GT_CTFS && g_capturelimit.integer ) {
 
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
@@ -1807,7 +1808,7 @@ static void CheckExitRules( void ) {
 }
 
 
-static void ClearBodyQue( void ) {
+void ClearBodyQue( void ) {
 	int	i;
 	gentity_t	*ent;
 
@@ -1930,6 +1931,8 @@ static void G_WarmupEnd( void )
 			G_FreeEntity( ent );
 		}
 	}
+
+	G_ATDWarmupEnd();
 }
 
 
@@ -2414,6 +2417,11 @@ static void G_RunFrame( int levelTime ) {
 
 	// see if it is time to end the level
 	CheckExitRules();
+
+	// Attack & Defend round management
+	if ( g_gametype.integer == GT_CTFS ) {
+		G_CheckATDRound();
+	}
 
 	// update to team status?
 	CheckTeamStatus();

@@ -363,6 +363,8 @@ struct gclient_s {
 		int		enemy;
 		int		amount;
 	} damage;
+
+	team_t		atdDeadSpecTeam;	/* GT_CTFS: original team when dead-spectating; TEAM_FREE when inactive */
 };
 
 
@@ -458,6 +460,29 @@ typedef struct {
 #ifdef MISSIONPACK
 	int			portalSequence;
 #endif
+
+	// Attack & Defend (GT_CTFS) round state
+	int			atdRoundNumber;				// current round, 1-based
+	int			atdRoundNumberStarted;	// matches atdRoundNumber once round is live
+	int			atdRoundStartTime;			// level.time when warmup ends and round goes live
+	qboolean	atdRoundRespawned;			// players have been respawned for this warmup phase
+	int			atdRoundFreezeTime;			// level.time after which players are frozen (small settling delay post-respawn)
+	int			atdEliminationSides;		// random seed: (sides+round)%2==0 => RED attacks
+	int			atdRoundRedPlayers;			// red players alive at round start (for elim check)
+	int			atdRoundBluePlayers;		// blue players alive at round start
+
+	int			atdRoundScoresRed[MAX_ATD_ROUNDS_STORED];	// per-half-round red scores
+	int			atdRoundScoresBlue[MAX_ATD_ROUNDS_STORED];	// per-half-round blue scores
+
+	int			atdRoundStartRed;			// teamScores[RED] at the start of the current half
+	int			atdRoundStartBlue;			// teamScores[BLUE] at the start of the current half
+	qboolean	atdRound30SecWarned;		// qtrue once the 30-second warning sound has fired this round
+	qboolean	atdTouchScored;				// qtrue once the base-flag +1 has been awarded this half-round
+
+	// g_threewave safe-carrier and post-elimination touch bonus tracking
+	int			atdFlagToucherNum;			// clientNum of the attacker who first touched the base flag this round (-1 = none)
+	int			atdElimTime;				// level.time when defending team was eliminated (0 = not eliminated yet)
+	qboolean	atdElimTouchScored;			// qtrue once the post-elimination touch bonus has been awarded
 
 	// spawn spots
 	gentity_t	*spawnSpots[NUM_SPAWN_SPOTS];
@@ -712,6 +737,21 @@ qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
 void Team_CheckDroppedItem( gentity_t *dropped );
 qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker );
 void Team_ResetFlags( void );
+void Team_DirtyFlagStatus( void );
+
+//
+// g_and.c (Attack & Defend / GT_CTFS)
+//
+void ClearBodyQue( void );
+void G_ATDInitGame( void );
+void G_ATDWarmupEnd( void );
+void G_ATDEndRound( void );
+void G_ATDGlobalSound( const char *path );
+void G_ATDClientSound( int clientNum, const char *path );
+void G_CheckATDRound( void );
+void G_ATDCycleTeammateFollow( gentity_t *ent );
+int  G_LastAliveOnTeam( team_t team );
+void G_CheckLastTeamStanding( gentity_t *self );
 
 //
 // g_mem.c

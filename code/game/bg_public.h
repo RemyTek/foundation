@@ -89,7 +89,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_FLAGSTATUS			23		// string indicating flag status in CTF
 #define CS_SHADERSTATE			24
 #define CS_BOTINFO				25
-
+// Attack & Defend (GT_CTFS) configstrings
+#define CS_ATD_ROUNDSCORES			29
+#define CS_ATD_ROUNDSTART			30
+#define CS_ATD_RESPAWNED			31
+#define MAX_ATD_ROUNDS_STORED		500
+#define MAX_ATD_ROUNDS_WINDOW		22
+#define MAX_ATD_ROUNDS				MAX_ATD_ROUNDS_STORED
 #define	CS_ITEMS				27		// string of 0's and 1's that tell which items are present
 
 #define	CS_MODELS				32
@@ -146,6 +152,7 @@ typedef enum {
 	GT_TEAM,			// team deathmatch
 	GT_CTF,				// capture the flag
 	GT_CA,				// clan arena
+	GT_CTFS,			// attack & defend (round-based one-way CTF)
 	GT_RTF,				// return the flag
 #ifdef MISSIONPACK
 	GT_1FCTF,
@@ -516,6 +523,9 @@ typedef enum {
 	EV_TAUNT_GETFLAG,
 	EV_TAUNT_GUARDBASE,
 	EV_TAUNT_PATROL,
+
+	EV_ATD_30SEC_WARNING,	// GT_CTFS: 30 seconds remaining in the round
+
 	EV_MAX
 
 } entity_event_t;

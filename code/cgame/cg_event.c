@@ -1330,6 +1330,13 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 #endif
 			break;
 
+		case EV_ATD_30SEC_WARNING:
+			DEBUGNAME("EV_ATD_30SEC_WARNING");
+			if ( cgs.atd30SecWarningSound ) {
+				trap_S_StartLocalSound( cgs.atd30SecWarningSound, CHAN_ANNOUNCER );
+			}
+			break;
+
 		default:
 			DEBUGNAME("UNKNOWN");
 			CG_Error("Unknown event: %i", event);

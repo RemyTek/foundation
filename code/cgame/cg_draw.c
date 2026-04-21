@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // active (after loading) gameplay
 
 #include "cg_local.h"
+#include "../../ui/menudef.h"
 #include "cg_superhud.h"
 #include "cg_cherryhud.h"
 
@@ -1930,6 +1931,22 @@ void CG_ScanForCrosshairEntity(void)
 
 
 /*
+======================
+CG_ATDRoundScoreboardVisible
+
+Returns qtrue when the inter-round scoreboard is showing for GT_CTFS,
+so crosshair elements can be suppressed during that period.
+======================
+*/
+qboolean CG_ATDRoundScoreboardVisible( void ) {
+	return ( cgs.gametype == GT_CTFS &&
+		cg.warmup &&
+		cgs.atdCompletedRounds > 0 &&
+		cgs.atdRoundRespawned &&
+		!cg.intermissionStarted );
+}
+
+/*
 =====================
 CG_DrawCrosshairNames
 =====================
@@ -1943,6 +1960,10 @@ void CG_DrawCrosshairNames(void)
 	if (cg_drawCrosshairNames.integer == 0) return;
 	if (cg.renderingThirdPerson != 0) return;
 	if (global_viewlistFirstOption > 1) return;
+
+	if ( CG_ATDRoundScoreboardVisible() ) {
+		return;
+	}
 
 	CG_ScanForCrosshairEntity();
 	if ((cg_drawCrosshairNames.integer == 2) &&
@@ -2264,6 +2285,10 @@ void CG_DrawWarmup(void)
 				{
 					text = "Return The Flag";
 				}
+			else if (cgs.gametype == GT_CTFS)
+			{
+				text = "Attack & Defend";
+			}
 			else
 			{
 				text = "";
@@ -2309,6 +2334,13 @@ void CG_DrawWarmup(void)
 					case 2:
 						trap_S_StartLocalSound(cgs.media.count3Sound, CHAN_ANNOUNCER);
 						break;
+					case 5:
+						if ( cgs.gametype == GT_CTFS ) {
+							trap_S_StartLocalSound( cgs.media.countRoundBeginsInSound, CHAN_ANNOUNCER );
+						} else {
+							trap_S_StartLocalSound( cgs.media.countPrepareSound, CHAN_ANNOUNCER );
+						}
+						break;
 					default:
 						break;
 				}
@@ -2335,6 +2367,14 @@ void CG_DrawWarmup(void)
 
 			w = CG_DrawStrlen(s);
 			CG_DrawStringExt(320 - w * cw / 2, 70, s, color, qfalse, qtrue, cw, (int)(cw * 1.5), 0);
+		}
+
+		// GT_CTFS: draw per-round scores during inter-round warmup
+		if ( cgs.gametype == GT_CTFS &&
+		     cgs.atdCompletedRounds > 0 &&
+		     ( cgs.atdRoundStartTime || cgs.atdRoundRespawned ) &&
+		     !cg.intermissionStarted ) {
+			CG_DrawATDRoundScores( 1.0f );
 		}
 	}
 }
@@ -2430,6 +2470,13 @@ void CG_DrawWarmupShud(void)
 						break;
 					case 2:
 						trap_S_StartLocalSound(cgs.media.count3Sound, CHAN_ANNOUNCER);
+						break;
+					case 5:
+						if ( cgs.gametype == GT_CTFS ) {
+							trap_S_StartLocalSound( cgs.media.countRoundBeginsInSound, CHAN_ANNOUNCER );
+						} else {
+							trap_S_StartLocalSound( cgs.media.countPrepareSound, CHAN_ANNOUNCER );
+						}
 						break;
 					default:
 						break;
@@ -3340,6 +3387,166 @@ void CG_CheckOrderPending(void) {
 #endif
 
 /*
+=========================
+CG_DrawATDRoundCountdown
+
+Draws a red countdown (30..1) at the top-centre of the screen during
+the final 30 seconds of a GT_CTFS round.
+=========================
+*/
+/*
+=============================================================================
+TTF-based text rendering (used by ATD round scoreboard and countdown)
+=============================================================================
+*/
+
+static fontInfo_t cg_drawFont;
+
+void CG_Text_RegisterFont( void ) {
+	trap_R_RegisterFont( "fonts/fontImage_16", 16, &cg_drawFont );
+}
+
+int CG_Text_Width( const char *text, float scale, int limit ) {
+	const char  *s = text;
+	glyphInfo_t *glyph;
+	float        useScale = scale * cg_drawFont.glyphScale;
+	float        out = 0;
+	int          count = 0, len;
+
+	if ( !text )
+		return 0;
+	len = strlen( text );
+	if ( limit > 0 && len > limit )
+		len = limit;
+	while ( s && *s && count < len ) {
+		if ( Q_IsColorString( s ) ) {
+			s += 2;
+		} else {
+			glyph = &cg_drawFont.glyphs[(unsigned char)*s];
+			out += glyph->xSkip;
+			s++;
+			count++;
+		}
+	}
+	return (int)( out * useScale );
+}
+
+int CG_Text_Height( const char *text, float scale, int limit ) {
+	const char  *s = text;
+	glyphInfo_t *glyph;
+	float        useScale = scale * cg_drawFont.glyphScale;
+	float        max = 0;
+	int          count = 0, len;
+
+	if ( !text )
+		return 0;
+	len = strlen( text );
+	if ( limit > 0 && len > limit )
+		len = limit;
+	while ( s && *s && count < len ) {
+		if ( Q_IsColorString( s ) ) {
+			s += 2;
+		} else {
+			glyph = &cg_drawFont.glyphs[(unsigned char)*s];
+			if ( max < glyph->height )
+				max = glyph->height;
+			s++;
+			count++;
+		}
+	}
+	return (int)( max * useScale );
+}
+
+void CG_Text_PaintChar( float x, float y, float width, float height, float scale,
+						float s, float t, float s2, float t2, qhandle_t hShader ) {
+	float w = width * scale;
+	float h = height * scale;
+	CG_AdjustFrom640( &x, &y, &w, &h );
+	trap_R_DrawStretchPic( x, y, w, h, s, t, s2, t2, hShader );
+}
+
+void CG_Text_Paint( float x, float y, float scale, vec4_t color, const char *text,
+					float adjust, int limit, int style ) {
+	const char  *s;
+	vec4_t       newColor;
+	glyphInfo_t *glyph;
+	float        useScale;
+	int          count = 0, len;
+
+	if ( !text )
+		return;
+
+	useScale = scale * cg_drawFont.glyphScale;
+	s        = text;
+	trap_R_SetColor( color );
+	Com_Memcpy( &newColor[0], &color[0], sizeof( vec4_t ) );
+	len = strlen( text );
+	if ( limit > 0 && len > limit )
+		len = limit;
+
+	while ( s && *s && count < len ) {
+		glyph = &cg_drawFont.glyphs[(unsigned char)*s];
+		if ( Q_IsColorString( s ) ) {
+			Com_Memcpy( newColor, g_color_table[ColorIndex( *(s + 1) )], sizeof( newColor ) );
+			newColor[3] = color[3];
+			trap_R_SetColor( newColor );
+			s += 2;
+			continue;
+		} else {
+			float yadj = useScale * glyph->top;
+			if ( style == ITEM_TEXTSTYLE_SHADOWED || style == ITEM_TEXTSTYLE_SHADOWEDMORE ) {
+				int ofs = ( style == ITEM_TEXTSTYLE_SHADOWED ) ? 1 : 2;
+				colorBlack[3] = newColor[3];
+				trap_R_SetColor( colorBlack );
+				CG_Text_PaintChar( x + ofs, y - yadj + ofs,
+								   glyph->imageWidth, glyph->imageHeight, useScale,
+								   glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->glyph );
+				colorBlack[3] = 1.0f;
+				trap_R_SetColor( newColor );
+			}
+			CG_Text_PaintChar( x, y - yadj,
+							   glyph->imageWidth, glyph->imageHeight, useScale,
+							   glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->glyph );
+			x += ( glyph->xSkip * useScale ) + adjust;
+			s++;
+			count++;
+		}
+	}
+	trap_R_SetColor( NULL );
+}
+
+/*
+=============================================================================
+ATD round countdown (final 30 seconds of a round)
+=============================================================================
+*/
+
+static void CG_DrawATDRoundCountdown( void ) {
+	int		   deadline, msecRemaining, secRemaining, cw, w;
+	const char *s;
+	vec4_t	   colorRed = { 1.0f, 0.15f, 0.15f, 1.0f };
+
+	if ( cgs.gametype != GT_CTFS )
+		return;
+	if ( !cgs.atdRoundStartTime || !cgs.atdRoundTimelimit )
+		return;
+	if ( cg.intermissionStarted )
+		return;
+
+	deadline	  = cgs.atdRoundStartTime + cgs.atdRoundTimelimit * 1000;
+	msecRemaining = deadline - cg.time;
+
+	if ( msecRemaining <= 0 || msecRemaining > 30000 )
+		return;
+
+	secRemaining = ( msecRemaining + 999 ) / 1000;
+	s = va( "%i", secRemaining );
+	cw = 24;
+	w = CG_DrawStrlen( s );
+	CG_DrawStringExt( 320 - w * cw / 2, 20, s, colorRed, qfalse, qtrue, cw, (int)( cw * 1.5f ), 0 );
+}
+
+/*
 =================
 CG_Draw2D
 =================
@@ -3447,6 +3654,7 @@ static void CG_Draw2D(void)
 	{
 		CG_DrawWarmup();
 	}
+	CG_DrawATDRoundCountdown();
 	cg.scoreBoardShowing = CG_DrawIntermission();
 	if (cg.scoreBoardShowing == qfalse)
 	{

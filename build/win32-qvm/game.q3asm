@@ -10,9 +10,10 @@ ai_vcmd
 bg_lib
 bg_misc
 bg_pmove
-bg_promode
+bg_movement
 bg_slidemove
 g_active
+g_and
 g_arenas
 g_bot
 g_client

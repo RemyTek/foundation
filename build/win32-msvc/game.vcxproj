@@ -169,10 +169,11 @@ copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName).pdb "$(QUAKE3DIR)\$(MOD
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\code\game\bg_misc.c" />
-    <ClCompile Include="..\..\code\game\bg_promode.c" />
+    <ClCompile Include="..\..\code\game\bg_movement.c" />
     <ClCompile Include="..\..\code\game\bg_pmove.c" />
     <ClCompile Include="..\..\code\game\bg_slidemove.c" />
     <ClCompile Include="..\..\code\game\g_active.c" />
+    <ClCompile Include="..\..\code\game\g_and.c" />
     <ClCompile Include="..\..\code\game\g_arenas.c" />
     <ClCompile Include="..\..\code\game\g_bot.c" />
     <ClCompile Include="..\..\code\game\g_client.c" />
@@ -216,7 +217,6 @@ copy $(ProjectDir)$(ARCH)\$(Configuration)\$(TargetName).pdb "$(QUAKE3DIR)\$(MOD
     <ClInclude Include="..\..\code\game\be_ea.h" />
     <ClInclude Include="..\..\code\game\bg_lib.h" />
     <ClInclude Include="..\..\code\game\bg_local.h" />
-    <ClInclude Include="..\..\code\game\bg_promode.h" />
     <ClInclude Include="..\..\code\game\bg_pmove.h" />
     <ClInclude Include="..\..\code\game\bg_public.h" />
     <ClInclude Include="..\..\code\game\botlib.h" />
