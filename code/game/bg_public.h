@@ -348,6 +348,8 @@ typedef enum {
 	PW_AMMOREGEN,
 	PW_INVULNERABILITY,
 
+	PW_SPAWNPROTECTION,		// spawn protection timer
+
 	PW_NUM_POWERUPS
 
 } powerup_t;

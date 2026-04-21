@@ -1270,6 +1270,10 @@ void ClientSpawn(gentity_t *ent) {
 		}
 	}
 
+	if ( g_spawnProtection.integer > 0 ) {
+		ent->client->ps.powerups[PW_SPAWNPROTECTION] = ent->client->respawnTime + ( g_spawnProtection.integer * 1000 );
+	}
+
 	// run a client frame to drop exactly to the floor,
 	// initialize animations and other things
 	client->ps.commandTime = level.time - 100;
