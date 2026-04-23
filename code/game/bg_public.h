@@ -93,12 +93,39 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	CS_SOUNDS				(CS_MODELS+MAX_MODELS)
 #define	CS_PLAYERS				(CS_SOUNDS+MAX_SOUNDS)
 #define CS_LOCATIONS			(CS_PLAYERS+MAX_CLIENTS)
-#define CS_PARTICLES			(CS_LOCATIONS+MAX_LOCATIONS) 
+#define CS_PARTICLES			(CS_LOCATIONS+MAX_LOCATIONS)
 
 #define CS_MAX					(CS_PARTICLES+MAX_LOCATIONS)
 
 //CPM
 #define CS_PROMODE             16
+
+// OSP2-BE configstrings
+#define CS_OSP_SERVER_MODE                        806
+#define CS_OSP_CUSTOM_CLIENT                      807
+#define CS_OSP_ALLOW_PMOVE                        809
+#define CS_OSP_MAXPACKETS_MIN                     810
+#define CS_OSP_MAXPACKETS_MAX                     811
+#define CS_OSP_TIMENUDGE_MIN                      812
+#define CS_OSP_TIMENUDGE_MAX                      813
+#define CS_OSP_VERSION_STR                        814
+#define CS_OSP_CLAN_BASE_TEAM_DM                  815
+#define CS_OSP_MOTD0                              816
+#define CS_OSP_MOTD1                              817
+#define CS_OSP_MOTD2                              818
+#define CS_OSP_MOTD3                              819
+#define CS_OSP_MOTD4                              820
+#define CS_OSP_MOTD5                              821
+#define CS_OSP_MOTD6                              822
+#define CS_OSP_MOTD7                              823
+#define CS_OSP_CUSTOM_GFX                         824
+#define CS_OSP_DECALS                             840
+#define CS_OSP_AUTH                               872
+#define CS_OSP_FREEZE_GAME_TYPE                   873
+#define CS_OSP_CUSTOM_CLIENT2                     874
+#define CS_OSP2BE_SUPPORTED                       887
+#define CS_OSP2BE_DISABLED_FEATURES               888
+#define XQ3E_ALLOW_FEATURES                       1000
 
 #if (CS_MAX) > MAX_CONFIGSTRINGS
 #error overflow: (CS_MAX) > MAX_CONFIGSTRINGS
@@ -113,6 +140,7 @@ typedef enum {
 
 	GT_TEAM,			// team deathmatch
 	GT_CTF,				// capture the flag
+	GT_CA,
 #ifdef MISSIONPACK
 	GT_1FCTF,
 	GT_OBELISK,
@@ -145,7 +173,7 @@ typedef enum {
 } pmtype_t;
 
 typedef enum {
-	WEAPON_READY, 
+	WEAPON_READY,
 	WEAPON_RAISING,
 	WEAPON_DROPPING,
 	WEAPON_FIRING
@@ -203,6 +231,8 @@ typedef struct {
     int         fastRail;
     int         fastWeaponSwitch;
 
+    qboolean    noFootsteps;    // if the game is setup for no footsteps by the server
+
 	// callbacks to test the world
 	// these will be different functions during game and cgame
 	void		(*trace)( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentMask );
@@ -225,11 +255,16 @@ typedef enum {
 	STAT_PERSISTANT_POWERUP,
 #endif
 	STAT_WEAPONS,					// 16 bit fields
-	STAT_ARMOR,				
+	STAT_ARMOR,
 	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
 	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
 	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
-    STAT_TIME_LASTJUMP
+    STAT_TIME_LASTJUMP,
+    STAT_OSP_PHYS = 7,              // OSP physics type
+    STAT_RAIL_DELAY = 8,
+    STAT_ARMOR_TYPE = 9,            // armor type: red/green/yellow (OSP2-BE)
+    STAT_OSP_10 = 10,
+    STAT_WEAPON_DELAY = 11
 } statIndex_t;
 
 
@@ -270,9 +305,7 @@ typedef enum {
 #define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
 #define	EF_FIRING			0x00000100		// for lightning gun
-#ifdef MISSIONPACK
 #define	EF_KAMIKAZE			0x00000200
-#endif
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
 #define EF_AWARD_CAP		0x00000800		// draw the capture sprite
 #define	EF_TALK				0x00001000		// draw a talk balloon
@@ -575,8 +608,12 @@ typedef enum {
 	TEAM_RED,
 	TEAM_BLUE,
 	TEAM_SPECTATOR,
+        TEAM_4,
+        TEAM_5,
+        TEAM_6,
+        TEAM_7,
 
-	TEAM_NUM_TEAMS
+        TEAM_NUM_TEAMS
 } team_t;
 
 typedef enum {
@@ -593,7 +630,7 @@ typedef enum {
 //team task
 typedef enum {
 	TEAMTASK_NONE,
-	TEAMTASK_OFFENSE, 
+	TEAMTASK_OFFENSE,
 	TEAMTASK_DEFENSE,
 	TEAMTASK_PATROL,
 	TEAMTASK_FOLLOW,
@@ -634,7 +671,13 @@ typedef enum {
 	MOD_KAMIKAZE,
 	MOD_JUICED,
 #endif
-	MOD_GRAPPLE
+MOD_GRAPPLE,
+    MOD_LANDMINE,
+    MOD_LANDMINE_SPLASH,
+    MOD_TURRET,
+    MOD_TURRET_SPLASH,
+    MOD_TURRET_EXPLOSION,
+    MOD_DISPENSER_EXPLOSION
 } meansOfDeath_t;
 
 
@@ -690,7 +733,7 @@ gitem_t	*BG_FindItemForPowerup( powerup_t pw );
 gitem_t	*BG_FindItemForHoldable( holdable_t pw );
 #define	ITEM_INDEX(x) ((x)-bg_itemlist)
 
-qboolean	BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const playerState_t *ps );
+qboolean	BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const playerState_t *ps, qboolean disableArmorCheck );
 
 
 // g_dmflags->integer flags
@@ -740,7 +783,7 @@ typedef enum {
 void	BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 void	BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result );
 
-void	BG_AddPredictableEventToPlayerstate( entity_event_t newEvent, int eventParm, playerState_t *ps, int entityNum );
+void	BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 
 void	BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad );
 

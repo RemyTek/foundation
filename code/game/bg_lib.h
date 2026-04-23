@@ -25,7 +25,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // This file is NOT included on native builds
 
 typedef int size_t;
+#ifndef _INTPTR_T_DEFINED
+#define _INTPTR_T_DEFINED
 typedef int intptr_t;
+#endif
 
 typedef char *  va_list;
 #define _INTSIZEOF(n)   ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )

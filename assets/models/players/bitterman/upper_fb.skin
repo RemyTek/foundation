@@ -1,6 +1,6 @@
 tag_head,
 tag_weapon,
 tag_torso,
-u_body,fullBright
-u_vestl,fullBright
-u_vestr,fullBright
+u_body,fBright
+u_vestl,fBright
+u_vestr,fBright

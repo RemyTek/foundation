@@ -97,6 +97,7 @@ BR=$(BUILD_DIR)/release-$(PLATFORM)-$(ARCH)
 
 QADIR=$(MOUNT_DIR)/game
 CGDIR=$(MOUNT_DIR)/cgame
+COMDIR=$(MOUNT_DIR)/qcommon
 UIDIR=$(MOUNT_DIR)/q3_ui
 
 bin_path=$(shell which $(1) 2> /dev/null)
@@ -323,20 +324,25 @@ makedirs:
 	@if [ ! -d $(B)/$(MOD)/game ];then $(MKDIR) $(B)/$(MOD)/game;fi
 	@if [ ! -d $(B)/$(MOD)/ui ];then $(MKDIR) $(B)/$(MOD)/ui;fi
 	@if [ ! -d $(B)/$(MOD)/vm ];then $(MKDIR) $(B)/$(MOD)/vm;fi
-
-#############################################################################
-## BASEQ3 CGAME
-#############################################################################
-# $(B)/$(MOD)/cgame/cg_particles.o \
+	@if [ ! -d $(B)/$(MOD)/qcommon ];then $(MKDIR) $(B)/$(MOD)/qcommon;fi
 
 CGOBJ_ = \
   $(B)/$(MOD)/cgame/cg_main.o \
-  $(B)/$(MOD)/cgame/bg_lib.o \
-  $(B)/$(MOD)/cgame/bg_misc.o \
-  $(B)/$(MOD)/cgame/bg_pmove.o \
-  $(B)/$(MOD)/cgame/bg_promode.o \
-  $(B)/$(MOD)/cgame/bg_slidemove.o \
+  $(B)/$(MOD)/cgame/cg_cvardescriptions.o \
+  $(B)/$(MOD)/cgame/cg_crosshair.o \
+  $(B)/$(MOD)/cgame/cg_chatfilter.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_element_decor.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_elements.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_layout.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_lexer_commands.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_lexer_parser.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_lexer.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_private.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_tablebuilder.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud_util.o \
+  $(B)/$(MOD)/cgame/cg_cherryhud.o \
   $(B)/$(MOD)/cgame/cg_consolecmds.o \
+  $(B)/$(MOD)/cgame/cg_customloc.o \
   $(B)/$(MOD)/cgame/cg_draw.o \
   $(B)/$(MOD)/cgame/cg_drawtools.o \
   $(B)/$(MOD)/cgame/cg_effects.o \
@@ -344,18 +350,85 @@ CGOBJ_ = \
   $(B)/$(MOD)/cgame/cg_event.o \
   $(B)/$(MOD)/cgame/cg_info.o \
   $(B)/$(MOD)/cgame/cg_localents.o \
+  $(B)/$(MOD)/cgame/cg_localevents.o \
   $(B)/$(MOD)/cgame/cg_marks.o \
   $(B)/$(MOD)/cgame/cg_players.o \
   $(B)/$(MOD)/cgame/cg_playerstate.o \
+  $(B)/$(MOD)/cgame/cg_playerscolors.o \
   $(B)/$(MOD)/cgame/cg_predict.o \
   $(B)/$(MOD)/cgame/cg_scoreboard.o \
   $(B)/$(MOD)/cgame/cg_servercmds.o \
   $(B)/$(MOD)/cgame/cg_snapshot.o \
   $(B)/$(MOD)/cgame/cg_view.o \
   $(B)/$(MOD)/cgame/cg_weapons.o \
+  $(B)/$(MOD)/cgame/cg_ospconfig.o \
+  $(B)/$(MOD)/cgame/cg_osphud.o \
+  $(B)/$(MOD)/cgame/cg_osputil.o \
+  $(B)/$(MOD)/cgame/cg_unlagged.o \
+  $(B)/$(MOD)/cgame/cg_be_util.o \
+  $(B)/$(MOD)/cgame/cg_be_stats.o \
+  $(B)/$(MOD)/cgame/cg_bescoreboard.o \
+  $(B)/$(MOD)/cgame/cg_superhud.o \
+  $(B)/$(MOD)/cgame/cg_superhud_configparser.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_ammomessage.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_attacker_icon.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_attacker_name.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_chat.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_flagstatus.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_followmessage.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_fps.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_fragmessage.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_gametime.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_gametype.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_grid.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_itempickup.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_itempickupicon.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_localtime.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_location.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_name.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_ng.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_ngp.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_obituaries.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_player_name.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_player_stats.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_powerup.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_pred.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_rankmessage.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_reward.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbab.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbac.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbai.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbamb.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbamc.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbami.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbhb.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbhc.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_sbhi.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_score.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_specmessage.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_spectators.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_speed.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_target_name.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_target_status.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_team.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_teamcount.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_tempAcc.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_vmw.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_warmupinfo.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_weapon_stats.o \
+  $(B)/$(MOD)/cgame/cg_superhud_element_weaponlist.o \
+  $(B)/$(MOD)/cgame/cg_superhud_private.o \
+  $(B)/$(MOD)/cgame/cg_superhud_util.o \
   \
-  $(B)/$(MOD)/game/q_math.o \
-  $(B)/$(MOD)/game/q_shared.o
+  $(B)/$(MOD)/game/bg_lib.o \
+  $(B)/$(MOD)/game/bg_misc.o \
+  $(B)/$(MOD)/game/bg_pmove.o \
+  $(B)/$(MOD)/game/bg_slidemove.o \
+  \
+  $(B)/$(MOD)/qcommon/l_crc.o \
+  $(B)/$(MOD)/qcommon/common.o \
+  $(B)/$(MOD)/qcommon/q_math.o \
+  $(B)/$(MOD)/qcommon/q_shared.o
 
 CGOBJ = $(CGOBJ_) $(B)/$(MOD)/cgame/cg_syscalls.o
 
@@ -481,6 +554,12 @@ $(B)/$(MOD)/cgame/q_%.o: $(QADIR)/q_%.c
 $(B)/$(MOD)/cgame/%.o: $(CGDIR)/%.c
 	$(DO_CGAME_CC)
 
+$(B)/$(MOD)/game/q_shared.o: $(COMDIR)/q_shared.c
+	$(DO_GAME_CC)
+
+$(B)/$(MOD)/game/q_math.o: $(COMDIR)/q_math.c
+	$(DO_GAME_CC)
+
 $(B)/$(MOD)/game/%.o: $(QADIR)/%.c
 	$(DO_GAME_CC)
 
@@ -490,7 +569,8 @@ $(B)/$(MOD)/ui/bg_%.o: $(QADIR)/bg_%.c
 $(B)/$(MOD)/ui/%.o: $(UIDIR)/%.c
 	$(DO_UI_CC)
 
-#############################################################################
+$(B)/$(MOD)/qcommon/%.o: $(COMDIR)/%.c
+	$(DO_CGAME_CC)
 # MISC
 #############################################################################
 

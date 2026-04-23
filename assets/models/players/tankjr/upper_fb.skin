@@ -1,6 +1,6 @@
 tag_head,
 tag_weapon,
-u_abdomen,fullBright
-u_arms,fullBright
-u_torso,fullBright
+u_abdomen,fBright
+u_arms,fBright
+u_torso,fBright
 tag_torso,

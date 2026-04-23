@@ -1,6 +1,6 @@
 tag_head,
-u_larm,fullBright
+u_larm,fBright
 tag_weapon,
-u_rarm,fullBright
-u_torso,fullBright
+u_rarm,fBright
+u_torso,fBright
 tag_torso,

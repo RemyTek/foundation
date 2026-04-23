@@ -90,13 +90,13 @@ struct gentity_s {
 	const char	*model;
 	const char	*model2;
 	int			freetime;			// level.time when the object was freed
-	
+
 	int			eventTime;			// events will be cleared EVENT_VALID_MSEC after set
 	qboolean	freeAfterEvent;
 	qboolean	unlinkAfterEvent;
 
 	qboolean	physicsObject;		// if true, it can be pushed by movers and fall off edges
-									// all game items are physicsObjects, 
+									// all game items are physicsObjects,
 	float		physicsBounce;		// 1.0 = continuous bounce, 0.0 = no bounce
 	int			clipmask;			// brushes with this content value will be collided against
 									// when moving.  items and corpses do not collide against
@@ -249,7 +249,7 @@ typedef struct {
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
 typedef struct {
-	clientConnected_t	connected;	
+	clientConnected_t	connected;
 	usercmd_t	cmd;				// we would lose angles if not persistant
 	qboolean	localClient;		// true if "ip" info key is "localhost"
 	qboolean	initialSpawn;		// the first spawn should be at a cool location
@@ -446,7 +446,7 @@ typedef struct {
 	int			intermissiontime;		// time the intermission was started
 	qboolean	readyToExit;			// at least one client wants to exit
 	int			exitTime;
-	
+
 	vec3_t		intermission_origin;	// also used for spectator spawns
 	vec3_t		intermission_angle;
 	qboolean	intermission_spot;
@@ -488,6 +488,7 @@ char *G_NewString( const char *string );
 //
 // g_cmds.c
 //
+char *ConcatArgs( int start );
 void Cmd_Score_f (gentity_t *ent);
 void StopFollowing( gentity_t *ent, qboolean release );
 void BroadcastTeamChange( gclient_t *client, team_t oldTeam );
@@ -507,6 +508,12 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn );
 void UseHoldableItem( gentity_t *ent );
 void PrecacheItem (gitem_t *it);
 gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle );
+gentity_t *Drop_Item_Powerup( gentity_t *ent, gitem_t *item, float angle, int time );
+gentity_t *Drop_Item_Armor( gentity_t *ent, gitem_t *item, float angle );
+gentity_t *Drop_Item_Health( gentity_t *ent, gitem_t *item, float angle );
+gentity_t *Drop_Item_Ammo( gentity_t *ent, gitem_t *item, float angle );
+gentity_t *Drop_Item_Weapon( gentity_t *ent, gitem_t *item, float angle );
+gentity_t *Drop_Item_Flag( gentity_t *ent, gitem_t *item, float angle );
 gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity );
 void SetRespawn (gentity_t *ent, float delay);
 void G_SpawnItem (gentity_t *ent, gitem_t *item);

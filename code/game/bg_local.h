@@ -74,7 +74,35 @@ extern	float	pm_flightfriction;
 
 extern	int		c_pmove;
 
+// OSP2-BE mode variables (defined in bg_slidemove.c)
+extern int modeMaxAmmoShotgun;
+extern int modeGrenadeTime;
+extern int modeMaxAmmoGrenade;
+extern int modeMaxAmmoRocket;
+extern int modeMaxAmmoRail;
+extern int modeBeginWeaponChangeTime;
+extern int modeFinishWeaponChangeTime;
+extern int modePMNoAmmoTime;
+extern int pm_armorPromode;
+extern int modeHitLevelSounds;
+extern int modePickupDistance;
+extern int modePromodePhysKoeff;
+extern float modePromode_pm_airaccelerate_1;
+extern int modePredictionKoeff2;
+extern float modePromode_pm_airaccelerate_2;
+extern float modeWishspeedLimit;
+extern int modePredictionKoeff1;
+extern float modeSwimScale1;
+extern float modeSwimScale2;
+extern float modeShotgunKoeff;
+extern int modeShotgunNumberOfPellets;
+extern int modeUnknown2;
+extern int modeUnknown3;
+extern int modeUnknown4;
+extern int modeShotgunPromode;
+
 void PM_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce );
+void PM_ClipVelocityOSP( vec3_t in, vec3_t normal, vec3_t out, float overbounce );
 void PM_AddTouchEnt( int entityNum );
 void PM_AddEvent( int newEvent );
 
