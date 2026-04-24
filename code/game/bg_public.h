@@ -89,6 +89,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	CS_ITEMS				27		// string of 0's and 1's that tell which items are present
 
+#define CS_ATD_ROUNDSCORES		29		// GT_CTFS: space-delimited red/blue score pairs per completed half-round
+#define CS_ATD_ROUNDSTART		30		// GT_CTFS: server time (ms) when the current round went live; "0" if not active
+#define CS_ATD_RESPAWNED		31		// GT_CTFS: epoch when players were respawned to spawns; "0" otherwise
+
+#define MAX_ATD_ROUNDS_STORED	500		// max half-rounds stored server-side (250 display rounds)
+#define MAX_ATD_ROUNDS_WINDOW	22		// half-rounds transmitted in CS sliding window (11 display rounds)
+#define MAX_ATD_ROUNDS			MAX_ATD_ROUNDS_STORED	// backward-compat alias
+
 #define	CS_MODELS				32
 #define	CS_SOUNDS				(CS_MODELS+MAX_MODELS)
 #define	CS_PLAYERS				(CS_SOUNDS+MAX_SOUNDS)
@@ -141,6 +149,7 @@ typedef enum {
 	GT_TEAM,			// team deathmatch
 	GT_CTF,				// capture the flag
 	GT_CA,
+	GT_CTFS,
 #ifdef MISSIONPACK
 	GT_1FCTF,
 	GT_OBELISK,
@@ -465,6 +474,7 @@ typedef enum {
 	EV_GENERAL_SOUND,
 	EV_GLOBAL_SOUND,		// no attenuation
 	EV_GLOBAL_TEAM_SOUND,
+	EV_ATD_30SEC_WARNING,	// GT_CTFS: 30 seconds remaining in the round
 
 	EV_BULLET_HIT_FLESH,
 	EV_BULLET_HIT_WALL,

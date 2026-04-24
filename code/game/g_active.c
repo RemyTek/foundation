@@ -131,7 +131,7 @@ void P_WorldEffects( gentity_t *ent ) {
 				// don't play a normal pain sound
 				ent->pain_debounce_time = level.time + 200;
 
-				G_Damage (ent, NULL, NULL, NULL, NULL, 
+				G_Damage (ent, NULL, NULL, NULL, NULL,
 					ent->damage, DAMAGE_NO_ARMOR, MOD_WATER);
 			}
 		}
@@ -143,7 +143,7 @@ void P_WorldEffects( gentity_t *ent ) {
 	//
 	// check for sizzle damage (move to pmove?)
 	//
-	if (waterlevel && 
+	if (waterlevel &&
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
 		if (ent->health > 0
 			&& ent->pain_debounce_time <= level.time	) {
@@ -152,12 +152,12 @@ void P_WorldEffects( gentity_t *ent ) {
 				G_AddEvent( ent, EV_POWERUP_BATTLESUIT, 0 );
 			} else {
 				if (ent->watertype & CONTENTS_LAVA) {
-					G_Damage (ent, NULL, NULL, NULL, NULL, 
+					G_Damage (ent, NULL, NULL, NULL, NULL,
 						30*waterlevel, 0, MOD_LAVA);
 				}
 
 				if (ent->watertype & CONTENTS_SLIME) {
-					G_Damage (ent, NULL, NULL, NULL, NULL, 
+					G_Damage (ent, NULL, NULL, NULL, NULL,
 						10*waterlevel, 0, MOD_SLIME);
 				}
 			}
@@ -311,6 +311,44 @@ void	G_TouchTriggers( gentity_t *ent ) {
 
 /*
 =================
+G_ATDCycleTeammateFollow
+
+For a GT_CTFS dead-spectator, advance the follow-target to the next
+living member of the player's original team.  Falls back to free-fly
+if no living teammates remain.
+=================
+*/
+void G_ATDCycleTeammateFollow( gentity_t *ent ) {
+	int       i, start, clientnum;
+	team_t    myTeam;
+	gclient_t *cl;
+
+	myTeam = ent->client->atdDeadSpecTeam;
+	if ( myTeam == TEAM_FREE ) return;
+
+	start = ent->client->sess.spectatorClient;
+	if ( start < 0 || start >= level.maxclients ) start = -1;
+
+	for ( i = 1; i <= level.maxclients; i++ ) {
+		clientnum = ( start + i ) % level.maxclients;
+		if ( clientnum == ent->s.number ) continue;
+		cl = &level.clients[clientnum];
+		if ( cl->pers.connected != CON_CONNECTED ) continue;
+		if ( cl->sess.sessionTeam != myTeam ) continue;
+		if ( cl->atdDeadSpecTeam != TEAM_FREE ) continue;
+		if ( g_entities[clientnum].health <= 0 ) continue;
+		ent->client->sess.spectatorState  = SPECTATOR_FOLLOW;
+		ent->client->sess.spectatorClient = clientnum;
+		if ( G_LastAliveOnTeam( myTeam ) == clientnum ) {
+			G_ATDClientSound( ent->s.number, "sound/vo_evil/last_standing.wav" );
+		}
+		return;
+	}
+	ent->client->sess.spectatorState = SPECTATOR_FREE;
+}
+
+/*
+=================
 SpectatorThink
 =================
 */
@@ -349,7 +387,11 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 
 	// attack button cycles through spectators
 	if ( ( client->buttons & BUTTON_ATTACK ) && ! ( client->oldbuttons & BUTTON_ATTACK ) ) {
-		Cmd_FollowCycle_f( ent, 1 );
+		if ( client->atdDeadSpecTeam != TEAM_FREE ) {
+			G_ATDCycleTeammateFollow( ent );
+		} else {
+			Cmd_FollowCycle_f( ent, 1 );
+		}
 	}
 }
 
@@ -368,8 +410,8 @@ qboolean ClientInactivityTimer( gclient_t *client ) {
 		// gameplay, everyone isn't kicked
 		client->inactivityTime = level.time + 60 * 1000;
 		client->inactivityWarning = qfalse;
-	} else if ( client->pers.cmd.forwardmove || 
-		client->pers.cmd.rightmove || 
+	} else if ( client->pers.cmd.forwardmove ||
+		client->pers.cmd.rightmove ||
 		client->pers.cmd.upmove ||
 		(client->pers.cmd.buttons & BUTTON_ATTACK) ) {
 		client->inactivityTime = level.time + g_inactivity.integer * 1000;
@@ -958,7 +1000,31 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 		Pmove (&pm);
 #else
+	/* GT_CTFS inter-round freeze: set PM_FREEZE so client prediction is also frozen.
+	   pm_type is reset to PM_NORMAL at the top of ClientThink_real each frame, so
+	   there is no bleed-through when the round begins. */
+	if ( g_gametype.integer == GT_CTFS &&
+	     level.warmupTime == 0 &&
+	     level.atdRoundNumber != level.atdRoundNumberStarted &&
+	     level.atdRoundRespawned &&
+	     level.atdRoundFreezeTime > 0 &&
+	     level.time >= level.atdRoundFreezeTime &&
+	     client->ps.pm_type == PM_NORMAL ) {
+		client->ps.pm_type = PM_FREEZE;
+		Pmove( &pm );
+
+		/* Allow weapon switching during freeze. */
+		if ( pm.cmd.weapon > WP_NONE && pm.cmd.weapon < WP_NUM_WEAPONS &&
+		     pm.cmd.weapon != client->ps.weapon &&
+		     ( client->ps.stats[STAT_WEAPONS] & ( 1 << pm.cmd.weapon ) ) ) {
+			BG_AddPredictableEventToPlayerstate( EV_CHANGE_WEAPON, 0, &client->ps );
+			client->ps.weapon      = pm.cmd.weapon;
+			client->ps.weaponstate = WEAPON_READY;
+			client->ps.weaponTime  = 0;
+		}
+	} else {
 		Pmove (&pm);
+	}
 #endif
 
 	// save results of pmove
@@ -1013,15 +1079,27 @@ void ClientThink_real( gentity_t *ent ) {
 
 	// check for respawning
 	if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+		if ( g_gametype.integer == GT_CTFS ) {
+			/* Bots stay on-team when dead; after the body-sink timeout
+			   unlink the entity so the corpse disappears like a body
+			   que entry would.  The entity is relinked by ClientSpawn
+			   at the start of the next round. */
+			if ( ( ent->r.svFlags & SVF_BOT ) &&
+			     ent->r.linked &&
+			     level.time > client->respawnTime + 11500 ) {
+				trap_UnlinkEntity( ent );
+			}
+			return;
+		}
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
-			if ( g_forcerespawn.integer > 0 && 
+			if ( g_forcerespawn.integer > 0 &&
 				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
 				respawn( ent );
 				return;
 			}
-		
+
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 				respawn( ent );

@@ -386,5 +386,7 @@ CG_CVAR( cg_scoreboardWidth, "cg_scoreboardWidth", "640", CVAR_ARCHIVE )
 CG_CVAR( cg_scoreboardColors, "cg_scoreboardColors", "", CVAR_ARCHIVE )
 CG_CVAR( g_promode, "g_promode", "0", 0 )
 CG_CVAR( osp_client, "osp_client", "1008_OSP2_"OSP_VERSION, CVAR_USERINFO | CVAR_ROM )
+CG_CVAR( cg_flagStyle, "cg_flagStyle", "1", CVAR_ARCHIVE )
+CG_CVAR( cg_flagPOIs,  "cg_flagPOIs",  "1", CVAR_ARCHIVE )
 
 #undef CG_CVAR

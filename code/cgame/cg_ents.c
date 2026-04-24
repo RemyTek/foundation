@@ -24,6 +24,205 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
+/* Per-team persistent flag position cache.  Updated whenever the flag entity
+   is present in the snapshot; kept across frames so the icon remains visible
+   through walls and PVS gaps.  Reset only at map initialisation. */
+typedef struct {
+	vec3_t   origins[2];
+	int      entityNums[2];
+	int      seenFrame[2];
+	int      count;
+} flagPOICache_t;
+
+static flagPOICache_t s_flagPOI[5]; /* [0]=red flag, [1]=blue flag, [2]=neutral,
+                                       [3]=red obelisk (1FCTF), [4]=blue obelisk (1FCTF) */
+
+static void CG_DrawFlagPOI( centity_t *cent, const gitem_t *item );
+
+static void CG_UpdateFlagPOISlot( flagPOICache_t *slot, int entityNum, const vec3_t origin ) {
+	int i;
+	for ( i = 0; i < slot->count; i++ ) {
+		if ( slot->entityNums[i] == entityNum ) {
+			VectorCopy( origin, slot->origins[i] );
+			slot->seenFrame[i] = cg.clientFrame;
+			return;
+		}
+	}
+	if ( slot->count < 2 ) {
+		slot->entityNums[slot->count] = entityNum;
+		VectorCopy( origin, slot->origins[slot->count] );
+		slot->seenFrame[slot->count] = cg.clientFrame;
+		slot->count++;
+		return;
+	}
+	slot->entityNums[0] = entityNum;
+	VectorCopy( origin, slot->origins[0] );
+	slot->seenFrame[0] = cg.clientFrame;
+}
+
+static void CG_PruneFlagPOISlotCurrentFrame( flagPOICache_t *slot ) {
+	int readIdx, writeIdx;
+	writeIdx = 0;
+	for ( readIdx = 0; readIdx < slot->count; readIdx++ ) {
+		if ( slot->seenFrame[readIdx] != cg.clientFrame ) {
+			continue;
+		}
+		if ( writeIdx != readIdx ) {
+			slot->entityNums[writeIdx] = slot->entityNums[readIdx];
+			slot->seenFrame[writeIdx]  = slot->seenFrame[readIdx];
+			VectorCopy( slot->origins[readIdx], slot->origins[writeIdx] );
+		}
+		writeIdx++;
+	}
+	slot->count = writeIdx;
+}
+
+static void CG_DrawFlagPOIMarker( const vec3_t origin, qhandle_t shader, const vec4_t color4 ) {
+	vec3_t trans;
+	float  py, hf, z, sx, sy, iconHalf, perspHalf;
+
+	VectorSubtract( origin, cg.refdef.vieworg, trans );
+	z = DotProduct( trans, cg.refdef.viewaxis[0] );
+	if ( z <= 0.1f ) {
+		return;
+	}
+
+	py = tan( cg.refdef.fov_y * ( M_PI / 360.0f ) );
+	hf = 240.0f / ( z * py );
+
+	sx = 320.0f - DotProduct( trans, cg.refdef.viewaxis[1] ) * hf;
+	sy = 240.0f - DotProduct( trans, cg.refdef.viewaxis[2] ) * hf;
+
+	if ( z > 500.0f ) {
+		iconHalf = 6.25f;
+	} else {
+		perspHalf = 12.0f * hf;
+		iconHalf  = ( perspHalf > 6.25f ) ? perspHalf : 6.25f;
+	}
+
+	sy = sy - 1.0f - iconHalf * 2.0f;
+
+	if ( sx < iconHalf || sx > 640.0f - iconHalf ||
+	     sy < 0 || sy + iconHalf * 2.0f > 480.0f ) {
+		return;
+	}
+
+	trap_R_SetColor( color4 );
+	CG_DrawPic( sx - iconHalf, sy, iconHalf * 2.0f, iconHalf * 2.0f, shader );
+}
+
+void CG_ClearFlagPOIs( void ) {
+	memset( s_flagPOI, 0, sizeof( s_flagPOI ) );
+}
+
+static void CG_DrawFlagPOIPair( int defTeam, int defFlagSlot, int atkBaseSlot,
+                                int defFlagStatus, int ourTeam ) {
+	int            i;
+	int            atkTeam;
+	vec4_t         defColor, atkColor;
+	qhandle_t      shader;
+	flagPOICache_t *defFlags = &s_flagPOI[defFlagSlot];
+	flagPOICache_t *atkBase  = &s_flagPOI[atkBaseSlot];
+
+	atkTeam = ( defTeam == TEAM_RED ) ? TEAM_BLUE : TEAM_RED;
+
+	defColor[0] = ( defTeam == TEAM_RED ) ? 1.0f : 0.0f;
+	defColor[1] = ( defTeam == TEAM_RED ) ? 0.0f : 0.5f;
+	defColor[2] = ( defTeam == TEAM_RED ) ? 0.0f : 1.0f;
+	defColor[3] = 1.0f;
+
+	atkColor[0] = ( atkTeam == TEAM_RED ) ? 1.0f : 0.0f;
+	atkColor[1] = ( atkTeam == TEAM_RED ) ? 0.0f : 0.5f;
+	atkColor[2] = ( atkTeam == TEAM_RED ) ? 0.0f : 1.0f;
+	atkColor[3] = 1.0f;
+
+	if ( ourTeam == defTeam ) {
+		shader = cgs.media.flagDefendPOI;
+		for ( i = 0; i < defFlags->count; i++ ) {
+			CG_DrawFlagPOIMarker( defFlags->origins[i], shader, defColor );
+		}
+	} else {
+		shader = cgs.media.flagAttackPOI;
+		for ( i = 0; i < defFlags->count; i++ ) {
+			CG_DrawFlagPOIMarker( defFlags->origins[i], shader, defColor );
+		}
+		if ( defFlagStatus == FLAG_TAKEN && atkBase->count > 0 ) {
+			shader = cgs.media.flagCapturePOI;
+			for ( i = 0; i < atkBase->count; i++ ) {
+				CG_DrawFlagPOIMarker( atkBase->origins[i], shader, atkColor );
+			}
+		}
+	}
+}
+
+void CG_DrawFlagPOIs( void ) {
+	int slotIdx;
+	int ourTeam, ourClientNum;
+
+	if ( !cg_flagPOIs.integer ) {
+		return;
+	}
+	if ( cgs.gametype != GT_CTF && cgs.gametype != GT_CTFS ) {
+		return;
+	}
+	if ( !cg.snap ) {
+		return;
+	}
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		return;
+	}
+
+	for ( slotIdx = 0; slotIdx < 5; slotIdx++ ) {
+		CG_PruneFlagPOISlotCurrentFrame( &s_flagPOI[slotIdx] );
+	}
+
+	ourClientNum = cg.snap->ps.clientNum;
+	ourTeam      = cgs.clientinfo[ourClientNum].team;
+
+	if ( cgs.gametype == GT_CTF ) {
+		CG_DrawFlagPOIPair( TEAM_RED,  0, 1, cgs.redflag,  ourTeam );
+		CG_DrawFlagPOIPair( TEAM_BLUE, 1, 0, cgs.blueflag, ourTeam );
+	} else if ( cgs.gametype == GT_CTFS ) {
+		int defTeam       = ( cgs.atdAttackingTeam == TEAM_RED ) ? TEAM_BLUE : TEAM_RED;
+		int defFlagIdx    = defTeam - 1;
+		int atkBaseIdx    = cgs.atdAttackingTeam - 1;
+		int defFlagStatus = ( defTeam == TEAM_RED ) ? cgs.redflag : cgs.blueflag;
+		CG_DrawFlagPOIPair( defTeam, defFlagIdx, atkBaseIdx, defFlagStatus, ourTeam );
+	}
+
+	trap_R_SetColor( NULL );
+}
+
+static void CG_DrawFlagPOI( centity_t *cent, const gitem_t *item ) {
+	int    idx;
+	vec3_t pos;
+
+	if ( !cg_flagPOIs.integer ) {
+		return;
+	}
+	if ( cgs.gametype != GT_CTF && cgs.gametype != GT_CTFS ) {
+		return;
+	}
+	if ( !cg.snap || cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		return;
+	}
+	if ( cgs.gametype == GT_CTFS && cg.warmup && !cgs.atdRoundRespawned ) {
+		return;
+	}
+
+	if ( item->giTag == PW_REDFLAG ) {
+		idx = 0;
+	} else if ( item->giTag == PW_BLUEFLAG ) {
+		idx = 1;
+	} else {
+		return;
+	}
+
+	VectorCopy( cent->currentState.pos.trBase, pos );
+	pos[2] += 62;
+	CG_UpdateFlagPOISlot( &s_flagPOI[idx], cent->currentState.number, pos );
+}
+
 
 /*
 ======================
@@ -307,13 +506,25 @@ static void CG_Item(centity_t* cent)
 		CG_Error("Bad item index %i on entity", es->modelindex);
 	}
 
-	// if set to invisible, skip
-	if (!es->modelindex || (es->eFlags & EF_NODRAW))
+	if (!es->modelindex)
 	{
 		return;
 	}
 
 	item = &bg_itemlist[ es->modelindex ];
+
+	// Cache flag POI before the EF_NODRAW check so that in GT_1FCTF the
+	// red/blue flag home positions (pos.trBase + 62) are recorded even
+	// when those entities are invisible logic targets.
+	if ( item->giType == IT_TEAM ) {
+		CG_DrawFlagPOI( cent, item );
+	}
+
+	// if set to invisible, skip
+	if (es->eFlags & EF_NODRAW)
+	{
+		return;
+	}
 	if (cg_simpleItems.integer && item->giType != IT_TEAM)
 	{
 		CG_AddSimpleItem(cent);
@@ -378,6 +589,15 @@ static void CG_Item(centity_t* cent)
 	}
 
 	ent.hModel = cg_items[es->modelindex].models[0];
+
+	/* Override flag model when cg_flagStyle == 2 and GT_CTFS is active */
+	if ( cgs.gametype == GT_CTFS && cg_flagStyle.integer == 2 && item->giType == IT_TEAM ) {
+		if ( item->giTag == PW_REDFLAG && cgs.media.redFlagModel2 ) {
+			ent.hModel = cgs.media.redFlagModel2;
+		} else if ( item->giTag == PW_BLUEFLAG && cgs.media.blueFlagModel2 ) {
+			ent.hModel = cgs.media.blueFlagModel2;
+		}
+	}
 
 	VectorCopy(cent->lerpOrigin, ent.origin);
 	VectorCopy(cent->lerpOrigin, ent.oldorigin);
@@ -1019,7 +1239,9 @@ CG_TeamBase
 static void CG_TeamBase(centity_t* cent)
 {
 	refEntity_t model;
-	if (cgs.gametype == GT_CTF)
+	if (cgs.gametype == GT_CTF
+	    || cgs.gametype == GT_CTFS
+	   )
 	{
 		// show the flag base
 		memset(&model, 0, sizeof(model));

@@ -1852,6 +1852,20 @@ static void CG_PlayerAnimation(centity_t* cent, int* legsOld, int* legs, float* 
 
 	ci = &cgs.clientinfo[ clientNum ];
 
+	/* GT_CTFS: freeze animation during inter-round respawn window. */
+	if ( cgs.gametype == GT_CTFS && cgs.atdRoundRespawned && cg.time >= cgs.atdRoundFreezeTime
+	     && !( cent->currentState.eFlags & EF_DEAD ) ) {
+		CG_RunLerpFrame( ci, &cent->pe.legs,  LEGS_IDLE,   1 );
+		CG_RunLerpFrame( ci, &cent->pe.torso, TORSO_STAND, 1 );
+		*legsOld       = cent->pe.legs.oldFrame;
+		*legs          = cent->pe.legs.frame;
+		*legsBackLerp  = cent->pe.legs.backlerp;
+		*torsoOld      = cent->pe.torso.oldFrame;
+		*torso         = cent->pe.torso.frame;
+		*torsoBackLerp = cent->pe.torso.backlerp;
+		return;
+	}
+
 	// do the shuffle turn frames locally
 	if (cent->pe.legs.yawing && (cent->currentState.legsAnim & ~ANIM_TOGGLEBIT) == LEGS_IDLE)
 	{
@@ -2327,14 +2341,16 @@ static void CG_PlayerPowerups(centity_t* cent)
 	// redflag
 	if (powerups & (1 << PW_REDFLAG))
 	{
-		CG_TrailItem(cent, cgs.media.redFlagModel);
+		CG_TrailItem( cent, ( cgs.gametype == GT_CTFS && cg_flagStyle.integer == 2 && cgs.media.redFlagModel2 )
+		              ? cgs.media.redFlagModel2 : cgs.media.redFlagModel );
 		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 1.0, 0.2f, 0.2f);
 	}
 
 	// blueflag
 	if (powerups & (1 << PW_BLUEFLAG))
 	{
-		CG_TrailItem(cent, cgs.media.blueFlagModel);
+		CG_TrailItem( cent, ( cgs.gametype == GT_CTFS && cg_flagStyle.integer == 2 && cgs.media.blueFlagModel2 )
+		              ? cgs.media.blueFlagModel2 : cgs.media.blueFlagModel );
 		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 0.2f, 0.2f, 1.0);
 	}
 

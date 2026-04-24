@@ -216,7 +216,7 @@ void CG_DrawHead(float x, float y, float w, float h, int clientNum, vec3_t headA
 			origin[0] = len / 0.268;    // len / tan( fov/2 )
 
 			VectorAdd(origin, ci->headOffset, origin);
-			
+
 			// Determine color based on player relationship
 			if (clientNum == cg.clientNum)
 			{
@@ -233,7 +233,7 @@ void CG_DrawHead(float x, float y, float w, float h, int clientNum, vec3_t headA
 				// Teammate - use team colors
 				VectorCopy(cgs.osp.teamColors.head, headColor);
 			}
-			
+
 			// allow per-model tweaking
 			CG_OSPDraw3DModel(x, y, w, h, cm, headSkin, origin, headAngles, headColor);
 
@@ -242,7 +242,7 @@ void CG_DrawHead(float x, float y, float w, float h, int clientNum, vec3_t headA
 	else if (cg_drawIcons.integer)
 	{
 		qhandle_t iconToUse;
-		
+
 		/* Use original icon when cg_drawRealHeads is active */
 		if (cg_drawRealHeads.integer && ci->originalModelIcon)
 		{
@@ -252,7 +252,7 @@ void CG_DrawHead(float x, float y, float w, float h, int clientNum, vec3_t headA
 		{
 			iconToUse = ci->modelIcon;
 		}
-		
+
 		CG_DrawPicOld(x, y, w, h, iconToUse);
 	}
 
@@ -2008,7 +2008,7 @@ CG_DrawIntermission
 qboolean CG_DrawIntermission(void)
 {
 	qboolean result;
-	
+
 	if (cg_q3compScoreboard.integer)
 	{
 		if (cgs.gametype >= GT_TEAM)
@@ -2027,7 +2027,7 @@ qboolean CG_DrawIntermission(void)
 	{
 		result = CG_DrawOldScoreboard();
 	}
-	
+
 	// Request scores every 2 seconds only when table is actually being drawn
 	if (result && cg.scoresRequestTime + 2000 < cg.time)
 	{
@@ -2038,7 +2038,7 @@ qboolean CG_DrawIntermission(void)
 			cg.realNumClients = CG_CountRealClients();
 		}
 	}
-	
+
 	return result;
 }
 
@@ -2264,6 +2264,10 @@ void CG_DrawWarmup(void)
 			{
 				text = "Clan Arena";
 			}
+			else if (cgs.gametype == GT_CTFS)
+			{
+				text = "Attack & Defend";
+			}
 			else
 			{
 				text = "";
@@ -2281,7 +2285,7 @@ void CG_DrawWarmup(void)
 			CG_DrawStringExt((SCREEN_WIDTH - (len * width)) / 2, 25, text, colorLtGrey, 0, 1, width, (int)(1.1 * (float)width), qfalse);
 		}
 
-		if (cg.showScores == 0)
+		if (cg.showScores == 0 && !(cgs.gametype == GT_CTFS && cgs.atdCompletedRounds > 0))
 		{
 			int cw;
 			float* color = colorWhite;
@@ -2309,6 +2313,11 @@ void CG_DrawWarmup(void)
 					case 2:
 						trap_S_StartLocalSound(cgs.media.count3Sound, CHAN_ANNOUNCER);
 						break;
+					case 4:
+						if ( cgs.gametype == GT_CTFS ) {
+							trap_S_StartLocalSound(cgs.media.countRoundBeginsInSound, CHAN_ANNOUNCER);
+						}
+						break;
 					default:
 						break;
 				}
@@ -2335,6 +2344,12 @@ void CG_DrawWarmup(void)
 
 			w = CG_DrawStrlen(s);
 			CG_DrawStringExt(320 - w * cw / 2, 70, s, color, qfalse, qtrue, cw, (int)(cw * 1.5), 0);
+		}
+		if ( cgs.gametype == GT_CTFS &&
+		     cgs.atdCompletedRounds > 0 &&
+		     ( cgs.atdRoundStartTime || cgs.atdRoundRespawned ) &&
+		     !cg.intermissionStarted ) {
+			CG_DrawATDRoundScores( 1.0f );
 		}
 	}
 }
@@ -2409,7 +2424,7 @@ void CG_DrawWarmupShud(void)
 	}
 	else // warmup > 0
 	{
-		if (cg.showScores == 0)
+		if (cg.showScores == 0 && !(cgs.gametype == GT_CTFS && cgs.atdCompletedRounds > 0))
 		{
 			sec = (sec - cg.time) / 1000;
 			if (sec < 0)
@@ -3019,6 +3034,34 @@ void CG_DrawWeaponStatsWrapper(void)
 
 /*
 =================
+CG_DrawATDRoundCountdown
+=================
+*/
+static void CG_DrawATDRoundCountdown( void ) {
+	int        deadline, msecRemaining, secRemaining, w;
+	const char *s;
+
+	if ( cgs.gametype != GT_CTFS )
+		return;
+	if ( !cgs.atdRoundStartTime || !cgs.atdRoundTimelimit )
+		return;
+	if ( cg.intermissionStarted )
+		return;
+
+	deadline      = cgs.atdRoundStartTime + cgs.atdRoundTimelimit * 1000;
+	msecRemaining = deadline - cg.time;
+
+	if ( msecRemaining <= 0 || msecRemaining > 30000 )
+		return;
+
+	secRemaining = ( msecRemaining + 999 ) / 1000;
+	s = va( "%i", secRemaining );
+	w = CG_DrawStrlen( s );
+	CG_DrawStringExt( 320 - w * 20 / 2, 20, s, colorRed, qfalse, qtrue, 20, 26, 0 );
+}
+
+/*
+=================
 CG_Draw2D
 =================
 */
@@ -3114,11 +3157,13 @@ static void CG_Draw2D(void)
 	{
 		CG_DrawWarmup();
 	}
+	CG_DrawATDRoundCountdown();
 	cg.scoreBoardShowing = CG_DrawIntermission();
 	if (cg.scoreBoardShowing == qfalse)
 	{
 		CG_OSPDrawCenterString();
 	}
+	CG_DrawFlagPOIs();
 }
 
 

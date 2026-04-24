@@ -306,6 +306,12 @@ void CG_DrawCrosshair(void)
 		return;
 	}
 
+	/* GT_CTFS: hide crosshair while the inter-round scoreboard is visible. */
+	if ( cgs.gametype == GT_CTFS && cg.warmup && cgs.atdCompletedRounds > 0 &&
+	     cgs.atdRoundRespawned && !cg.intermissionStarted ) {
+		return;
+	}
+
 	if (cg.renderingThirdPerson)
 	{
 		return;

@@ -91,11 +91,21 @@ void CG_SHUDElementGameTypeRoutine(void* context)
 			}
 			else if (cgs.gametype == GT_CTF)
 			{
-				text = "Capture the Flag";
+				if (cgs.osp.gameTypeFreeze == 1) {
+					text = "FreezeTag CTF";
+				}
+				else
+				{
+					text = "Capture the Flag";
+				}
 			}
 			else if (cgs.gametype == GT_CA)
 			{
 				text = "Clan Arena";
+			}
+			else if (cgs.gametype == GT_CTFS)
+			{
+				text = "Attack & Defend";
 			}
 			else
 			{

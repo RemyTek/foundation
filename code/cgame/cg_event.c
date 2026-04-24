@@ -1218,6 +1218,11 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 			break;
 		}
 
+		case EV_ATD_30SEC_WARNING:
+			DEBUGNAME("EV_ATD_30SEC_WARNING");
+			CG_AddBufferedSound( cgs.media.atd30SecWarningSound );
+			break;
+
 		case EV_PAIN:
 			// local player sounds are triggered in CG_CheckLocalSounds,
 			// so ignore events on the player

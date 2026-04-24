@@ -735,6 +735,9 @@ typedef struct
 	qhandle_t   redFlagModel;
 	qhandle_t   blueFlagModel;
 	qhandle_t   neutralFlagModel;
+	qhandle_t   redFlagModel2;     /* GT_CTFS cg_flagStyle 2: flag3/r_flag3.md3 */
+	qhandle_t   blueFlagModel2;    /* GT_CTFS cg_flagStyle 2: flag3/b_flag3.md3 */
+	qhandle_t   neutralFlagModel2; /* GT_CTFS cg_flagStyle 2: flag3/n_flag3.md3 */
 	qhandle_t   redFlagShader[3];
 	qhandle_t   blueFlagShader[3];
 	qhandle_t   flagShader[4];
@@ -1068,6 +1071,15 @@ typedef struct
 	sfxHandle_t count1Sound;
 	sfxHandle_t countFightSound;
 	sfxHandle_t countPrepareSound;
+	sfxHandle_t countPrepareTeamSound;
+	sfxHandle_t countRoundBeginsInSound;
+	sfxHandle_t atdAttackSound;       /* GT_CTFS: "attack the flag" cue */
+	sfxHandle_t atdDefendSound;       /* GT_CTFS: "defend the flag" cue */
+	sfxHandle_t atd30SecWarningSound; /* GT_CTFS: 30-second round warning */
+	/* Flag POI shaders */
+	qhandle_t   flagAttackPOI;
+	qhandle_t   flagDefendPOI;
+	qhandle_t   flagCapturePOI;
 
 	qhandle_t cursor;
 	qhandle_t selectCursor;
@@ -1382,6 +1394,7 @@ typedef struct
 	int             fraglimit;
 	int             capturelimit;
 	int             timelimit;
+	int             atdRoundTimelimit;  /* GT_CTFS: per-round time in minutes */
 	int             maxclients;
 	char            mapname[MAX_QPATH];
 	char            redTeam[MAX_QPATH];
@@ -1404,6 +1417,15 @@ typedef struct
 	int             scores1, scores2;       // from configstrings
 	int             redflag, blueflag;      // flag status from configstrings
 	int             flagStatus;
+	int             atdAttackingTeam;         /* GT_CTFS: which team attacks this round */
+	int             atdCompletedRounds;       /* GT_CTFS: total completed half-rounds */
+	int             atdRoundOffset;           /* GT_CTFS: index of first stored half-round */
+	int             atdRoundScoresRed[MAX_ATD_ROUNDS_WINDOW];   /* GT_CTFS: red capture times per half-round */
+	int             atdRoundScoresBlue[MAX_ATD_ROUNDS_WINDOW];  /* GT_CTFS: blue capture times per half-round */
+	int             atdRoundStartTime;        /* GT_CTFS: server time when current round went live */
+	qboolean        atdRoundRespawned;        /* GT_CTFS: qtrue once inter-round respawn has happened */
+	int             atdRoundFreezeTime;       /* GT_CTFS: server time when inter-round freeze ends */
+	unsigned int    g_threewave;              /* GT_CTFS: g_threewave server setting */
 
 	qboolean  newHud;
 
@@ -1783,6 +1805,8 @@ void CG_SetEntitySoundPosition(centity_t* cent);
 void CG_AddPacketEntities(void);
 void CG_Beam(centity_t* cent);
 void CG_AdjustPositionForMover(const vec3_t in, int moverNum, int fromTime, int toTime, vec3_t out);
+void CG_DrawFlagPOIs( void );
+void CG_ClearFlagPOIs( void );
 
 void CG_PositionEntityOnTag(refEntity_t* entity, const refEntity_t* parent,
                             qhandle_t parentModel, char* tagName);
@@ -1897,6 +1921,7 @@ void CG_DrawOldTourneyScoreboard(void);
 void CG_BEStatsShowStatsInfo(void);
 qboolean CG_OSPDrawScoretable(void);
 qboolean CG_BEDrawTeamScoretable(void);
+void CG_DrawATDRoundScores( float fade );
 
 
 extern int customScoreboardColorIsSet;

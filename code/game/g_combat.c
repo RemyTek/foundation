@@ -57,6 +57,11 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	if ( level.warmupTime ) {
 		return;
 	}
+	// no frag scoring between round end and the next round going live (GT_CTFS)
+	if ( g_gametype.integer == GT_CTFS &&
+	     level.atdRoundNumber != level.atdRoundNumberStarted ) {
+		return;
+	}
 	// show score plum
 	ScorePlum(ent, origin, score);
 	//
@@ -97,7 +102,7 @@ Toss the weapon and powerups for the killed player
 // 		}
 // 	}
 
-// 	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
+// 	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK &&
 // 		self->client->ps.ammo[ weapon ] && !g_instagib.integer ) {
 // 		// find the item type for this weapon
 // 		item = BG_FindItemForWeapon( weapon );
@@ -144,6 +149,11 @@ void TossClientItems(gentity_t *self) {
     float angle;
     int i;
     gentity_t *drop;
+
+    // GT_CTFS: no items on the map, nothing to toss, flags already returned.
+    if ( g_gametype.integer == GT_CTFS ) {
+        return;
+    }
 
     // Drop the weapon if enabled
     if (g_itemDrop.integer & 2) { // qlone - conditional weapon toss
@@ -533,6 +543,73 @@ void G_GenericDeathCleanup( gentity_t *self ) {
 
 /*
 ==================
+G_LastAliveOnTeam
+
+Returns the client number of the last living player on the given team
+if exactly one is left, or -1 if zero or more than one are alive.
+Used by GT_CTFS elimination logic and the last-standing sound cue.
+==================
+*/
+int G_LastAliveOnTeam( team_t team ) {
+	int        i;
+	int        aliveCount = 0;
+	int        lastAlive  = -1;
+	gclient_t *cl;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		cl = &level.clients[i];
+		if ( cl->pers.connected != CON_CONNECTED ) continue;
+		if ( cl->sess.sessionTeam != team ) continue;
+		if ( cl->atdDeadSpecTeam != TEAM_FREE ) continue;
+		if ( g_entities[i].health <= 0 ) continue;
+		aliveCount++;
+		lastAlive = i;
+	}
+	return ( aliveCount == 1 ) ? lastAlive : -1;
+}
+
+/*
+==================
+G_CheckLastTeamStanding
+
+Plays the "last standing" sound cue when exactly one teammate is still
+alive after a player dies in GT_CTFS.
+==================
+*/
+static void G_CheckLastTeamStanding( gentity_t *self ) {
+	int        i;
+	int        lastAlive;
+	team_t     myTeam;
+	gclient_t *cl;
+
+	if ( g_gametype.integer != GT_CTFS ) return;
+	if ( level.warmupTime != 0 ) return;
+	if ( level.atdRoundNumber != level.atdRoundNumberStarted ) return;
+
+	if ( self->client->atdDeadSpecTeam != TEAM_FREE ) {
+		myTeam = self->client->atdDeadSpecTeam;
+	} else {
+		myTeam = self->client->sess.sessionTeam;
+		if ( myTeam == TEAM_SPECTATOR || myTeam == TEAM_FREE ) return;
+	}
+
+	lastAlive = G_LastAliveOnTeam( myTeam );
+	if ( lastAlive < 0 ) return;
+
+	G_ATDClientSound( lastAlive, "sound/vo_evil/last_standing.wav" );
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		if ( i == lastAlive ) continue;
+		cl = &level.clients[i];
+		if ( cl->pers.connected != CON_CONNECTED ) continue;
+		if ( cl->sess.spectatorState != SPECTATOR_FOLLOW ) continue;
+		if ( cl->sess.spectatorClient != lastAlive ) continue;
+		G_ATDClientSound( i, "sound/vo_evil/last_standing.wav" );
+	}
+}
+
+/*
+==================
 player_die
 ==================
 */
@@ -597,8 +674,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		obit = modNames[ meansOfDeath ];
 	}
 
-	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n", 
-		killer, self->s.number, meansOfDeath, killerName, 
+	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n",
+		killer, self->s.number, meansOfDeath, killerName,
 		self->client->pers.netname, obit );
 
 	// broadcast the death event to everyone
@@ -621,7 +698,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			AddScore( attacker, self->r.currentOrigin, 1 );
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
-				
+
 				// play humiliation on player
 				attacker->client->ps.persistant[PERS_GAUNTLET_FRAG_COUNT]++;
 
@@ -661,7 +738,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		if ( self->client->ps.powerups[PW_NEUTRALFLAG] ) {		// only happens in One Flag CTF
 			Team_ReturnFlag( TEAM_FREE );
 			self->client->ps.powerups[PW_NEUTRALFLAG] = 0;
-		} else 
+		} else
 #endif
 		if ( self->client->ps.powerups[PW_REDFLAG] ) {		// only happens in standard CTF
 			Team_ReturnFlag( TEAM_RED );
@@ -764,9 +841,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			self->health = GIB_HEALTH+1;
 		}
 
-		self->client->ps.legsAnim = 
+		self->client->ps.legsAnim =
 			( ( self->client->ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
-		self->client->ps.torsoAnim = 
+		self->client->ps.torsoAnim =
 			( ( self->client->ps.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 
 		G_AddEvent( self, EV_DEATH1 + i, killer );
@@ -783,6 +860,20 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		}
 #endif
 	}
+
+	/* GT_CTFS: move dead human players into free-spectate for the round.
+	   G_CheckATDRound will restore them to their team before the next round. */
+	if ( g_gametype.integer == GT_CTFS &&
+	     level.warmupTime == 0 &&
+	     level.atdRoundNumber == level.atdRoundNumberStarted &&
+	     !( self->r.svFlags & SVF_BOT ) ) {
+		team_t origTeam = self->client->sess.sessionTeam;
+		self->client->sess.sessionTeam    = TEAM_SPECTATOR;
+		self->client->sess.spectatorState = SPECTATOR_FREE;
+		self->client->atdDeadSpecTeam     = origTeam;
+		G_ATDCycleTeammateFollow( self );
+	}
+	G_CheckLastTeamStanding( self );
 
 	trap_LinkEntity (self);
 
@@ -951,6 +1042,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( level.intermissionQueued ) {
 		return;
 	}
+	// GT_CTFS: no damage to players while the round hasn't gone live yet
+	if ( g_gametype.integer == GT_CTFS && targ->client &&
+	     level.atdRoundNumber != level.atdRoundNumberStarted ) {
+		return;
+	}
 #ifdef MISSIONPACK
 	if ( targ->client && mod != MOD_JUICED) {
 		if ( targ->client->invulnerabilityTime > level.time) {
@@ -1061,7 +1157,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		// if the attacker was on the same team
 #ifdef MISSIONPACK
 		if ( mod != MOD_JUICED && targ != attacker && !(dflags & DAMAGE_NO_TEAM_PROTECTION) && OnSameTeam (targ, attacker)  ) {
-#else	
+#else
 		if ( targ != attacker && OnSameTeam (targ, attacker)  ) {
 #endif
 			if ( !g_friendlyFire.integer ) {
@@ -1169,7 +1265,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// See if it's the player hurting the emeny flag carrier
 #ifdef MISSIONPACK
 	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_1FCTF ) {
-#else	
+#else
 	if( g_gametype.integer == GT_CTF) {
 #endif
 		Team_CheckHurtCarrier(targ, attacker);
@@ -1192,7 +1288,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;
 		}
-			
+
 		if ( targ->health <= 0 ) {
 			if ( client )
 				targ->flags |= FL_NO_KNOCKBACK;
@@ -1236,7 +1332,7 @@ qboolean CanDamage( gentity_t *targ, vec3_t origin )
 		return qtrue;
 
 	VectorSubtract( targ->r.absmax, targ->r.absmin, size );
-	
+
 	// top quad
 
 	// - +

@@ -778,12 +778,25 @@ static void CG_RegisterSounds(void)
 	cgs.media.twoFragSound = trap_S_RegisterSound("sound/feedback/2_frags.wav", qtrue);
 	cgs.media.threeFragSound = trap_S_RegisterSound("sound/feedback/3_frags.wav", qtrue);
 
+	if ( cgs.gametype == GT_CTFS ) {
+		cgs.media.count3Sound = trap_S_RegisterSound( "sound/vo_evil/three.wav", qtrue );
+		cgs.media.count2Sound = trap_S_RegisterSound( "sound/vo_evil/two.wav", qtrue );
+		cgs.media.count1Sound = trap_S_RegisterSound( "sound/vo_evil/one.wav", qtrue );
+	} else {
 	cgs.media.count3Sound = trap_S_RegisterSound("sound/feedback/three.wav", qtrue);
 	cgs.media.count2Sound = trap_S_RegisterSound("sound/feedback/two.wav", qtrue);
 	cgs.media.count1Sound = trap_S_RegisterSound("sound/feedback/one.wav", qtrue);
+	}
 
 	cgs.media.countFightSound = trap_S_RegisterSound("sound/feedback/fight.wav", qtrue);
 	cgs.media.countPrepareSound = trap_S_RegisterSound("sound/feedback/prepare.wav", qtrue);
+	if ( cgs.gametype == GT_CTFS || cg_buildScript.integer ) {
+		cgs.media.countPrepareTeamSound    = trap_S_RegisterSound( "sound/feedback/prepare_team.wav", qtrue );
+		cgs.media.countRoundBeginsInSound  = trap_S_RegisterSound( "sound/vo_evil/round_begins_in.wav", qtrue );
+		cgs.media.atdAttackSound       = trap_S_RegisterSound( "sound/vo_evil/attack_the_flag.wav", qtrue );
+		cgs.media.atdDefendSound       = trap_S_RegisterSound( "sound/vo_evil/defend_the_flag.wav", qtrue );
+		cgs.media.atd30SecWarningSound = trap_S_RegisterSound( "sound/vo_evil/30_second_warning.wav", qtrue );
+	}
 
 	if (cgs.gametype >= GT_TEAM || cg_buildScript.integer)
 	{
@@ -806,7 +819,9 @@ static void CG_RegisterSounds(void)
 		cgs.media.takenYourTeamSound = trap_S_RegisterSound("sound/teamplay/flagtaken_yourteam.wav", qtrue);
 		cgs.media.takenOpponentSound = trap_S_RegisterSound("sound/teamplay/flagtaken_opponent.wav", qtrue);
 
-		if (cgs.gametype == GT_CTF || cg_buildScript.integer)
+		if (cgs.gametype == GT_CTF
+			|| cgs.gametype == GT_CTFS
+			|| cg_buildScript.integer)
 		{
 			cgs.media.redFlagReturnedSound = trap_S_RegisterSound("sound/teamplay/voc_red_returned.wav", qtrue);
 			cgs.media.blueFlagReturnedSound = trap_S_RegisterSound("sound/teamplay/voc_blue_returned.wav", qtrue);
@@ -1165,13 +1180,13 @@ static void CG_RegisterGraphics(void)
 	cgs.media.teleporterIcon = trap_R_RegisterShaderNoMip("icons/teleporter");
 	cgs.media.medkitIcon = trap_R_RegisterShaderNoMip("icons/medkit");
 
-	if (cgs.gametype == GT_CTF || cg_buildScript.integer)
+	if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTFS || cg_buildScript.integer)
 	{
 		cgs.media.redCubeModel = trap_R_RegisterModel("models/powerups/orb/r_orb.md3");
 		cgs.media.blueCubeModel = trap_R_RegisterModel("models/powerups/orb/b_orb.md3");
 	}
 
-	if (cgs.gametype == GT_CTF || cg_buildScript.integer)
+	if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTFS || cg_buildScript.integer)
 	{
 		cgs.media.redFlagModel = trap_R_RegisterModel("models/flags/r_flag.md3");
 		cgs.media.blueFlagModel = trap_R_RegisterModel("models/flags/b_flag.md3");
@@ -1181,6 +1196,14 @@ static void CG_RegisterGraphics(void)
 		cgs.media.blueFlagShader[0] = trap_R_RegisterShaderNoMip("icons/iconf_blu1");
 		cgs.media.blueFlagShader[1] = trap_R_RegisterShaderNoMip("icons/iconf_blu2");
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip("icons/iconf_blu3");
+		/* cg_flagStyle 2: alternate flag3 models */
+		cgs.media.redFlagModel2     = trap_R_RegisterModel( "models/flag3/r_flag3.md3" );
+		cgs.media.blueFlagModel2    = trap_R_RegisterModel( "models/flag3/b_flag3.md3" );
+		cgs.media.neutralFlagModel2 = trap_R_RegisterModel( "models/flag3/n_flag3.md3" );
+		/* Flag POI shaders */
+		cgs.media.flagAttackPOI  = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_attack" );
+		cgs.media.flagDefendPOI  = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_defend" );
+		cgs.media.flagCapturePOI = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_capture" );
 	}
 
 
@@ -1889,6 +1912,7 @@ int CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 	CG_InitMarkPolys();
 
 	CG_InitCTFLocations();
+	CG_ClearFlagPOIs();
 
 	// remove the last loading update
 	cg.infoScreenText[0] = 0;

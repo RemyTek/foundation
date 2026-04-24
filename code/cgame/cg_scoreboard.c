@@ -1272,13 +1272,13 @@ int CG_OSPDrawTeamScores(int x, int y, int team, float fade, int maxScores)
 	{
 		score = &cg.scores[i];
 		ci = &cgs.clientinfo[score->client];
-		
+
 		// In demo mode, if clientinfo is not valid, skip this entry
 		if (cg.demoPlayback && !ci->infoValid)
 		{
 			continue;
 		}
-		
+
 		if (ci->team != team && ci->rt != team)
 		{
 			continue;
@@ -2003,7 +2003,7 @@ qboolean CG_BEDrawTeamScoretable(void)
 		CG_DrawWeaponStatsWrapper();
 	}
 
-	
+
 	if (cg_drawAccuracy.integer && !cg.showAccuracy && cg.statsRequestTime + 2500 < cg.time)
 	{
 		cg.statsRequestTime = cg.time;
@@ -2013,3 +2013,114 @@ qboolean CG_BEDrawTeamScoretable(void)
 	return qtrue;
 }
 
+/*
+=================
+CG_DrawATDRoundScores
+
+Draws the per-round score panel during GT_CTFS inter-round warmup.
+=================
+*/
+void CG_DrawATDRoundScores( float fade ) {
+	static const float	PANEL_Y    = ( 480.0f - 120.0f ) * 0.5f;
+	static const float	PANEL_H    = 120.0f;
+	static const int	DISP_COLS  = 10;
+	static const int	COL0_LEFT  = 88;
+	static const int	COL_PITCH  = 50;
+	static const int	TCOL_LEFT  = 590;
+	static const int	TCOL_W     = 46;
+	static const int	CW_NUM     = 7;   /* char width for numbers  */
+	static const int	CH_NUM     = 14;  /* char height for numbers */
+	static const int	CW_LBL     = 8;   /* char width for labels   */
+	static const int	CH_LBL     = 14;  /* char height for labels  */
+
+	int		completedHalves, completedFull, windowStart;
+	int		i, half0, half1, len, cx, iy;
+	vec4_t	cBg, cBorder, cWhite, cRed, cBlu;
+	const char	*s;
+
+	completedHalves = cgs.atdCompletedRounds;
+	if ( completedHalves <= 0 ) {
+		return;
+	}
+
+	completedFull = ( completedHalves + 1 ) / 2;
+	windowStart   = completedFull > DISP_COLS ? completedFull - DISP_COLS : 0;
+
+	cBg[0]     = 0.0f;  cBg[1]     = 0.0f;  cBg[2]     = 0.0f;  cBg[3]     = 0.7f * fade;
+	cBorder[0] = 1.0f;  cBorder[1] = 1.0f;  cBorder[2] = 1.0f;  cBorder[3] = fade;
+	cWhite[0]  = 1.0f;  cWhite[1]  = 1.0f;  cWhite[2]  = 1.0f;  cWhite[3]  = fade;
+	cRed[0]    = 1.0f;  cRed[1]    = 0.3f;  cRed[2]    = 0.3f;  cRed[3]    = fade;
+	cBlu[0]    = 0.4f;  cBlu[1]    = 0.6f;  cBlu[2]    = 1.0f;  cBlu[3]    = fade;
+
+	CG_FillRect( 0,   PANEL_Y,          640, PANEL_H,      cBg );
+	CG_DrawRect( 2,   PANEL_Y + 2,      636, PANEL_H - 4,  1.0f, cBorder );
+	CG_FillRect( 86,  PANEL_Y + 2,      2,   PANEL_H - 4,  cBorder );
+	CG_FillRect( 588, PANEL_Y + 2,      2,   PANEL_H - 4,  cBorder );
+	CG_FillRect( 2,   PANEL_Y + 40,     636, 2,            cBorder );
+
+	/* Header row — centre CH_NUM chars in the first 40px band */
+	iy  = (int)( PANEL_Y ) + ( 40 - CH_NUM ) / 2;
+	s   = "Round";
+	len = CG_DrawStrlen( s );
+	cx  = 2 + ( 84 - len * CW_NUM ) / 2;
+	CG_DrawStringExt( cx, iy, s, cWhite, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+	for ( i = 0; i < DISP_COLS; i++ ) {
+		s   = va( "%i", windowStart + i + 1 );
+		len = CG_DrawStrlen( s );
+		cx  = COL0_LEFT + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
+		CG_DrawStringExt( cx, iy, s, cWhite, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+	}
+	s   = "T";
+	len = CG_DrawStrlen( s );
+	cx  = TCOL_LEFT + ( TCOL_W - len * CW_NUM ) / 2;
+	CG_DrawStringExt( cx, iy, s, cWhite, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+
+	/* Red team row — centre CH_LBL chars in the second 40px band */
+	iy  = (int)( PANEL_Y ) + 40 + ( 40 - CH_LBL ) / 2;
+	s   = cgs.redTeam[0] ? cgs.redTeam : DEFAULT_REDTEAM_NAME;
+	len = CG_DrawStrlen( s );
+	cx  = 2 + ( 84 - len * CW_LBL ) / 2;
+	if ( cx < 2 ) cx = 2;
+	CG_DrawStringExt( cx, iy, s, cRed, qfalse, qtrue, CW_LBL, CH_LBL, 84 / CW_LBL );
+	for ( i = 0; i < DISP_COLS; i++ ) {
+		half0 = ( windowStart + i ) * 2;
+		{
+			int localIdx0 = half0 - cgs.atdRoundOffset;
+			s = ( ( windowStart + i ) < completedFull && half0 < completedHalves
+			      && localIdx0 >= 0 && localIdx0 < MAX_ATD_ROUNDS_WINDOW )
+			    ? va( "%i", cgs.atdRoundScoresRed[localIdx0] ) : "-";
+		}
+		len = CG_DrawStrlen( s );
+		cx  = COL0_LEFT + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
+		CG_DrawStringExt( cx, iy, s, cRed, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+	}
+	s   = va( "%i", cgs.scores1 );
+	len = CG_DrawStrlen( s );
+	cx  = TCOL_LEFT + ( TCOL_W - len * CW_NUM ) / 2;
+	CG_DrawStringExt( cx, iy, s, cRed, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+
+	/* Blue team row — centre CH_LBL chars in the third 40px band */
+	iy  = (int)( PANEL_Y ) + 80 + ( 40 - CH_LBL ) / 2;
+	s   = cgs.blueTeam[0] ? cgs.blueTeam : DEFAULT_BLUETEAM_NAME;
+	len = CG_DrawStrlen( s );
+	cx  = 2 + ( 84 - len * CW_LBL ) / 2;
+	if ( cx < 2 ) cx = 2;
+	CG_DrawStringExt( cx, iy, s, cBlu, qfalse, qtrue, CW_LBL, CH_LBL, 84 / CW_LBL );
+	for ( i = 0; i < DISP_COLS; i++ ) {
+		half0 = ( windowStart + i ) * 2;
+		half1 = half0 + 1;
+		{
+			int localIdx1 = half1 - cgs.atdRoundOffset;
+			s = ( ( windowStart + i ) < completedFull && half1 < completedHalves
+			      && localIdx1 >= 0 && localIdx1 < MAX_ATD_ROUNDS_WINDOW )
+			    ? va( "%i", cgs.atdRoundScoresBlue[localIdx1] ) : "-";
+		}
+		len = CG_DrawStrlen( s );
+		cx  = COL0_LEFT + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
+		CG_DrawStringExt( cx, iy, s, cBlu, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+	}
+	s   = va( "%i", cgs.scores2 );
+	len = CG_DrawStrlen( s );
+	cx  = TCOL_LEFT + ( TCOL_W - len * CW_NUM ) / 2;
+	CG_DrawStringExt( cx, iy, s, cBlu, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
+}

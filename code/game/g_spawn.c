@@ -75,7 +75,7 @@ qboolean	G_SpawnVector( const char *key, const char *defaultString, float *out )
 // fields are needed for spawning from the entity string
 //
 typedef enum {
-	F_INT, 
+	F_INT,
 	F_FLOAT,
 	F_LSTRING,			// string on disk, pointer in memory, TAG_LEVEL
 	F_GSTRING,			// string on disk, pointer in memory, TAG_GAME
@@ -341,7 +341,7 @@ so message texts can be multi-line
 char *G_NewString( const char *string ) {
 	char	*newb, *new_p;
 	int		i,l;
-	
+
 	l = (int)strlen(string) + 1;
 
 	newb = G_Alloc( l );
@@ -361,7 +361,7 @@ char *G_NewString( const char *string ) {
 			*new_p++ = string[i];
 		}
 	}
-	
+
 	return newb;
 }
 
@@ -433,7 +433,7 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	int			i;
 	gentity_t	*ent;
 	char		*s, *value, *gametypeName;
-	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester", "teamtournament"};
+	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "ctf", "harvester", "teamtournament"};
 
 	// get the next free entity
 	ent = G_Spawn();
@@ -552,7 +552,7 @@ qboolean G_ParseSpawnVars( void ) {
 	}
 
 	// go through all the key / value pairs
-	while ( 1 ) {	
+	while ( 1 ) {
 		// parse key
 		if ( !trap_GetEntityToken( keyname, sizeof( keyname ) ) ) {
 			G_Error( "G_ParseSpawnVars: EOF without closing brace" );
@@ -561,8 +561,8 @@ qboolean G_ParseSpawnVars( void ) {
 		if ( keyname[0] == '}' ) {
 			break;
 		}
-		
-		// parse value	
+
+		// parse value
 		if ( !trap_GetEntityToken( com_token, sizeof( com_token ) ) ) {
 			G_Error( "G_ParseSpawnVars: EOF without closing brace" );
 		}
@@ -669,7 +669,7 @@ static qboolean G_ParseSpawnVarsFromFile(void) {
 
 	level.numSpawnVars = 0;
 	level.numSpawnVarChars = 0;
-	
+
 	// parse the opening brace
 	if (!ReadEntityToken(com_token, sizeof(com_token))) {
 		// end of spawn string
@@ -718,7 +718,7 @@ static void G_RemoveDuplicateItems(void)
 {
 	gentity_t *ent1, *ent2;
 	int i, j;
-	
+
 	// check for item entities on top of each other and remove the original
 	// this is so spawning from file will replace them if same coordinates
 	for (i = MAX_CLIENTS; i < level.num_entities; i++) {
@@ -730,7 +730,7 @@ static void G_RemoveDuplicateItems(void)
 		if (!ent1->item) {
 			continue;
 		}
-		
+
 		for (j = i + 1; j < level.num_entities; j++) {
 			ent2 = &g_entities[j];
 
@@ -740,7 +740,7 @@ static void G_RemoveDuplicateItems(void)
 			if (!ent2->item) {
 				continue;
 			}
-			
+
 			if (ent1->r.currentOrigin[0] == ent2->r.currentOrigin[0] &&
 			    ent1->r.currentOrigin[1] == ent2->r.currentOrigin[1] &&
 				ent1->r.currentOrigin[2] == ent2->r.currentOrigin[2])
@@ -787,7 +787,7 @@ static qboolean G_SpawnEntitiesFromFile(void)
 	trap_FS_FCloseFile(file);
 	// set the parse pointer to the beginning of string
 	entityParsePoint = entityString;
-	
+
 	// parse ents
 	while (G_ParseSpawnVarsFromFile()) {
 		G_SpawnGEntityFromSpawnVars();

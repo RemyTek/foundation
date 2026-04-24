@@ -11,7 +11,7 @@ typedef struct
 	int clientNum;
 	int weaponType; /* WP_RAILGUN, WP_LIGHTNING, etc. */
 	int flags; /* Bit flags for element state */
-	
+
 	// Информация о контейнере
 	const char* containerType;         // "!scoreboard", "playersRows", "spectatorsRows"
 } cherryhudDecorElement_t;
@@ -188,22 +188,22 @@ static void (*CG_CHUDDecorFindWeaponStatHandler(const char* statName))(cherryhud
 void* CG_CHUDElementDecorCreate(const cherryhudConfig_t* config, const char* containerType)
 {
 	cherryhudDecorElement_t* element;
-	
-	
+
+
 	element = (cherryhudDecorElement_t*)CG_CHUDCreateElementBase(config, sizeof(cherryhudDecorElement_t));
 	if (!element) {
 		return NULL;
 	}
-	
+
 	memcpy(&element->config, config, sizeof(element->config));
-	
+
 	// Initialize new fields
 	Q_strncpyz(element->displayText, "", sizeof(element->displayText));
 	Q_strncpyz(element->infoType, "", sizeof(element->infoType));
 	element->clientNum = (cg.snap && cg.snap->ps.clientNum >= 0) ? cg.snap->ps.clientNum : 0;
 	element->weaponType = WP_GAUNTLET; // Default
 	element->containerType = containerType; // Set container type
-	
+
 	// Set flags once at creation to avoid checking every frame
 	element->flags = 0;
 	if (config->text.isSet) {
@@ -218,7 +218,7 @@ void* CG_CHUDElementDecorCreate(const cherryhudConfig_t* config, const char* con
 			element->flags |= CHUD_DECOR_HAS_EMPTY_IMAGE;
 		}
 	}
-	
+
 	// Determine render mode once at creation
 	if (element->flags & CHUD_DECOR_HAS_MANUAL_TEXT && element->flags & CHUD_DECOR_HAS_MANUAL_IMAGE) {
 		// Both text and image specified - render both
@@ -233,34 +233,34 @@ void* CG_CHUDElementDecorCreate(const cherryhudConfig_t* config, const char* con
 		// No manual content - generate based on type
 		element->flags |= CHUD_DECOR_RENDER_DYNAMIC;
 	}
-	
+
 	// Parse type from config
 	if (config->type.isSet) {
 		Q_strncpyz(element->infoType, config->type.value, sizeof(element->infoType));
 	} else {
 		Q_strncpyz(element->infoType, "player.name", sizeof(element->infoType)); // Default
 	}
-	
+
 	// Parse weapon type if it's a weapon type
 	if (Q_strncmp(element->infoType, "weapon.", 7) == 0) {
 		char buffer[MAX_QPATH];
 		char* weaponName;
 		char* dotPos;
-		
+
 		/* Copy infoType to buffer to avoid modifying the original */
 		Q_strncpyz(buffer, element->infoType, sizeof(buffer));
 		weaponName = buffer + 7; /* Skip "weapon." */
 		dotPos = strchr(weaponName, '.');
-		
+
 		if (dotPos) {
 			*dotPos = '\0'; /* Null terminate weapon name in buffer */
 			element->weaponType = CG_CHUDDecorGetWeaponTypeFromString(weaponName);
 		}
 	}
-	
+
 	// Initialize contexts
 	CG_CHUDTextMakeContext(config, &element->textCtx);
-	
+
 	// Initialize draw context if image is set or if this might be a dynamic image type
 	if (config->image.isSet || (config->type.isSet && Q_stricmp(config->type.value, "player.skill") == 0)) {
         CG_CHUDDrawMakeContext(config, &element->drawCtx);
@@ -271,17 +271,17 @@ void* CG_CHUDElementDecorCreate(const cherryhudConfig_t* config, const char* con
 			}
 		}
 	}
-	
-	
+
+
 	if (config->text.isSet) {
 		Q_strncpyz(element->displayText, config->text.value, sizeof(element->displayText));
 		element->textCtx.text = element->displayText;
 		// CG_CHUDFillAndFrameForText((cherryhudConfig_t*)config, &element->textCtx); // Текст0контекст заполняется правильно из конфига.
 	}
-	
+
 	// Initialize content source once at creation
 	CG_CHUDDecorInitializeContent(element);
-	
+
 	return element;
 }
 
@@ -291,48 +291,48 @@ void CG_CHUDElementDecorRoutine(void* context)
 	const cherryhudConfig_t* config;
 	cherryhudLayoutBounds_t* bounds;
 	int clientNum;
-	
+
 	element = (cherryhudDecorElement_t*)context;
 	config = &element->config;
-	
+
 	if (!CG_CHUDValidateElementAndConfig(element, config)) {
 		return;
 	}
-	
+
 	bounds = CG_CHUDLayoutGetBoundsByContext(context);
 	if (!CG_CHUDValidateBounds(bounds)) {
 		return;
 	}
 
 	CG_CHUDSetDrawContextFromBounds(&element->drawCtx, bounds);
-	
+
     CG_CHUDSetTextContextFromBounds(&element->textCtx, bounds);
-	
+
 	// Get client number from bounds for player types
 	clientNum = bounds->clientNum;
 	element->clientNum = clientNum;
-	
+
 	// Use common validation and visibility checking
 	CG_CHUDRenderElementWithValidation(element, config, bounds, clientNum);
-	
+
 	// Update dynamic content
 	if (element->flags & CHUD_DECOR_USE_AUTO_TEXT) {
 		CG_CHUDDecorProcessType(element);
 	}
-	
+
 	// Update dynamic images
 	if (element->flags & CHUD_DECOR_USE_DYNAMIC_IMAGE) {
 		CG_CHUDDecorProcessType(element);
 	}
-	
+
 	// Draw element background and border using common utility
 	CG_CHUDRenderElementBackgroundAndBorder(config, bounds);
-	
+
 	// Special handling for player.head - render 3D head
 	if (Q_stricmp(element->infoType, "player.head") == 0) {
 		// Render 3D head using CG_DrawHead
 		vec3_t headAngles = {0, 0, 0};
-		
+
 		// Draw border if configured
 		if (config->border.isSet) {
 			vec4_t borderColor;
@@ -352,7 +352,7 @@ void CG_CHUDElementDecorRoutine(void* context)
 	if (element->textCtx.text && element->textCtx.text[0] != '\0') {
 		CG_CHUDRenderElementText(config, &element->textCtx, element->textCtx.text);
     }
-	
+
 	// CG_CHUDDrawBorder(config); // fix me later. Need to use border/background for whole ELEMENT
 }
 
@@ -364,10 +364,10 @@ void CG_CHUDElementDecorDestroy(void* context)
 void CG_CHUDElementDecorSetClientNum(void* context, int clientNum)
 {
 	cherryhudDecorElement_t* element;
-	
+
 	element = (cherryhudDecorElement_t*)context;
 	if (!element) return;
-	
+
 	element->clientNum = clientNum;
 }
 
@@ -406,13 +406,13 @@ static void CG_CHUDDecorProcessPlayerType(cherryhudDecorElement_t* element)
 	char* subType = element->infoType + 7; // Skip "player."
 	void (*handler)(cherryhudDecorElement_t*);
 	qhandle_t autoIcon;
-	
+
 	// Find handler using lookup table
 	handler = CG_CHUDDecorFindPlayerTypeHandler(subType);
 	if (handler) {
 		// Call the handler to set text content
 		handler(element);
-		
+
 		// Check if this type has an automatic icon and set it if needed
 		if (CG_CHUDDecorPlayerTypeHasAutoIcon(subType)) {
 			autoIcon = CG_CHUDDecorGetAutoImage(element);
@@ -434,7 +434,7 @@ static void CG_CHUDDecorProcessGameType(cherryhudDecorElement_t* element)
 {
 	char* subType = element->infoType + 5; // Skip "game."
 	void (*handler)(cherryhudDecorElement_t*);
-	
+
 	// Find handler using lookup table
 	handler = CG_CHUDDecorFindGameTypeHandler(subType);
 	if (handler) {
@@ -462,10 +462,10 @@ static void CG_CHUDDecorProcessWeaponType(cherryhudDecorElement_t* element)
 		CG_CHUDDecorGetUnknownType(element);
 		return;
 	}
-	
+
 	*dotPos = '\0'; /* Null terminate weapon name in buffer */
 	weaponStat = dotPos + 1; /* Get the stat part */
-	
+
 	// Find handler using lookup table
 	handler = CG_CHUDDecorFindWeaponStatHandler(weaponStat);
 	if (handler) {
@@ -494,13 +494,13 @@ static void CG_CHUDDecorSetTextFromString(cherryhudDecorElement_t* element, cons
 static void CG_CHUDDecorSetTextFromClientInfo(cherryhudDecorElement_t* element, const char* field) {
 	clientInfo_t* ci = &cgs.clientinfo[element->clientNum];
 	const char* value = NULL;
-	
+
 	if (Q_stricmp(field, "name") == 0) {
 		value = ci->name;
 	} else if (Q_stricmp(field, "xid") == 0) {
 		value = (const char*)ci->xidStr;
 	}
-	
+
 	CG_CHUDDecorSetTextFromString(element, value ? value : "Unknown");
 }
 
@@ -512,7 +512,7 @@ static void CG_CHUDDecorGetPlayerName(cherryhudDecorElement_t* element) {
 static void CG_CHUDDecorGetPlayerScore(cherryhudDecorElement_t* element) {
 	score_t* score = CG_CHUDDecorFindPlayerScore(element->clientNum);
 	int playerScore = 0;
-	
+
 	if (score) {
 		playerScore = score->score;
 	} else {
@@ -524,7 +524,7 @@ static void CG_CHUDDecorGetPlayerScore(cherryhudDecorElement_t* element) {
 static void CG_CHUDDecorGetPlayerPing(cherryhudDecorElement_t* element) {
 	score_t* score = CG_CHUDDecorFindPlayerScore(element->clientNum);
 	int ping = 0;
-	
+
 	if (score && score->ping != -1) {
 		ping = score->ping;
 	}
@@ -540,7 +540,7 @@ static void CG_CHUDDecorGetPlayerStat(cherryhudDecorElement_t* element, float va
 static void CG_CHUDDecorGetPlayerScoreStat(cherryhudDecorElement_t* element, const char* field) {
 	score_t* score = CG_CHUDDecorFindPlayerScore(element->clientNum);
 	int value = 0;
-	
+
 	if (score) {
 		if (Q_stricmp(field, "time") == 0) {
 			value = score->time;
@@ -548,7 +548,7 @@ static void CG_CHUDDecorGetPlayerScoreStat(cherryhudDecorElement_t* element, con
 			value = score->scoreFlags;
 		}
 	}
-	
+
 	CG_CHUDDecorApplyFormatting(element, (float)value);
 }
 
@@ -586,7 +586,7 @@ static void CG_CHUDDecorGetPlayerThaws(cherryhudDecorElement_t* element) {
 		CG_CHUDDecorGetPlayerStat(element, 0.0f);
 		return;
 	}
-	
+
 	CG_CHUDDecorGetPlayerScoreStat(element, "thaws");
 }
 
@@ -597,12 +597,12 @@ static void CG_CHUDDecorGetPlayerXid(cherryhudDecorElement_t* element) {
 static void CG_CHUDDecorGetPlayerSkill(cherryhudDecorElement_t* element) {
 	newStatsInfo_t* st = &cgs.be.statsAll[element->clientNum];
 	qhandle_t skillShader = 0;
-	
+
 	// Initialize draw context if not already done
 	if (!element->drawCtx.pos[0] && !element->drawCtx.pos[1]) {
 		CG_CHUDDrawMakeContext(&element->config, &element->drawCtx);
 	}
-	
+
 	// Check if this is a bot - use bot skill directly
 	if (cgs.clientinfo[element->clientNum].botSkill > 0 && cgs.clientinfo[element->clientNum].botSkill <= 5) {
 		skillShader = cgs.media.botSkillShaders[cgs.clientinfo[element->clientNum].botSkill - 1];
@@ -611,7 +611,7 @@ static void CG_CHUDDecorGetPlayerSkill(cherryhudDecorElement_t* element) {
 	else if (st->infoValid && st->dmgGiven > 0) {
 		// Use the pre-calculated damageRatio from statsAll
 		float efficiency = st->damageRatio;
-		
+
 		// Determine skill level based on efficiency and damage thresholds
 		if (efficiency >= 2.0f && st->dmgGiven > 2000) {
 			skillShader = cgs.media.botSkillShaders[5]; // Highest skill (skill 6)
@@ -630,7 +630,7 @@ static void CG_CHUDDecorGetPlayerSkill(cherryhudDecorElement_t* element) {
 		// No valid stats or no damage - show skill 1
 		skillShader = cgs.media.botSkillShaders[0];
 	}
-	
+
 	// Set the skill icon
 	element->drawCtx.image = skillShader;
 	// Clear text for icon display
@@ -661,22 +661,23 @@ static void CG_CHUDDecorGetGameMapName(cherryhudDecorElement_t* element) {
 static void CG_CHUDDecorGetGameType(cherryhudDecorElement_t* element) {
 	const char* gametypeNames[] = {
 		"Free for all",
-		"Tournament", 
+		"Tournament",
 		"Single Player",
 		"Team Deathmatch",
 		"Capture The flag",
 		"Clan Arena",
+		"Attack & Defend",
 		"Freeze Tag",
 		"Freeze tag CTF",
 		"Unknown"
 	};
-	
+
 	int gt;
 	short isFreeze;
-	
+
 	gt = cgs.gametype;
 	isFreeze = cgs.osp.gameTypeFreeze;
-	
+
 	if (gt >= 0 && gt < 8) {
 		if (isFreeze && gt == GT_TEAM) {
 			Q_strncpyz(element->displayText, gametypeNames[6], sizeof(element->displayText));
@@ -699,7 +700,7 @@ static void CG_CHUDDecorGetGameFragLimit(cherryhudDecorElement_t* element) {
 	short isFreeze;
 	int gt;
 	int limit;
-	
+
 	isFreeze = cgs.osp.gameTypeFreeze;
 	gt = cgs.gametype;
 	limit = (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
@@ -710,7 +711,7 @@ static void CG_CHUDDecorGetGameCaptureLimit(cherryhudDecorElement_t* element) {
 	short isFreeze;
 	int gt;
 	int limit;
-	
+
 	isFreeze = cgs.osp.gameTypeFreeze;
 	gt = cgs.gametype;
 	limit = (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
@@ -721,7 +722,7 @@ static void CG_CHUDDecorGetGameCaptureLimit(cherryhudDecorElement_t* element) {
 static void CG_CHUDDecorGetWeaponStat(cherryhudDecorElement_t* element, const char* statType) {
 	newStatsInfo_t* stats = &cgs.be.statsAll[element->clientNum];
 	float value = 0.0f;
-	
+
 	if (Q_stricmp(statType, "kills") == 0) {
 		value = (float)stats->stats[element->weaponType].kills;
 	} else if (Q_stricmp(statType, "accuracy") == 0) {
@@ -729,7 +730,7 @@ static void CG_CHUDDecorGetWeaponStat(cherryhudDecorElement_t* element, const ch
 	} else if (Q_stricmp(statType, "shots") == 0) {
 		value = (float)stats->stats[element->weaponType].shots;
 	}
-	
+
 	CG_CHUDDecorApplyFormatting(element, value);
 }
 
@@ -780,7 +781,7 @@ static int CG_CHUDDecorGetWeaponTypeFromString(const char* weaponName) {
 	if (Q_stricmp(weaponName, "railgun") == 0) return WP_RAILGUN;
 	if (Q_stricmp(weaponName, "plasma") == 0) return WP_PLASMAGUN;
 	if (Q_stricmp(weaponName, "bfg") == 0) return WP_BFG;
-	
+
 	return WP_GAUNTLET; // Default fallback
 }
 
@@ -790,10 +791,10 @@ static qhandle_t CG_CHUDDecorGetAutoImage(cherryhudDecorElement_t* element) {
     char* token;
     char* nextToken;
     int weaponIndex;
-    
+
     // Copy infoType to avoid modifying original
     Q_strncpyz(buffer, element->infoType, sizeof(buffer));
-    
+
     // Parse weapon type - для любого weapon.weaponname.* показываем иконку оружия
     if (Q_strncmp(buffer, "weapon.", 7) == 0) {
         token = buffer + 7; // Skip "weapon."
@@ -801,7 +802,7 @@ static qhandle_t CG_CHUDDecorGetAutoImage(cherryhudDecorElement_t* element) {
         if (nextToken) {
             *nextToken = '\0'; // Null-terminate weapon name
         }
-        
+
         // Get weapon index
         weaponIndex = CG_CHUDDecorGetWeaponTypeFromString(token);
         if (weaponIndex >= 0 && weaponIndex < WP_NUM_WEAPONS) {
@@ -811,7 +812,7 @@ static qhandle_t CG_CHUDDecorGetAutoImage(cherryhudDecorElement_t* element) {
             }
         }
     }
-    
+
     // Parse other types - привязываем к player.* для единообразия
     if (Q_stricmp(buffer, "player.ping") == 0) {
         return cgs.media.scoreboardBESignal;
@@ -849,7 +850,7 @@ static qhandle_t CG_CHUDDecorGetAutoImage(cherryhudDecorElement_t* element) {
     if (Q_stricmp(buffer, "player.damageReceived") == 0) {
         return cgs.media.arrowDown;
     }
-    
+
     // No matching image found
     return 0;
 }
@@ -858,10 +859,10 @@ static qhandle_t CG_CHUDDecorGetAutoImage(cherryhudDecorElement_t* element) {
 static void CG_CHUDDecorInitializeContent(cherryhudDecorElement_t* element)
 {
     qhandle_t autoImage;
-    
+
     // Mark content as initialized
     element->flags |= CHUD_DECOR_CONTENT_INITIALIZED;
-    
+
     // Determine content source based on render mode
     if (element->flags & CHUD_DECOR_BOTH_SPECIFIED) {
         // Both text and image specified - render both
@@ -915,11 +916,11 @@ static void CG_CHUDDecorApplyFormatting(cherryhudDecorElement_t* element, float 
     const cherryhudConfig_t* config;
     const char* infoType;
     qboolean isFloatType;
-    
+
     config = &element->config;
     infoType = element->infoType;
     isFloatType = qfalse;
-    
+
     // Check if this is a float type that should use .2f by default
     if (infoType) {
         if (Q_stricmp(infoType, "player.kd") == 0 ||
@@ -938,7 +939,7 @@ static void CG_CHUDDecorApplyFormatting(cherryhudDecorElement_t* element, float 
             return;
         }
     }
-    
+
     // Check if maxValue is set and value exceeds it
     if (config->maxValue.isSet && value > config->maxValue.value) {
         // Value exceeds maxValue, show maxValue + "+"
@@ -956,7 +957,7 @@ static void CG_CHUDDecorApplyFormatting(cherryhudDecorElement_t* element, float 
         element->textCtx.text = element->displayText;
         return;
     }
-    
+
     // Check if textExt.format is set
     if (config->textExt.format.isSet && config->textExt.format.value[0] != '\0') {
         // Apply formatting

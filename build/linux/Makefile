@@ -455,6 +455,7 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/bg_promode.o \
   $(B)/$(MOD)/game/bg_slidemove.o \
   $(B)/$(MOD)/game/g_active.o \
+  $(B)/$(MOD)/game/g_and.o \
   $(B)/$(MOD)/game/g_arenas.o \
   $(B)/$(MOD)/game/g_bot.o \
   $(B)/$(MOD)/game/g_client.o \

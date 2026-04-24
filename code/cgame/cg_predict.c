@@ -468,6 +468,28 @@ static void CG_TouchItem(centity_t* cent)
 
 	item = &bg_itemlist[ cent->currentState.modelindex ];
 
+	/* GT_CTFS: block flag pickup prediction during dead window or for defenders */
+	if ( cgs.gametype == GT_CTFS && item->giType == IT_TEAM ) {
+		/* Block flag pickup prediction during the dead window (round ended,
+		   warmup not yet started) to prevent the predict->server-reject flicker
+		   and phantom pickup sound. */
+		if ( !cgs.atdRoundStartTime && !cgs.atdRoundRespawned ) {
+			return;
+		}
+		if ( cg.predictedPlayerState.persistant[PERS_TEAM] != cgs.atdAttackingTeam ) {
+			return;
+		}
+		/* g_threewave: the server may award a +1 bonus touch without granting
+		   flag possession (post-elimination window).  If the server rejects the
+		   pickup the item stays in the world and the prediction re-fires every
+		   ~ping ms, repeating the generic n_healthSound.  Block prediction
+		   entirely; the correct sounds are already queued by the
+		   GTS_RED_TAKEN / GTS_BLUE_TAKEN handlers in cg_event.c. */
+		if ( cgs.g_threewave ) {
+			return;
+		}
+	}
+
 	// Special case for flags.
 	// We don't predict touching our own flag
 	if (cgs.gametype == GT_CTF)

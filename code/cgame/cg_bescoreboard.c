@@ -37,6 +37,7 @@ const char* gametypeNames[] = {
     "Team Deathmatch",
     "Capture The flag",
     "Clan Arena",
+    "Attack & Defend",
     "Freeze Tag",         // GT_TEAM + isFreeze
     "Freeze tag CTF",     // GT_CTF + isFreeze
     "^1Unknown^7"         // Unknown
@@ -304,7 +305,7 @@ static void CG_DrawPlayerPing(float y, int clientNum, score_t *score, scoreboard
             }
             CG_DrawIconAndValue(sb->pingX, textY_small, color, cgs.media.scoreboardBESignal, score->ping, sb->textColor);
         }
-    } else 
+    } else
     {
         CG_DrawIconAndValue(sb->pingX, textY_small, colorWhite, cgs.media.scoreboardBESignal, 0, sb->textColor);
     }
@@ -380,7 +381,7 @@ static void CG_DrawPlayerMainInfo(float y, int clientNum, score_t *score, scoreb
     CG_DrawPlayerHead(y, clientNum, score, sb);
     CG_DrawPlayerId(y, clientNum, sb);
     CG_DrawPlayerName(y, clientNum, sb);
-    if (connected) 
+    if (connected)
     {
         float width = sb->thirdX - sb->timeX + (sb->space / 2);
         float textY_small = y + sb->textSmallY;
@@ -432,7 +433,7 @@ static void CG_ScoreboardContext_Init_GT(void)
 {
     // if (cgs.gametype == GT_FFA)
         sbSet->numScoreColumns = 3;
-} 
+}
 
 static void CG_ScoreboardContext_Init_ShopwMode(void)
 {
@@ -476,12 +477,12 @@ void CG_ScoreboardContext_Init(void) {
     // Position head and name columns
     sbSet->headX = sbSet->baseX;
     sbSet->nameX = sbSet->headX + sbSet->headSize + (sbSet->space / 2);
-    
+
 
     // ====== Font and Rendering Settings ======
     sbSet->font = cg_scoreboardFont.integer;
     sbSet->flags = DS_SHADOW | DS_PROPORTIONAL;
-    
+
     // ====== Text Vertical Positioning ======
     sbSet->textY = (2 - (SCOREBOARD_SPACE / 2) * sbSet->scale);
 
@@ -737,7 +738,7 @@ void CG_DrawScoreLineFFA(int y, int clientNum, int rowIndex, float baseX) {
 
     // Local client
     if (clientNum == cg.snap->ps.clientNum) {
-        
+
         CG_FillRect(sb->headX, y, sb->width, sb->rowHeight, sb->lightWhite);
     }
 
@@ -801,12 +802,12 @@ void CG_DrawSpectatorLine(int y, int clientNum, float baseX) {
     }
 
     CG_DrawPlayerMainInfo(y, clientNum, score, sb, connected, qtrue);
-    
+
     if (!connected) {
         int textY = y + sb->textY;
         CG_DrawScoreboardText(sb->nameX + sb->nameMaxWidth + sb->space, textY, "Connecting", sb->textColor, sb->width / 4, SCALE_TINY * sb->scale, 0, NULL);
         return;
-    }  
+    }
     // Frame for all spectators
     CG_OSPDrawFrameAdjusted(sb->headX, y, sb->halfWidth, sb->rowHeight, sb->defaultBorder, sb->borderColor, qtrue);
 }
@@ -844,7 +845,7 @@ int CG_DrawScoreboardFFA(short isDouble) {
     }
 
     qsort(scoreArray, numSorted, sizeof(ScoreSort_t), ScoreSort_Compare);
-    
+
     if (isDouble) {
         // Split players into two tables: top in left
         half = (numSorted + 1) / 2;
@@ -963,7 +964,7 @@ int CG_DrawSpectatorList(int yStart, float baseX, short isDouble) {
                                    bottomLine, sbSet->borderColor, qfalse);
 
             CG_FillRect(sbSet->eyeX - (sbSet->space / 2), lineY - (sbSet->space / 2), sbSet->space, sbSet->space, sbSet->background);
-            
+
             CG_DrawPic(sbSet->eyeX, lineY, sbSet->title.width, sbSet->title.height, cgs.media.scoreboardBEEye);
 
             if (numSpectators > half) {
@@ -1063,7 +1064,7 @@ static void DrawScoreboardColumnHeaders(scoreboardContext_t* sb, float baseX, co
 }
 
 // Draw the background and frame for scoreboard (unified for all gametypes)
-static void DrawScoreboardBackgroundAndFrame(float frameX, float frameY, float frameW, float frameH, scoreboardContext_t* sb, int gametype, int team) 
+static void DrawScoreboardBackgroundAndFrame(float frameX, float frameY, float frameW, float frameH, scoreboardContext_t* sb, int gametype, int team)
 {
     vec4_t bgColor, hdrColor;
     vec4_t tempbgColor, temphdrColor;
@@ -1119,7 +1120,7 @@ static void DrawScoreboardBackgroundAndFrame(float frameX, float frameY, float f
          {
              Vector4Copy(sbSet->background, bgColor);
          }
-           
+
         if (cgs.be.sbSettings.ffaColors.headerBg[3] >= 0.0f)
         {
             Vector4Copy(cgs.be.sbSettings.ffaColors.headerBg, hdrColor);

@@ -178,6 +178,8 @@ void CG_ParseServerinfo(void)
 	cgs.fraglimit = atoi(Info_ValueForKey(info, "fraglimit"));
 	cgs.capturelimit = atoi(Info_ValueForKey(info, "capturelimit"));
 	cgs.timelimit = atoi(Info_ValueForKey(info, "timelimit"));
+	cgs.atdRoundTimelimit = atoi( Info_ValueForKey( info, "roundtimelimit" ) );
+	cgs.g_threewave = atoi( Info_ValueForKey( info, "g_threewave" ) );
 	cgs.maxclients = atoi(Info_ValueForKey(info, "sv_maxclients"));
 	mapname = Info_ValueForKey(info, "mapname");
 	Com_sprintf(cgs.mapname, sizeof(cgs.mapname), "maps/%s.bsp", mapname);
@@ -192,6 +194,33 @@ void CG_ParseServerinfo(void)
 CG_ParseWarmup
 ==================
 */
+static void CG_ParseATDRoundScores( const char *str ) {
+	int   r = 0;
+	char  buf[12 + MAX_ATD_ROUNDS_WINDOW * 24];
+	char *tok;
+
+	cgs.atdCompletedRounds = 0;
+	cgs.atdRoundOffset     = 0;
+	Com_Memset( cgs.atdRoundScoresRed,  0, sizeof( cgs.atdRoundScoresRed  ) );
+	Com_Memset( cgs.atdRoundScoresBlue, 0, sizeof( cgs.atdRoundScoresBlue ) );
+
+	if ( !str || !*str ) { return; }
+
+	Q_strncpyz( buf, str, sizeof( buf ) );
+	tok = strtok( buf, " " );
+	if ( !tok ) return;
+	cgs.atdRoundOffset = atoi( tok );
+	tok = strtok( NULL, " " );
+	while ( tok && r < MAX_ATD_ROUNDS_WINDOW ) {
+		cgs.atdRoundScoresRed[r]  = atoi( tok );
+		tok = strtok( NULL, " " );
+		if ( !tok ) break;
+		cgs.atdRoundScoresBlue[r] = atoi( tok );
+		tok = strtok( NULL, " " );
+		r++;
+	}
+	cgs.atdCompletedRounds = cgs.atdRoundOffset + r;
+}
 static void CG_ParseWarmup(void)
 {
 	const char*  info;
@@ -206,9 +235,18 @@ static void CG_ParseWarmup(void)
 	{
 		// Очистка новой статистики
 		memset(&cgs.be.newStats, 0, sizeof(cgs.be.newStats));
+		if ( cgs.gametype == GT_CTFS && cg.snap &&
+		     cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
+			if ( cg.snap->ps.persistant[PERS_TEAM] == cgs.atdAttackingTeam ) {
+				trap_S_StartLocalSound( cgs.media.atdAttackSound, CHAN_ANNOUNCER );
+			} else {
+				trap_S_StartLocalSound( cgs.media.atdDefendSound, CHAN_ANNOUNCER );
+			}
+		}
 	}
 	else if (warmup > 0 && cg.warmup <= 0)
 	{
+		if ( cgs.gametype != GT_CTFS )
 		{
 			trap_S_StartLocalSound(cgs.media.countPrepareSound, CHAN_ANNOUNCER);
 		}
@@ -236,6 +274,16 @@ void CG_SetConfigValues(void)
 		s = CG_ConfigString(CS_FLAGSTATUS);
 		cgs.redflag = s[0] - '0';
 		cgs.blueflag = s[1] - '0';
+	}
+	else if ( cgs.gametype == GT_CTFS ) {
+		s = CG_ConfigString( CS_FLAGSTATUS );
+		cgs.redflag          = s[0] - '0';
+		cgs.blueflag         = s[1] - '0';
+		cgs.atdAttackingTeam = s[2] - '0';
+		CG_ParseATDRoundScores( CG_ConfigString( CS_ATD_ROUNDSCORES ) );
+		cgs.atdRoundStartTime  = atoi( CG_ConfigString( CS_ATD_ROUNDSTART ) );
+		cgs.atdRoundFreezeTime = atoi( CG_ConfigString( CS_ATD_RESPAWNED ) );
+		cgs.atdRoundRespawned  = cgs.atdRoundFreezeTime > 0;
 	}
 	cg.warmup = atoi(CG_ConfigString(CS_WARMUP));
 }
@@ -368,6 +416,16 @@ static void CG_ConfigStringModified(void)
 		CG_ScoresDown_f();
 		// cgs.be.newStats.drawWindow = qtrue;
 	}
+	else if ( num == CS_ATD_ROUNDSCORES ) {
+		CG_ParseATDRoundScores( str );
+	}
+	else if ( num == CS_ATD_ROUNDSTART ) {
+		cgs.atdRoundStartTime = atoi( str );
+	}
+	else if ( num == CS_ATD_RESPAWNED ) {
+		cgs.atdRoundFreezeTime = atoi( str );
+		cgs.atdRoundRespawned  = cgs.atdRoundFreezeTime > 0;
+	}
 	else if (num >= CS_MODELS && num < CS_MODELS + MAX_MODELS)
 	{
 		cgs.gameModels[ num - CS_MODELS ] = trap_R_RegisterModel(str);
@@ -397,6 +455,11 @@ static void CG_ConfigStringModified(void)
 				cgs.osp.redflag = str[2] - '0';
 				cgs.osp.blueflag = str[3] - '0';
 			}
+		}
+		else if ( cgs.gametype == GT_CTFS ) {
+			cgs.redflag          = str[0] - '0';
+			cgs.blueflag         = str[1] - '0';
+			cgs.atdAttackingTeam = str[2] - '0';
 		}
 	}
 	else if (num == CS_OSP_ALLOW_PMOVE)
@@ -601,6 +664,9 @@ static void CG_MapRestart(void)
 
 	cg.intermissionStarted = qfalse;
 
+	cgs.atdCompletedRounds = 0;	/* prevent stale scoreboard on map_restart */
+	cgs.atdRoundOffset     = 0;
+
 	cgs.voteTime = 0;
 
 	cg.mapRestart = qtrue;
@@ -610,7 +676,7 @@ static void CG_MapRestart(void)
 		cg.showScores = qfalse;
 		cg.showAccuracy = qfalse;
 	}
-	
+
 	cg.scoreFadeTime = 0;
 
 	CG_OSPWStatsUp_f();                                                             /* Address : 0xf5df Type : Interium */
@@ -1554,7 +1620,7 @@ void CG_ServerCommand(void)
 	if (Q_stricmp(cmd, "xstats1") == 0)
 	{
 		if (cgs.be.statsAllRequested)
-		{	
+		{
 			CG_BEParseXStatsToStatsAll();
 			xstats1_received_count++;
 			last_xstats1_sequence = cgs.serverCommandSequence;

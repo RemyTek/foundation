@@ -803,7 +803,7 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 #ifdef MISSIONPACK
 	if ((g_gametype.integer == GT_CTF || g_gametype.integer == GT_1FCTF)			&& item->giType == IT_TEAM) { // Special case for CTF flags
 #else
-	if (g_gametype.integer == GT_CTF && item->giType == IT_TEAM) { // Special case for CTF flags
+	if ((g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTFS) && item->giType == IT_TEAM) { // Special case for CTF flags
 #endif
 		dropped->think = Team_DroppedFlagThink;
 		dropped->nextthink = level.time + 30000;
@@ -1233,7 +1233,7 @@ void G_CheckTeamItems( void ) {
 	// Set up team stuff
 	Team_InitGame();
 
-	if( g_gametype.integer == GT_CTF ) {
+	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTFS ) {
 		gitem_t	*item;
 
 		// check for the two flags
@@ -1405,6 +1405,13 @@ void G_SpawnItem( gentity_t *ent, gitem_t *item ) {
 	RegisterItem( item );
 
 	if ( G_ItemDisabled( item ) ) {
+		ent->tag = TAG_DONTSPAWN;
+		return;
+	}
+
+	// GT_CTFS (Attack & Defend): only the two CTF flags should exist on the map.
+	// Remove all weapons, pickups, powerups, holdables, ammo, and health.
+	if ( g_gametype.integer == GT_CTFS && item->giType != IT_TEAM ) {
 		ent->tag = TAG_DONTSPAWN;
 		return;
 	}
