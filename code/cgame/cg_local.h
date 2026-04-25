@@ -92,8 +92,8 @@ extern "C" {
 #define DEFAULT_TEAM_MODEL      "sarge"
 #define DEFAULT_TEAM_HEAD       "sarge"
 
-#define DEFAULT_REDTEAM_NAME        "^1RED"
-#define DEFAULT_BLUETEAM_NAME       "^4BLUE"
+#define DEFAULT_REDTEAM_NAME        "RED"
+#define DEFAULT_BLUETEAM_NAME       "BLUE"
 
 #define MAX_ALT_SHADERS 16
 
