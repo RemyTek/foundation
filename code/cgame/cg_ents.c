@@ -34,8 +34,16 @@ typedef struct {
 	int      count;
 } flagPOICache_t;
 
+typedef struct {
+	vec3_t origin;
+	int    powerups;
+	int    seenFrame;
+	int    valid;
+} teammatePOICache_t;
+
 static flagPOICache_t s_flagPOI[5]; /* [0]=red flag, [1]=blue flag, [2]=neutral,
                                        [3]=red obelisk (1FCTF), [4]=blue obelisk (1FCTF) */
+static teammatePOICache_t s_teammatePOI[MAX_CLIENTS];
 
 static void CG_DrawFlagPOI( centity_t *cent, const gitem_t *item );
 
@@ -113,6 +121,131 @@ static void CG_DrawFlagPOIMarker( const vec3_t origin, qhandle_t shader, const v
 
 void CG_ClearFlagPOIs( void ) {
 	memset( s_flagPOI, 0, sizeof( s_flagPOI ) );
+	memset( s_teammatePOI, 0, sizeof( s_teammatePOI ) );
+}
+
+static void CG_UpdateTeammatePOI( int clientNum, const vec3_t origin, int powerups ) {
+	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
+		return;
+	}
+	VectorCopy( origin, s_teammatePOI[clientNum].origin );
+	s_teammatePOI[clientNum].origin[2] += 48.0f;
+	s_teammatePOI[clientNum].powerups = powerups;
+	s_teammatePOI[clientNum].seenFrame = cg.clientFrame;
+	s_teammatePOI[clientNum].valid = qtrue;
+}
+
+static qboolean CG_TeammatePOITraceVisible( int entityNum, const vec3_t target ) {
+	trace_t trace;
+	CG_Trace( &trace, cg.refdef.vieworg, vec3_origin, vec3_origin, target,
+		cg.snap->ps.clientNum, CONTENTS_SOLID );
+	return ( trace.fraction == 1.0f || trace.entityNum == entityNum );
+}
+
+static qboolean CG_TeammatePOIVisible( const centity_t *cent ) {
+	vec3_t target;
+
+	VectorCopy( cent->lerpOrigin, target );
+	target[2] += 48.0f;
+	if ( CG_TeammatePOITraceVisible( cent->currentState.number, target ) ) {
+		return qtrue;
+	}
+	VectorCopy( cent->lerpOrigin, target );
+	target[2] += 28.0f;
+	return CG_TeammatePOITraceVisible( cent->currentState.number, target );
+}
+
+void CG_DrawTeammatePOIs( void ) {
+	int     i;
+	int     ourClientNum;
+	int     ourTeam;
+	vec4_t  markerColor;
+
+	if ( !cg_drawFriend.integer || !cg.snap || cgs.gametype < GT_TEAM ) {
+		return;
+	}
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		return;
+	}
+
+	ourClientNum = cg.snap->ps.clientNum;
+	ourTeam      = cg.snap->ps.persistant[PERS_TEAM];
+
+	if ( ourTeam != TEAM_RED && ourTeam != TEAM_BLUE ) {
+		return;
+	}
+
+	for ( i = 0; i < cgs.maxclients; i++ ) {
+		centity_t          *cent;
+		clientInfo_t       *ci;
+		teammatePOICache_t *cache;
+		qhandle_t           shader;
+		qboolean            isFlagCarrierPOI;
+
+		if ( i == ourClientNum ) {
+			continue;
+		}
+
+		cent  = &cg_entities[i];
+		ci    = &cgs.clientinfo[i];
+		cache = &s_teammatePOI[i];
+
+		if ( !ci->infoValid || ci->team != ourTeam ) {
+			continue;
+		}
+
+		/* Clear stale cache if player is dead or not a live player entity. */
+		if ( !cent->currentValid ||
+		     cent->currentState.eType != ET_PLAYER ||
+		     ( cent->currentState.eFlags & EF_DEAD ) ) {
+			cache->valid = qfalse;
+			continue;
+		}
+
+		CG_UpdateTeammatePOI( i, cent->lerpOrigin, cent->currentState.powerups );
+
+		if ( CG_TeammatePOIVisible( cent ) ) {
+			continue;
+		}
+		if ( !cache->valid ) {
+			continue;
+		}
+
+		shader           = cgs.media.friendPOIShader;
+		isFlagCarrierPOI = qfalse;
+		markerColor[0]   = 1.0f;
+		markerColor[1]   = 1.0f;
+		markerColor[2]   = 1.0f;
+		markerColor[3]   = 1.0f;
+
+		if ( ourTeam == TEAM_BLUE && ( cache->powerups & ( 1 << PW_REDFLAG ) ) ) {
+			shader           = cgs.media.friendPOIRedFlagStolenShader;
+			isFlagCarrierPOI = qtrue;
+			markerColor[0]   = 1.0f;
+			markerColor[1]   = 0.0f;
+			markerColor[2]   = 0.0f;
+		} else if ( ourTeam == TEAM_RED && ( cache->powerups & ( 1 << PW_BLUEFLAG ) ) ) {
+			shader           = cgs.media.friendPOIBlueFlagStolenShader;
+			isFlagCarrierPOI = qtrue;
+			markerColor[0]   = 0.0f;
+			markerColor[1]   = 0.0f;
+			markerColor[2]   = 1.0f;
+		} else if ( cache->powerups & ( 1 << PW_NEUTRALFLAG ) ) {
+			shader           = cgs.media.friendPOINeutralFlagCarrierShader;
+			isFlagCarrierPOI = qtrue;
+		}
+
+		if ( isFlagCarrierPOI && ( cg.time - cent->pe.painTime ) < 1500 ) {
+			shader         = cgs.media.friendPOIFlagCarrierHitShader;
+			markerColor[0] = 1.0f;
+			markerColor[1] = 0.0f;
+			markerColor[2] = 0.0f;
+		}
+
+		CG_DrawFlagPOIMarker( cache->origin, shader, markerColor );
+	}
+
+	trap_R_SetColor( NULL );
 }
 
 static void CG_DrawFlagPOIPair( int defTeam, int defFlagSlot, int atkBaseSlot,
@@ -590,12 +723,14 @@ static void CG_Item(centity_t* cent)
 
 	ent.hModel = cg_items[es->modelindex].models[0];
 
-	/* Override flag model when cg_flagStyle == 2 and GT_CTFS is active */
-	if ( cgs.gametype == GT_CTFS && cg_flagStyle.integer == 2 && item->giType == IT_TEAM ) {
-		if ( item->giTag == PW_REDFLAG && cgs.media.redFlagModel2 ) {
+	// flag style override — style 2 uses the flag3 alternate models
+	if ( item->giType == IT_TEAM && cg_flagStyle.integer == 2 ) {
+		if ( item->giTag == PW_REDFLAG ) {
 			ent.hModel = cgs.media.redFlagModel2;
-		} else if ( item->giTag == PW_BLUEFLAG && cgs.media.blueFlagModel2 ) {
+		} else if ( item->giTag == PW_BLUEFLAG ) {
 			ent.hModel = cgs.media.blueFlagModel2;
+		} else if ( item->giTag == PW_NEUTRALFLAG ) {
+			ent.hModel = cgs.media.neutralFlagModel2;
 		}
 	}
 

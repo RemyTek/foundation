@@ -1080,6 +1080,12 @@ typedef struct
 	qhandle_t   flagAttackPOI;
 	qhandle_t   flagDefendPOI;
 	qhandle_t   flagCapturePOI;
+	/* Teammate / flag-carrier POI shaders */
+	qhandle_t   friendPOIShader;
+	qhandle_t   friendPOIRedFlagStolenShader;
+	qhandle_t   friendPOIBlueFlagStolenShader;
+	qhandle_t   friendPOINeutralFlagCarrierShader;
+	qhandle_t   friendPOIFlagCarrierHitShader;
 
 	qhandle_t cursor;
 	qhandle_t selectCursor;
@@ -1807,6 +1813,7 @@ void CG_Beam(centity_t* cent);
 void CG_AdjustPositionForMover(const vec3_t in, int moverNum, int fromTime, int toTime, vec3_t out);
 void CG_DrawFlagPOIs( void );
 void CG_ClearFlagPOIs( void );
+void CG_DrawTeammatePOIs( void );
 
 void CG_PositionEntityOnTag(refEntity_t* entity, const refEntity_t* parent,
                             qhandle_t parentModel, char* tagName);

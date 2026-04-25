@@ -492,6 +492,7 @@ typedef struct {
 	int			atdFlagToucherNum;	// clientNum of the attacker who first touched the base flag this round (-1 = none)
 	int			atdElimTime;		// level.time when defending team was eliminated (0 = not eliminated yet)
 	qboolean	atdElimTouchScored;	// qtrue once the post-elimination touch bonus has been awarded
+	qboolean	atdTimelimitHit;	// match timelimit expired; Blue still needs a response round before resolving
 
 } level_locals_t;
 

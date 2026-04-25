@@ -1190,6 +1190,13 @@ SelectCTFSpawnPoint
 gentity_t *SelectCTFSpawnPoint( gentity_t *ent, team_t team, int teamstate, vec3_t origin, vec3_t angles ) {
 	gentity_t	*spot;
 
+	/* In GT_CTFS (Attack & Defend) every spawn — including between rounds —
+	   must use the base team_CTF_red/blueplayer points (count == 0).
+	   The mid-map team_CTF_red/bluespawn points (count == 1) are never used. */
+	if ( g_gametype.integer == GT_CTFS ) {
+		teamstate = TEAM_BEGIN;
+	}
+
 	spot = SelectRandomTeamSpawnPoint( ent, teamstate, team );
 
 	if ( !spot ) {

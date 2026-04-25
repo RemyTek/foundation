@@ -1736,6 +1736,27 @@ static void CheckExitRules( void ) {
 
 	if ( g_timelimit.integer && !level.warmupTime ) {
 		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
+			/* GT_CTFS: never cut the game off immediately — Blue must always get a
+			   final attack round to respond.  Set atdTimelimitHit and let
+			   G_ATDEndRound handle the actual resolution after Blue's turn. */
+			if ( g_gametype.integer == GT_CTFS ) {
+				if ( !level.atdTimelimitHit ) {
+					level.atdTimelimitHit = qtrue;
+					/* If a round is currently live, end it immediately as a draw so
+					   the Blue-response round can begin without delay. */
+					if ( level.atdRoundNumber == level.atdRoundNumberStarted ) {
+						G_BroadcastServerCommand( -1,
+							"print \"Match timelimit hit! Ending round early.\n\"" );
+						G_ATDEndRound();
+					} else {
+						G_BroadcastServerCommand( -1,
+							"print \"Match timelimit hit!\n\"" );
+					}
+				}
+				/* Never call LogExit from here for GT_CTFS —
+				   G_ATDEndRound owns the resolution once atdTimelimitHit is set. */
+				return;
+			}
 			G_BroadcastServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
 			return;
@@ -1791,7 +1812,9 @@ static void CheckExitRules( void ) {
 		}
 	}
 
-	if ( g_gametype.integer >= GT_CTF && g_capturelimit.integer ) {
+	/* GT_CTFS manages its own game-end logic via G_ATDEndRound / G_ATDEffectiveScoreLimit.
+	   Never let the generic capturelimit check terminate a GT_CTFS match. */
+	if ( g_gametype.integer >= GT_CTF && g_gametype.integer != GT_CTFS && g_capturelimit.integer ) {
 
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );

@@ -1196,10 +1196,16 @@ static void CG_RegisterGraphics(void)
 		cgs.media.blueFlagShader[0] = trap_R_RegisterShaderNoMip("icons/iconf_blu1");
 		cgs.media.blueFlagShader[1] = trap_R_RegisterShaderNoMip("icons/iconf_blu2");
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip("icons/iconf_blu3");
-		/* cg_flagStyle 2: alternate flag3 models */
 		cgs.media.redFlagModel2     = trap_R_RegisterModel( "models/flag3/r_flag3.md3" );
 		cgs.media.blueFlagModel2    = trap_R_RegisterModel( "models/flag3/b_flag3.md3" );
 		cgs.media.neutralFlagModel2 = trap_R_RegisterModel( "models/flag3/n_flag3.md3" );
+
+		cgs.media.flagPoleModel    = trap_R_RegisterModel( "models/flag2/flagpole.md3" );
+		cgs.media.flagFlapModel    = trap_R_RegisterModel( "models/flag2/flagflap3.md3" );
+
+		cgs.media.redFlagFlapSkin     = trap_R_RegisterSkin( "models/flag2/red.skin" );
+		cgs.media.blueFlagFlapSkin    = trap_R_RegisterSkin( "models/flag2/blue.skin" );
+		cgs.media.neutralFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/white.skin" );
 		/* Flag POI shaders */
 		cgs.media.flagAttackPOI  = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_attack" );
 		cgs.media.flagDefendPOI  = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_defend" );
@@ -1214,6 +1220,11 @@ static void CG_RegisterGraphics(void)
 		cgs.media.frozenShader = trap_R_RegisterShader("textures/effects/frozen");
 		cgs.media.friendShader = trap_R_RegisterShader("sprites/foe");
 		cgs.media.friendShaderWallhack = trap_R_RegisterShader("sprites/foe2");
+		cgs.media.friendPOIShader = trap_R_RegisterShaderNoMip( "sprites/foe2.tga" );
+		cgs.media.friendPOIRedFlagStolenShader = trap_R_RegisterShader( "sprites/flagcarrier" );
+		cgs.media.friendPOIBlueFlagStolenShader = trap_R_RegisterShader( "sprites/flagcarrier" );
+		cgs.media.friendPOINeutralFlagCarrierShader = trap_R_RegisterShader( "sprites/neutralflagcarrier" );
+		cgs.media.friendPOIFlagCarrierHitShader = trap_R_RegisterShader( "sprites/flagcarrier_hit" );
 		cgs.media.redQuadShader = trap_R_RegisterShader("powerups/blueflag");
 	}
 

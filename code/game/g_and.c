@@ -45,6 +45,7 @@ void G_ATDInitGame( void ) {
 	level.atdFlagToucherNum     = -1;
 	level.atdElimTime           = 0;
 	level.atdElimTouchScored    = qfalse;
+	level.atdTimelimitHit       = qfalse;
 	Com_Memset( level.atdRoundScoresRed,  0, sizeof( level.atdRoundScoresRed  ) );
 	Com_Memset( level.atdRoundScoresBlue, 0, sizeof( level.atdRoundScoresBlue ) );
 	/* Clear the round score configstring so clients start fresh. */
@@ -180,6 +181,7 @@ void G_ATDEndRound( void ) {
 	int halfIdx;
 	int scorelimit;
 	int i;
+	qboolean blueResponseNotified;
 	gclient_t *cl;
 
 	Team_ResetFlags();
@@ -213,6 +215,8 @@ void G_ATDEndRound( void ) {
 
 	level.atdRoundNumber++;
 
+	blueResponseNotified = qfalse;
+
 	/* Scorelimit check at round boundary.
 	   Blue always attacks last. Determine which team just attacked using the same
 	   formula as G_ATDCheckRules so the two stay in sync.
@@ -235,6 +239,7 @@ void G_ATDEndRound( void ) {
 			   Inform players if Red is already at or past the scorelimit. */
 			if ( red >= scorelimit ) {
 				int lead = red - blue;
+				blueResponseNotified = qtrue;
 				if ( lead > 4 ) {
 					G_BroadcastServerCommand( -1, va(
 						"print \"^1Red^7 has hit the scorelimit with a ^1%i^7-point lead"
@@ -264,6 +269,44 @@ void G_ATDEndRound( void ) {
 				}
 				/* Tied at or above scorelimit — play another round pair. */
 			}
+		}
+	}
+
+	/* Match timelimit check — mirrors scorelimit: Blue always gets a response round.
+	   atdTimelimitHit stays set during overtime so CheckExitRules never calls LogExit. */
+	if ( level.atdTimelimitHit ) {
+		int red2  = level.teamScores[TEAM_RED];
+		int blue2 = level.teamScores[TEAM_BLUE];
+		qboolean blueJustAttacked2 =
+			( ( level.atdEliminationSides + level.atdRoundNumber - 1 ) % 2 != 0 );
+
+		if ( !blueJustAttacked2 ) {
+			/* Red just attacked — Blue gets a final response round. */
+			if ( !blueResponseNotified ) {
+				G_BroadcastServerCommand( -1,
+					"print \"Match timelimit hit — ^4Blue^7 plays a final round!\n\"" );
+			}
+			/* Fall through to start Blue's round. */
+		} else {
+			/* Blue just attacked — resolve the match. */
+			if ( blue2 > red2 ) {
+				CalculateRanks();
+				G_BroadcastScoresToAllClients();
+				G_BroadcastServerCommand( -1, "print \"^4Blue^7 wins!\n\"" );
+				G_ATDGlobalSound( "sound/vo_evil/blue_wins.wav" );
+				LogExit( "Timelimit hit." );
+				return;
+			} else if ( red2 > blue2 ) {
+				CalculateRanks();
+				G_BroadcastScoresToAllClients();
+				G_BroadcastServerCommand( -1, "print \"^1Red^7 wins!\n\"" );
+				G_ATDGlobalSound( "sound/vo_evil/red_wins.wav" );
+				LogExit( "Timelimit hit." );
+				return;
+			}
+			/* Tied — overtime: atdTimelimitHit stays set, play another round pair. */
+			G_BroadcastServerCommand( -1,
+				"print \"Overtime! Scores tied — playing another round!\n\"" );
 		}
 	}
 

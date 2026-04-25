@@ -3099,71 +3099,73 @@ static void CG_Draw2D(void)
 		{
 			CG_CHUDRoutine();
 		}
-		return;
 	}
-
-	if (cg_enableOSPHUD.integer)
+	else if (cg_enableOSPHUD.integer)
 	{
 		CG_OSPHUDRoutine();
 		if (cg_chud.integer)
 		{
 			CG_CHUDRoutine();
 		}
-		return;
 	}
-
-	if (cg.snap->ps.pm_type == PM_INTERMISSION)
+	else if (cg.snap->ps.pm_type == PM_INTERMISSION)
 	{
 		CG_OSPDrawIntermission();
 		CG_DrawVote();
 		return;
 	}
-
-	if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR)
-	{
-		CG_DrawCrosshair();
-		CG_DrawCrosshairNames();
-	}
 	else
 	{
-		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if (!cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0)
+		if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR)
 		{
-			CG_DrawStatusBar();
-			CG_DrawAmmoWarning();
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
-			CG_DrawWeaponSelect();
-			CG_DrawHoldableItem();
-			CG_DrawReward();
 		}
-
-		if (cgs.gametype >= GT_TEAM)
+		else
 		{
-			CG_DrawTeamInfo();
+			// don't draw any status if dead or the scoreboard is being explicitly shown
+			if (!cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0)
+			{
+				CG_DrawStatusBar();
+				CG_DrawAmmoWarning();
+				CG_DrawCrosshair();
+				CG_DrawCrosshairNames();
+				CG_DrawWeaponSelect();
+				CG_DrawHoldableItem();
+				CG_DrawReward();
+			}
+
+			if (cgs.gametype >= GT_TEAM)
+			{
+				CG_DrawTeamInfo();
+			}
+		}
+
+		CG_DrawVote();
+
+		if (cg_lagometer.integer)
+		{
+			CG_DrawLagometer(428 - (cg_drawPing.integer > 0 ? 14 : 0));
+		}
+		CG_DrawUpperRight();
+		CG_DrawLowerRight();
+		CG_DrawLowerLeft();
+		if (CG_DrawFollow() == qfalse)
+		{
+			CG_DrawWarmup();
+		}
+		CG_DrawATDRoundCountdown();
+		cg.scoreBoardShowing = CG_DrawIntermission();
+		if (cg.scoreBoardShowing == qfalse)
+		{
+			CG_OSPDrawCenterString();
 		}
 	}
 
-	CG_DrawVote();
-
-	if (cg_lagometer.integer)
-	{
-		CG_DrawLagometer(428 - (cg_drawPing.integer > 0 ? 14 : 0));
-	}
-	CG_DrawUpperRight();
-	CG_DrawLowerRight();
-	CG_DrawLowerLeft();
-	if (CG_DrawFollow() == qfalse)
-	{
-		CG_DrawWarmup();
-	}
-	CG_DrawATDRoundCountdown();
-	cg.scoreBoardShowing = CG_DrawIntermission();
-	if (cg.scoreBoardShowing == qfalse)
-	{
-		CG_OSPDrawCenterString();
-	}
+	/* Flag and teammate POIs draw on top of any HUD mode (SHUD, OSPHUD, default).
+	   They are intentionally skipped during intermission (early return above). */
 	CG_DrawFlagPOIs();
+	CG_DrawTeammatePOIs();
 }
 
 
