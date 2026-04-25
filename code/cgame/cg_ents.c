@@ -87,7 +87,9 @@ static void CG_PruneFlagPOISlotCurrentFrame( flagPOICache_t *slot ) {
 
 static void CG_DrawFlagPOIMarker( const vec3_t origin, qhandle_t shader, const vec4_t color4 ) {
 	vec3_t trans;
-	float  py, hf, z, sx, sy, iconHalf, perspHalf;
+	float py, hf, z, sx, sy;
+	float perspHalf, iconHalf;
+	float above;
 
 	VectorSubtract( origin, cg.refdef.vieworg, trans );
 	z = DotProduct( trans, cg.refdef.viewaxis[0] );
@@ -101,14 +103,11 @@ static void CG_DrawFlagPOIMarker( const vec3_t origin, qhandle_t shader, const v
 	sx = 320.0f - DotProduct( trans, cg.refdef.viewaxis[1] ) * hf;
 	sy = 240.0f - DotProduct( trans, cg.refdef.viewaxis[2] ) * hf;
 
-	if ( z > 500.0f ) {
-		iconHalf = 6.25f;
-	} else {
-		perspHalf = 12.0f * hf;
-		iconHalf  = ( perspHalf > 6.25f ) ? perspHalf : 6.25f;
-	}
+	perspHalf = 12.0f * hf;
+	iconHalf  = ( perspHalf > 6.25f ) ? perspHalf : 6.25f;
 
-	sy = sy - 1.0f - iconHalf * 2.0f;
+	above = 1.0f;
+	sy = sy - above - iconHalf * 2.0f;
 
 	if ( sx < iconHalf || sx > 640.0f - iconHalf ||
 	     sy < 0 || sy + iconHalf * 2.0f > 480.0f ) {
@@ -116,18 +115,14 @@ static void CG_DrawFlagPOIMarker( const vec3_t origin, qhandle_t shader, const v
 	}
 
 	trap_R_SetColor( color4 );
-	CG_DrawPic( sx - iconHalf, sy, iconHalf * 2.0f, iconHalf * 2.0f, shader );
-}
-
-void CG_ClearFlagPOIs( void ) {
-	memset( s_flagPOI, 0, sizeof( s_flagPOI ) );
-	memset( s_teammatePOI, 0, sizeof( s_teammatePOI ) );
+	CG_DrawPicAspect( sx - iconHalf, sy, iconHalf * 2.0f, iconHalf * 2.0f, shader );
 }
 
 static void CG_UpdateTeammatePOI( int clientNum, const vec3_t origin, int powerups ) {
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
 		return;
 	}
+
 	VectorCopy( origin, s_teammatePOI[clientNum].origin );
 	s_teammatePOI[clientNum].origin[2] += 48.0f;
 	s_teammatePOI[clientNum].powerups = powerups;
@@ -137,12 +132,14 @@ static void CG_UpdateTeammatePOI( int clientNum, const vec3_t origin, int poweru
 
 static qboolean CG_TeammatePOITraceVisible( int entityNum, const vec3_t target ) {
 	trace_t trace;
+
 	CG_Trace( &trace, cg.refdef.vieworg, vec3_origin, vec3_origin, target,
 		cg.snap->ps.clientNum, CONTENTS_SOLID );
+
 	return ( trace.fraction == 1.0f || trace.entityNum == entityNum );
 }
 
-static qboolean CG_TeammatePOIVisible( const centity_t *cent ) {
+qboolean CG_TeammatePOIVisible( const centity_t *cent ) {
 	vec3_t target;
 
 	VectorCopy( cent->lerpOrigin, target );
@@ -150,51 +147,58 @@ static qboolean CG_TeammatePOIVisible( const centity_t *cent ) {
 	if ( CG_TeammatePOITraceVisible( cent->currentState.number, target ) ) {
 		return qtrue;
 	}
+
 	VectorCopy( cent->lerpOrigin, target );
 	target[2] += 28.0f;
-	return CG_TeammatePOITraceVisible( cent->currentState.number, target );
+	if ( CG_TeammatePOITraceVisible( cent->currentState.number, target ) ) {
+		return qtrue;
+	}
+
+	return qfalse;
 }
 
 void CG_DrawTeammatePOIs( void ) {
-	int     i;
-	int     ourClientNum;
-	int     ourTeam;
-	vec4_t  markerColor;
+	int i;
+	int ourClientNum;
+	int ourTeam;
+	vec4_t markerColor;
 
 	if ( !cg_drawFriend.integer || !cg.snap || cgs.gametype < GT_TEAM ) {
 		return;
 	}
+
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		return;
 	}
 
 	ourClientNum = cg.snap->ps.clientNum;
-	ourTeam      = cg.snap->ps.persistant[PERS_TEAM];
+	ourTeam = cg.snap->ps.persistant[PERS_TEAM];
 
 	if ( ourTeam != TEAM_RED && ourTeam != TEAM_BLUE ) {
 		return;
 	}
 
 	for ( i = 0; i < cgs.maxclients; i++ ) {
-		centity_t          *cent;
-		clientInfo_t       *ci;
+		centity_t *cent;
+		clientInfo_t *ci;
 		teammatePOICache_t *cache;
-		qhandle_t           shader;
-		qboolean            isFlagCarrierPOI;
+		qhandle_t shader;
+		qboolean isFlagCarrierPOI;
 
 		if ( i == ourClientNum ) {
 			continue;
 		}
 
-		cent  = &cg_entities[i];
-		ci    = &cgs.clientinfo[i];
+		cent = &cg_entities[i];
+		ci = &cgs.clientinfo[i];
 		cache = &s_teammatePOI[i];
 
 		if ( !ci->infoValid || ci->team != ourTeam ) {
 			continue;
 		}
 
-		/* Clear stale cache if player is dead or not a live player entity. */
+		/* If this teammate is not currently represented as a live player entity,
+		   clear stale cache immediately so death POIs do not linger. */
 		if ( !cent->currentValid ||
 		     cent->currentState.eType != ET_PLAYER ||
 		     ( cent->currentState.eFlags & EF_DEAD ) ) {
@@ -207,39 +211,52 @@ void CG_DrawTeammatePOIs( void ) {
 		if ( CG_TeammatePOIVisible( cent ) ) {
 			continue;
 		}
+
 		if ( !cache->valid ) {
 			continue;
 		}
 
-		shader           = cgs.media.friendPOIShader;
+		shader = cgs.media.friendPOIShader;
 		isFlagCarrierPOI = qfalse;
-		markerColor[0]   = 1.0f;
-		markerColor[1]   = 1.0f;
-		markerColor[2]   = 1.0f;
-		markerColor[3]   = 1.0f;
-
-		if ( ourTeam == TEAM_BLUE && ( cache->powerups & ( 1 << PW_REDFLAG ) ) ) {
-			shader           = cgs.media.friendPOIRedFlagStolenShader;
+		markerColor[0] = 1.0f;
+		markerColor[1] = 1.0f;
+		markerColor[2] = 1.0f;
+		markerColor[3] = 1.0f;
+		if ( ( cache->powerups & ( 1 << PW_REDFLAG ) ) && ( cache->powerups & ( 1 << PW_BLUEFLAG ) ) ) {
+			shader = cgs.media.friendPOIRedFlagStolenShader;
 			isFlagCarrierPOI = qtrue;
-			markerColor[0]   = 1.0f;
-			markerColor[1]   = 0.0f;
-			markerColor[2]   = 0.0f;
+			markerColor[0] = 1.0f;
+			markerColor[1] = 0.0f;
+			markerColor[2] = 1.0f;
+		} else if ( ourTeam == TEAM_BLUE && ( cache->powerups & ( 1 << PW_REDFLAG ) ) ) {
+			shader = cgs.media.friendPOIRedFlagStolenShader;
+			isFlagCarrierPOI = qtrue;
+			markerColor[0] = 1.0f;
+			markerColor[1] = 0.0f;
+			markerColor[2] = 0.0f;
 		} else if ( ourTeam == TEAM_RED && ( cache->powerups & ( 1 << PW_BLUEFLAG ) ) ) {
-			shader           = cgs.media.friendPOIBlueFlagStolenShader;
+			shader = cgs.media.friendPOIBlueFlagStolenShader;
 			isFlagCarrierPOI = qtrue;
-			markerColor[0]   = 0.0f;
-			markerColor[1]   = 0.0f;
-			markerColor[2]   = 1.0f;
+			markerColor[0] = 0.0f;
+			markerColor[1] = 0.0f;
+			markerColor[2] = 1.0f;
 		} else if ( cache->powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-			shader           = cgs.media.friendPOINeutralFlagCarrierShader;
+			shader = cgs.media.friendPOINeutralFlagCarrierShader;
 			isFlagCarrierPOI = qtrue;
 		}
 
 		if ( isFlagCarrierPOI && ( cg.time - cent->pe.painTime ) < 1500 ) {
-			shader         = cgs.media.friendPOIFlagCarrierHitShader;
+			shader = cgs.media.friendPOIFlagCarrierHitShader;
 			markerColor[0] = 1.0f;
 			markerColor[1] = 0.0f;
 			markerColor[2] = 0.0f;
+		}
+
+		/* Regular teammates already have a depth-hacked sprite drawn by
+		   CG_PlayerSprites.  Only draw the POI overlay here for flag carriers
+		   so we don't stack two markers on the same player. */
+		if ( !isFlagCarrierPOI ) {
+			continue;
 		}
 
 		CG_DrawFlagPOIMarker( cache->origin, shader, markerColor );
@@ -248,14 +265,38 @@ void CG_DrawTeammatePOIs( void ) {
 	trap_R_SetColor( NULL );
 }
 
+void CG_ClearFlagPOIs( void ) {
+	memset( s_flagPOI, 0, sizeof( s_flagPOI ) );
+	memset( s_teammatePOI, 0, sizeof( s_teammatePOI ) );
+}
+
+/*
+===============
+CG_DrawFlagPOIPair
+
+Shared helper: renders POIs for one defending flag and the attacker's
+capture base using the same logic for both GT_CTF and GT_CTFS.
+
+  defTeam       - team that owns/defends this flag (TEAM_RED or TEAM_BLUE)
+  defFlagSlot   - s_flagPOI index for the defending flag (0=red, 1=blue)
+  atkBaseSlot   - s_flagPOI index for the attacker's capture base
+  defFlagStatus - wire-protocol value from cgs.redflag/blueflag
+                  (0=atbase, 1=taken, 2=dropped; NOT the flagStatus_t enum)
+  ourTeam       - local player's team
+
+Defenders see DEFEND on visible flag entities.
+Attackers see ATTACK on visible flag entities, plus CAPTURE at their own
+base while the flag is being carried (defFlagStatus == FLAG_TAKEN).
+===============
+*/
 static void CG_DrawFlagPOIPair( int defTeam, int defFlagSlot, int atkBaseSlot,
                                 int defFlagStatus, int ourTeam ) {
-	int            i;
-	int            atkTeam;
-	vec4_t         defColor, atkColor;
-	qhandle_t      shader;
-	flagPOICache_t *defFlags = &s_flagPOI[defFlagSlot];
-	flagPOICache_t *atkBase  = &s_flagPOI[atkBaseSlot];
+	int				i;
+	int				atkTeam;
+	vec4_t			defColor, atkColor;
+	qhandle_t		shader;
+	flagPOICache_t	*defFlags = &s_flagPOI[defFlagSlot];
+	flagPOICache_t	*atkBase  = &s_flagPOI[atkBaseSlot];
 
 	atkTeam = ( defTeam == TEAM_RED ) ? TEAM_BLUE : TEAM_RED;
 
@@ -270,15 +311,22 @@ static void CG_DrawFlagPOIPair( int defTeam, int defFlagSlot, int atkBaseSlot,
 	atkColor[3] = 1.0f;
 
 	if ( ourTeam == defTeam ) {
+		/* Own flag: defend POI on every visible flag entity.
+		   When the flag is carried the entity leaves the snapshot so
+		   count falls to zero automatically — no explicit status check needed. */
 		shader = cgs.media.flagDefendPOI;
 		for ( i = 0; i < defFlags->count; i++ ) {
 			CG_DrawFlagPOIMarker( defFlags->origins[i], shader, defColor );
 		}
 	} else {
+		/* Enemy flag: attack POI on every visible flag entity. */
 		shader = cgs.media.flagAttackPOI;
 		for ( i = 0; i < defFlags->count; i++ ) {
 			CG_DrawFlagPOIMarker( defFlags->origins[i], shader, defColor );
 		}
+
+		/* While a teammate is carrying the enemy flag, show capture POI at
+		   our own base.  defFlagStatus == FLAG_TAKEN (1) in the wire protocol. */
 		if ( defFlagStatus == FLAG_TAKEN && atkBase->count > 0 ) {
 			shader = cgs.media.flagCapturePOI;
 			for ( i = 0; i < atkBase->count; i++ ) {
@@ -288,9 +336,18 @@ static void CG_DrawFlagPOIPair( int defTeam, int defFlagSlot, int atkBaseSlot,
 	}
 }
 
+/*
+===============
+CG_DrawFlagPOIs
+
+Called from CG_Draw2D (after trap_R_RenderScene) so the 2D overlay
+appears on top of the rendered scene.  Projects each stored flag world
+position to screen space and draws the icon there.
+===============
+*/
 void CG_DrawFlagPOIs( void ) {
-	int slotIdx;
-	int ourTeam, ourClientNum;
+	int			slotIdx;
+	int			ourTeam, ourClientNum;
 
 	if ( !cg_flagPOIs.integer ) {
 		return;
@@ -305,6 +362,7 @@ void CG_DrawFlagPOIs( void ) {
 		return;
 	}
 
+	/* Keep only anchors refreshed by entity processing this frame. */
 	for ( slotIdx = 0; slotIdx < 5; slotIdx++ ) {
 		CG_PruneFlagPOISlotCurrentFrame( &s_flagPOI[slotIdx] );
 	}
@@ -313,11 +371,17 @@ void CG_DrawFlagPOIs( void ) {
 	ourTeam      = cgs.clientinfo[ourClientNum].team;
 
 	if ( cgs.gametype == GT_CTF ) {
+		/* Both teams attack and defend simultaneously.
+		   Each pair call takes the defending flag's wire-protocol status so
+		   attackers can see the Capture POI at their own base when carrying. */
 		CG_DrawFlagPOIPair( TEAM_RED,  0, 1, cgs.redflag,  ourTeam );
 		CG_DrawFlagPOIPair( TEAM_BLUE, 1, 0, cgs.blueflag, ourTeam );
 	} else if ( cgs.gametype == GT_CTFS ) {
+		/* One flag contested per round: the defending team's flag.
+		   Attackers see only Attack (and Capture when carrying).
+		   Defenders see only Defend. */
 		int defTeam       = ( cgs.atdAttackingTeam == TEAM_RED ) ? TEAM_BLUE : TEAM_RED;
-		int defFlagIdx    = defTeam - 1;
+		int defFlagIdx    = defTeam - 1;          /* TEAM_RED=1 → 0, TEAM_BLUE=2 → 1 */
 		int atkBaseIdx    = cgs.atdAttackingTeam - 1;
 		int defFlagStatus = ( defTeam == TEAM_RED ) ? cgs.redflag : cgs.blueflag;
 		CG_DrawFlagPOIPair( defTeam, defFlagIdx, atkBaseIdx, defFlagStatus, ourTeam );
@@ -326,8 +390,18 @@ void CG_DrawFlagPOIs( void ) {
 	trap_R_SetColor( NULL );
 }
 
+/*
+===============
+CG_DrawFlagPOI
+
+Called during entity processing to cache the flag's world position.
+The actual drawing and shader selection is handled by CG_DrawFlagPOIs
+in CG_Draw2D, so the icon persists through walls and PVS gaps on every
+frame.
+===============
+*/
 static void CG_DrawFlagPOI( centity_t *cent, const gitem_t *item ) {
-	int    idx;
+	int	idx;
 	vec3_t pos;
 
 	if ( !cg_flagPOIs.integer ) {
@@ -336,10 +410,7 @@ static void CG_DrawFlagPOI( centity_t *cent, const gitem_t *item ) {
 	if ( cgs.gametype != GT_CTF && cgs.gametype != GT_CTFS ) {
 		return;
 	}
-	if ( !cg.snap || cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
-		return;
-	}
-	if ( cgs.gametype == GT_CTFS && cg.warmup && !cgs.atdRoundRespawned ) {
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		return;
 	}
 
@@ -351,6 +422,8 @@ static void CG_DrawFlagPOI( centity_t *cent, const gitem_t *item ) {
 		return;
 	}
 
+	/* Cache the anchor near the top of the flag model so the projected
+	   position tracks the flag tip rather than the base.            */
 	VectorCopy( cent->currentState.pos.trBase, pos );
 	pos[2] += 62;
 	CG_UpdateFlagPOISlot( &s_flagPOI[idx], cent->currentState.number, pos );
@@ -723,15 +796,12 @@ static void CG_Item(centity_t* cent)
 
 	ent.hModel = cg_items[es->modelindex].models[0];
 
-	// flag style override — style 2 uses the flag3 alternate models
+	// flagStyle=2: substitute the alternate (flag3) model for team flag entities
 	if ( item->giType == IT_TEAM && cg_flagStyle.integer == 2 ) {
-		if ( item->giTag == PW_REDFLAG ) {
+		if ( item->giTag == PW_REDFLAG && cgs.media.redFlagModel2 )
 			ent.hModel = cgs.media.redFlagModel2;
-		} else if ( item->giTag == PW_BLUEFLAG ) {
+		else if ( item->giTag == PW_BLUEFLAG && cgs.media.blueFlagModel2 )
 			ent.hModel = cgs.media.blueFlagModel2;
-		} else if ( item->giTag == PW_NEUTRALFLAG ) {
-			ent.hModel = cgs.media.neutralFlagModel2;
-		}
 	}
 
 	VectorCopy(cent->lerpOrigin, ent.origin);

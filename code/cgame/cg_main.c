@@ -391,6 +391,8 @@ static cvarTable_t cvarTable[] =
 	{ &cg_altShadowColor, "cg_altShadowColor", "White", CVAR_ARCHIVE, CG_LocalEventCvarChanged_cg_altShadowColor },
 	{ &cg_scoreboardShowId, "cg_scoreboardShowId", "0", CVAR_ARCHIVE },
 	{ &cg_drawFriend, "cg_drawFriend", "1", CVAR_ARCHIVE },
+	{ &cg_flagStyle, "cg_flagStyle", "1", CVAR_ARCHIVE },
+	{ &cg_flagPOIs,  "cg_flagPOIs",  "1", CVAR_ARCHIVE },
 	{ &cg_teamIndicator, "cg_teamIndicator", "14", CVAR_ARCHIVE, CG_LocalEventBeFeaturesChanged },
 	{ &cg_teamIndicatorAdjust, "cg_teamIndicatorAdjust", "1", CVAR_ARCHIVE, CG_LocalEventCvarChanged_cg_teamIndicatorAdjust },
 	{ &cg_teamIndicatorColor, "cg_teamIndicatorColor", "White", CVAR_ARCHIVE, CG_LocalEventCvarChanged_cg_teamIndicatorColor },
@@ -1190,26 +1192,24 @@ static void CG_RegisterGraphics(void)
 	{
 		cgs.media.redFlagModel = trap_R_RegisterModel("models/flags/r_flag.md3");
 		cgs.media.blueFlagModel = trap_R_RegisterModel("models/flags/b_flag.md3");
+		cgs.media.redFlagModel2  = trap_R_RegisterModel("models/flag3/r_flag3.md3");
+		cgs.media.blueFlagModel2 = trap_R_RegisterModel("models/flag3/b_flag3.md3");
+		cgs.media.neutralFlagModel2 = trap_R_RegisterModel("models/flag3/n_flag3.md3");
 		cgs.media.redFlagShader[0] = trap_R_RegisterShaderNoMip("icons/iconf_red1");
 		cgs.media.redFlagShader[1] = trap_R_RegisterShaderNoMip("icons/iconf_red2");
 		cgs.media.redFlagShader[2] = trap_R_RegisterShaderNoMip("icons/iconf_red3");
 		cgs.media.blueFlagShader[0] = trap_R_RegisterShaderNoMip("icons/iconf_blu1");
 		cgs.media.blueFlagShader[1] = trap_R_RegisterShaderNoMip("icons/iconf_blu2");
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip("icons/iconf_blu3");
-		cgs.media.redFlagModel2     = trap_R_RegisterModel( "models/flag3/r_flag3.md3" );
-		cgs.media.blueFlagModel2    = trap_R_RegisterModel( "models/flag3/b_flag3.md3" );
-		cgs.media.neutralFlagModel2 = trap_R_RegisterModel( "models/flag3/n_flag3.md3" );
-
-		cgs.media.flagPoleModel    = trap_R_RegisterModel( "models/flag2/flagpole.md3" );
-		cgs.media.flagFlapModel    = trap_R_RegisterModel( "models/flag2/flagflap3.md3" );
-
-		cgs.media.redFlagFlapSkin     = trap_R_RegisterSkin( "models/flag2/red.skin" );
-		cgs.media.blueFlagFlapSkin    = trap_R_RegisterSkin( "models/flag2/blue.skin" );
-		cgs.media.neutralFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/white.skin" );
 		/* Flag POI shaders */
 		cgs.media.flagAttackPOI  = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_attack" );
 		cgs.media.flagDefendPOI  = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_defend" );
 		cgs.media.flagCapturePOI = trap_R_RegisterShaderNoMip( "gfx/2d/ad/poi_capture" );
+		cgs.media.friendPOIShader = trap_R_RegisterShaderNoMip( "sprites/foe2.tga" );
+		cgs.media.friendPOIRedFlagStolenShader = trap_R_RegisterShader( "sprites/flagcarrier" );
+		cgs.media.friendPOIBlueFlagStolenShader = trap_R_RegisterShader( "sprites/flagcarrier" );
+		cgs.media.friendPOINeutralFlagCarrierShader = trap_R_RegisterShader( "sprites/neutralflagcarrier" );
+		cgs.media.friendPOIFlagCarrierHitShader = trap_R_RegisterShader( "sprites/flagcarrier_hit" );
 	}
 
 
@@ -1220,11 +1220,6 @@ static void CG_RegisterGraphics(void)
 		cgs.media.frozenShader = trap_R_RegisterShader("textures/effects/frozen");
 		cgs.media.friendShader = trap_R_RegisterShader("sprites/foe");
 		cgs.media.friendShaderWallhack = trap_R_RegisterShader("sprites/foe2");
-		cgs.media.friendPOIShader = trap_R_RegisterShaderNoMip( "sprites/foe2.tga" );
-		cgs.media.friendPOIRedFlagStolenShader = trap_R_RegisterShader( "sprites/flagcarrier" );
-		cgs.media.friendPOIBlueFlagStolenShader = trap_R_RegisterShader( "sprites/flagcarrier" );
-		cgs.media.friendPOINeutralFlagCarrierShader = trap_R_RegisterShader( "sprites/neutralflagcarrier" );
-		cgs.media.friendPOIFlagCarrierHitShader = trap_R_RegisterShader( "sprites/flagcarrier_hit" );
 		cgs.media.redQuadShader = trap_R_RegisterShader("powerups/blueflag");
 	}
 

@@ -2011,6 +2011,52 @@ int FindHumanTeamLeader(bot_state_t *bs) {
 
 /*
 ==================
+BotCTFSOrders
+
+Give attack-or-defend orders to all bots on this team for GT_CTFS.
+Every bot on the attacking team is ordered to get the flag; every bot
+on the defending team is ordered to defend their flag base.
+==================
+*/
+static void BotCTFSOrders(bot_state_t *bs) {
+	int atkTeam, numteammates, i;
+	int teammates[MAX_CLIENTS];
+	char name[MAX_NETNAME];
+
+	if (!ctf_redflag.areanum || !ctf_blueflag.areanum)
+		return;
+
+	atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+	         ? TEAM_RED : TEAM_BLUE;
+
+	numteammates = BotSortTeamMatesByBaseTravelTime(bs, teammates, sizeof(teammates));
+	BotSortTeamMatesByTaskPreference(bs, teammates, numteammates);
+
+	if (BotTeam(bs) == atkTeam) {
+		/* Attacking team: everyone goes for the flag. */
+		for (i = 0; i < numteammates; i++) {
+			ClientName(teammates[i], name, sizeof(name));
+			BotAI_BotInitialChat(bs, "cmd_getflag", name, NULL);
+			BotSayTeamOrder(bs, teammates[i]);
+#ifdef MISSIONPACK
+			BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_GETFLAG);
+#endif
+		}
+	} else {
+		/* Defending team: everyone defends their base flag. */
+		for (i = 0; i < numteammates; i++) {
+			ClientName(teammates[i], name, sizeof(name));
+			BotAI_BotInitialChat(bs, "cmd_defendbase", name, NULL);
+			BotSayTeamOrder(bs, teammates[i]);
+#ifdef MISSIONPACK
+			BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_DEFEND);
+#endif
+		}
+	}
+}
+
+/*
+==================
 BotTeamAI
 ==================
 */
@@ -2163,6 +2209,23 @@ void BotTeamAI(bot_state_t *bs) {
 			break;
 		}
 #endif
+		case GT_CTFS:
+		{
+			/* Re-issue orders whenever team size or flag status changes, or role
+			   switches at the start of a new round (flagstatuschanged is set when
+			   a GTS_* event fires, which also happens on round transitions). */
+			if (bs->numteammates != numteammates || bs->flagstatuschanged || bs->forceorders) {
+				bs->teamgiveorders_time = FloatTime();
+				bs->numteammates = numteammates;
+				bs->flagstatuschanged = qfalse;
+				bs->forceorders = qfalse;
+			}
+			if (bs->teamgiveorders_time && bs->teamgiveorders_time < FloatTime() - 3) {
+				BotCTFSOrders(bs);
+				bs->teamgiveorders_time = 0;
+			}
+			break;
+		}
 	}
 }
 

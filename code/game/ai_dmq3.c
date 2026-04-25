@@ -131,7 +131,7 @@ BotCTFCarryingFlag
 ==================
 */
 int BotCTFCarryingFlag(bot_state_t *bs) {
-	if (gametype != GT_CTF) return CTF_FLAG_NONE;
+	if (gametype != GT_CTF && gametype != GT_CTFS) return CTF_FLAG_NONE;
 
 	if (bs->inventory[INVENTORY_REDFLAG] > 0) return CTF_FLAG_RED;
 	else if (bs->inventory[INVENTORY_BLUEFLAG] > 0) return CTF_FLAG_BLUE;
@@ -1363,6 +1363,16 @@ void BotTeamGoals(bot_state_t *bs, int retreat) {
 			//decide what to do in CTF mode
 			BotCTFSeekGoals(bs);
 		}
+		else if (gametype == GT_CTFS) {
+			/* GT_CTFS: only the attacking team pursues flags.
+			   Defenders have LTG_DEFENDKEYAREA set by orders and should not
+			   override it by wandering toward flags. */
+			int atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+			             ? TEAM_RED : TEAM_BLUE;
+			if (BotTeam(bs) == atkTeam) {
+				BotCTFSeekGoals(bs);
+			}
+		}
 #ifdef MISSIONPACK
 		else if (gametype == GT_1FCTF) {
 			Bot1FCTFSeekGoals(bs);
@@ -1545,7 +1555,7 @@ char *EasyClientName(int client, char *buf, int size) {
 			memmove(ptr, ptr+1, strlen(ptr + 1)+1);
 		}
 	}
-	
+
 	Q_strncpyz( buf, name, size );
 
 	return buf;
@@ -4855,7 +4865,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 				bs->enemysuicide = qtrue;
 			}
 			//
-#ifdef MISSIONPACK			
+#ifdef MISSIONPACK
 			if (gametype == GT_1FCTF) {
 				//
 				BotEntityInfo(target, &entinfo);
@@ -4903,7 +4913,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		}
 		case EV_GLOBAL_TEAM_SOUND:
 		{
-			if (gametype == GT_CTF) {
+			if (gametype == GT_CTF || gametype == GT_CTFS) {
 				switch(state->eventParm) {
 					case GTS_RED_CAPTURE:
 						bs->blueflagstatus = 0;

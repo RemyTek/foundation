@@ -92,8 +92,8 @@ extern "C" {
 #define DEFAULT_TEAM_MODEL      "sarge"
 #define DEFAULT_TEAM_HEAD       "sarge"
 
-#define DEFAULT_REDTEAM_NAME        "Stroggs"
-#define DEFAULT_BLUETEAM_NAME       "Pagans"
+#define DEFAULT_REDTEAM_NAME        "^1RED"
+#define DEFAULT_BLUETEAM_NAME       "^4BLUE"
 
 #define MAX_ALT_SHADERS 16
 
@@ -735,9 +735,9 @@ typedef struct
 	qhandle_t   redFlagModel;
 	qhandle_t   blueFlagModel;
 	qhandle_t   neutralFlagModel;
-	qhandle_t   redFlagModel2;     /* GT_CTFS cg_flagStyle 2: flag3/r_flag3.md3 */
-	qhandle_t   blueFlagModel2;    /* GT_CTFS cg_flagStyle 2: flag3/b_flag3.md3 */
-	qhandle_t   neutralFlagModel2; /* GT_CTFS cg_flagStyle 2: flag3/n_flag3.md3 */
+	qhandle_t   redFlagModel2;
+	qhandle_t   blueFlagModel2;
+	qhandle_t   neutralFlagModel2;
 	qhandle_t   redFlagShader[3];
 	qhandle_t   blueFlagShader[3];
 	qhandle_t   flagShader[4];
@@ -1586,10 +1586,12 @@ typedef struct
 } OSP_PrintInfo_t;
 
 void CG_AdjustFrom640(float* x, float* y, float* w, float* h);
+void CG_AdjustFrom640Aspect(float* x, float* y, float* w, float* h);
 void CG_AdjustFrom640_Old(float* x, float* y, float* w, float* h, qboolean correctWide);
 void CG_FillRect(float x, float y, float width, float height, const float* color);
 void CG_DrawPicOld(float x, float y, float width, float height, qhandle_t hShader);
 void CG_DrawPic(float x, float y, float width, float height, qhandle_t hShader);
+void CG_DrawPicAspect(float x, float y, float width, float height, qhandle_t hShader);
 void CG_DrawPicWithColor(float x, float y, float w, float h, const vec4_t color, qhandle_t shader);
 
 float CG_OSPDrawStringLength(const char* string, float ax, float aw, int proportional);
@@ -1814,6 +1816,7 @@ void CG_AdjustPositionForMover(const vec3_t in, int moverNum, int fromTime, int 
 void CG_DrawFlagPOIs( void );
 void CG_ClearFlagPOIs( void );
 void CG_DrawTeammatePOIs( void );
+qboolean CG_TeammatePOIVisible( const centity_t *cent );
 
 void CG_PositionEntityOnTag(refEntity_t* entity, const refEntity_t* parent,
                             qhandle_t parentModel, char* tagName);

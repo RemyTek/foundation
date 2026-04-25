@@ -120,6 +120,16 @@ void CG_AdjustFrom640(float* x, float* y, float* w, float* h)
 	if (w) *w *= cgs.screenXScale_Old;
 	if (h) *h *= cgs.screenYScale_Old;
 }
+// Aspect-correct scaling for coordinates derived from 3D world projection
+// (e.g. flag/teammate POIs). Uses screenXScale (vidHeight/480) + centering
+// bias so icons track the renderer viewport on widescreen displays.
+void CG_AdjustFrom640Aspect(float* x, float* y, float* w, float* h)
+{
+	if (x) *x = *x * cgs.screenXScale + cgs.screenXBias;
+	if (y) *y = *y * cgs.screenYScale + cgs.screenYBias;
+	if (w) *w *= cgs.screenXScale;
+	if (h) *h *= cgs.screenYScale;
+}
 void CG_AdjustFrom640_Old(float* x, float* y, float* w, float* h, qboolean correctWide)
 {
 #if 0
@@ -385,6 +395,12 @@ void CG_DrawPicOld(float x, float y, float width, float height, qhandle_t hShade
 void CG_DrawPic(float x, float y, float width, float height, qhandle_t hShader)
 {
 	CG_AdjustFrom640(&x, &y, &width, &height);
+	trap_R_DrawStretchPic(x, y, width, height, 0, 0, 1, 1, hShader);
+}
+
+void CG_DrawPicAspect(float x, float y, float width, float height, qhandle_t hShader)
+{
+	CG_AdjustFrom640Aspect(&x, &y, &width, &height);
 	trap_R_DrawStretchPic(x, y, width, height, 0, 0, 1, 1, hShader);
 }
 
@@ -1732,7 +1748,7 @@ void CG_OSPDrawPoly(float x, float y, float w, float h, vec4_t color)
 // bk001205 - code below duplicated in q3_ui/ui-atoms.c
 // bk001205 - FIXME: does this belong in ui_shared.c?
 // bk001205 - FIXME: HARD_LINKED flags not visible here
-#ifndef Q3_STATIC // bk001205 - q_shared defines not visible here 
+#ifndef Q3_STATIC // bk001205 - q_shared defines not visible here
 /*
 =================
 UI_DrawProportionalString2
@@ -3127,7 +3143,7 @@ void CG_OSPDrawStringNew(float x, float y, const char* string, const vec4_t setC
 	proportional = (flags & DS_PROPORTIONAL) ? 1 : 0;
 	hasBorder = (border != NULL) ? 1 : 0;
 	expectedLenght = 0.0f;
-	
+
 
 	if (flags & DS_MAX_WIDTH_IS_CHARS)
 	{

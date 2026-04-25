@@ -82,6 +82,15 @@ void BotVoiceChat_GetFlag(bot_state_t *bs, int client, int mode) {
 			return;
 	}
 #endif
+	else if (gametype == GT_CTFS) {
+		/* GT_CTFS: only attackers may go for the flag; ignore order if defending. */
+		int atkTeam = ((level.atdEliminationSides + level.atdRoundNumber) % 2 == 0)
+		             ? TEAM_RED : TEAM_BLUE;
+		if (!ctf_redflag.areanum || !ctf_blueflag.areanum)
+			return;
+		if (BotTeam(bs) != atkTeam)
+			return;
+	}
 	else {
 		return;
 	}
@@ -96,7 +105,7 @@ void BotVoiceChat_GetFlag(bot_state_t *bs, int client, int mode) {
 	//set the team goal time
 	bs->teamgoal_time = FloatTime() + CTF_GETFLAG_TIME;
 	// get an alternate route in ctf
-	if (gametype == GT_CTF) {
+	if (gametype == GT_CTF || gametype == GT_CTFS) {
 		//get an alternative route goal towards the enemy base
 		BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
 	}
@@ -188,6 +197,14 @@ void BotVoiceChat_Defend(bot_state_t *bs, int client, int mode) {
 #endif
 			) {
 		//
+		switch(BotTeam(bs)) {
+			case TEAM_RED: memcpy(&bs->teamgoal, &ctf_redflag, sizeof(bot_goal_t)); break;
+			case TEAM_BLUE: memcpy(&bs->teamgoal, &ctf_blueflag, sizeof(bot_goal_t)); break;
+			default: return;
+		}
+	}
+	else if (gametype == GT_CTFS) {
+		/* GT_CTFS: defenders guard their own flag base. */
 		switch(BotTeam(bs)) {
 			case TEAM_RED: memcpy(&bs->teamgoal, &ctf_redflag, sizeof(bot_goal_t)); break;
 			case TEAM_BLUE: memcpy(&bs->teamgoal, &ctf_blueflag, sizeof(bot_goal_t)); break;
