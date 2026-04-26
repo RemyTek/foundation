@@ -46,12 +46,14 @@ void G_ATDInitGame( void ) {
 	level.atdElimTime           = 0;
 	level.atdElimTouchScored    = qfalse;
 	level.atdTimelimitHit       = qfalse;
+	level.atdAccumulatedPlayMs  = 0;
 	Com_Memset( level.atdRoundScoresRed,  0, sizeof( level.atdRoundScoresRed  ) );
 	Com_Memset( level.atdRoundScoresBlue, 0, sizeof( level.atdRoundScoresBlue ) );
 	/* Clear the round score configstring so clients start fresh. */
 	trap_SetConfigstring( CS_ATD_ROUNDSCORES, "" );
 	trap_SetConfigstring( CS_ATD_ROUNDSTART, "0" );
 	trap_SetConfigstring( CS_ATD_RESPAWNED, "0" );
+	trap_SetConfigstring( CS_ATD_ACCUMULATED, "0" );
 	/* CS_WARMUP will be set after the initial match warmup ends (G_ATDEndRound). */
 }
 
@@ -281,11 +283,9 @@ void G_ATDEndRound( void ) {
 			( ( level.atdEliminationSides + level.atdRoundNumber - 1 ) % 2 != 0 );
 
 		if ( !blueJustAttacked2 ) {
-			/* Red just attacked — Blue gets a final response round. */
-			if ( !blueResponseNotified ) {
-				G_BroadcastServerCommand( -1,
-					"print \"Match timelimit hit — ^4Blue^7 plays a final round!\n\"" );
-			}
+			/* Red just attacked — Blue gets a final response round.
+			   The overtime announcement and sound were already broadcast from
+			   g_main.c when atdTimelimitHit was first set; no repeat needed. */
 			/* Fall through to start Blue's round. */
 		} else {
 			/* Blue just attacked — resolve the match. */
@@ -310,6 +310,20 @@ void G_ATDEndRound( void ) {
 		}
 	}
 
+	/* Accumulate the play time from the round that just ended.
+	   Capture atdRoundStartTime now — it is overwritten below with the next
+	   round's scheduled start time. */
+	{
+		int prevRoundStart = level.atdRoundStartTime;
+		int roundElapsed = level.time - prevRoundStart;
+		if ( g_roundtimelimit.integer > 0 ) {
+			int cap = g_roundtimelimit.integer * 1000;
+			if ( roundElapsed > cap ) roundElapsed = cap;
+		}
+		if ( roundElapsed < 0 ) roundElapsed = 0;
+		level.atdAccumulatedPlayMs += roundElapsed;
+	}
+
 	level.atdRoundStartTime   = level.time + atd_rounddelay.integer * 1000;
 	level.atdRoundRespawned   = qfalse;
 	level.atdRoundFreezeTime  = 0;
@@ -319,6 +333,17 @@ void G_ATDEndRound( void ) {
 	level.atdFlagToucherNum   = -1;
 	level.atdElimTime         = 0;
 	level.atdElimTouchScored  = qfalse;
+
+	/* Broadcast the new accumulated total so clients can freeze the timer display. */
+	trap_SetConfigstring( CS_ATD_ACCUMULATED, va( "%i", level.atdAccumulatedPlayMs ) );
+
+	/* Freeze the displayed game clock at the accumulated play time while warmup runs.
+	   level.startTime is used by g_timelimit; setting it here ensures warmup gaps
+	   do not count against the match timelimit either.
+	   Formula: startTime = now - accumulated  →  now - startTime = accumulated (frozen). */
+	level.startTime = level.time - level.atdAccumulatedPlayMs;
+	trap_SetConfigstring( CS_LEVEL_START_TIME, va( "%i", level.startTime ) );
+
 	/* Clear the active-round timer on clients — round is now in warmup phase. */
 	trap_SetConfigstring( CS_ATD_ROUNDSTART, "0" );
 	trap_SetConfigstring( CS_ATD_RESPAWNED, "0" );
@@ -413,6 +438,12 @@ void G_CheckATDRound( void ) {
 			level.atdRoundBluePlayers   = G_ATDTeamLivingCount( TEAM_BLUE );
 			level.atdRoundStartRed      = level.teamScores[TEAM_RED];
 			level.atdRoundStartBlue     = level.teamScores[TEAM_BLUE];
+			/* Adjust level.startTime so the game clock and g_timelimit both
+			   count only actual play time.  Formula:
+			     startTime = roundStartTime - accumulated
+			   → level.time - startTime = accumulated + elapsed_this_round. */
+			level.startTime = level.atdRoundStartTime - level.atdAccumulatedPlayMs;
+			trap_SetConfigstring( CS_LEVEL_START_TIME, va( "%i", level.startTime ) );
 			/* Publish the exact round-start time so clients can render the countdown. */
 			trap_SetConfigstring( CS_ATD_ROUNDSTART, va( "%i", level.atdRoundStartTime ) );
 			/* Clear the inter-round countdown and unfreeze players. */

@@ -493,6 +493,7 @@ typedef struct {
 	int			atdElimTime;		// level.time when defending team was eliminated (0 = not eliminated yet)
 	qboolean	atdElimTouchScored;	// qtrue once the post-elimination touch bonus has been awarded
 	qboolean	atdTimelimitHit;	// match timelimit expired; Blue still needs a response round before resolving
+	int			atdAccumulatedPlayMs;	// total play time (ms) from all completed rounds; excludes warmup gaps
 
 } level_locals_t;
 

@@ -740,7 +740,17 @@ float CG_DrawTimer(float y)
 	int         w, h;
 	const float   color[4] = {1.0, 1.0, 1.0, 1.0};
 
-	msec = cg.time - cgs.levelStartTime;
+	if ( cgs.gametype == GT_CTFS ) {
+		if ( cgs.atdRoundStartTime > 0 ) {
+			/* Round live: accumulated + elapsed this round. */
+			msec = cgs.atdAccumulatedPlayMs + ( cg.time - cgs.atdRoundStartTime );
+		} else {
+			/* Inter-round warmup: freeze at accumulated total. */
+			msec = cgs.atdAccumulatedPlayMs;
+		}
+	} else {
+		msec = cg.time - cgs.levelStartTime;
+	}
 
 	if (msec < 0) msec *= -1;
 
@@ -768,7 +778,15 @@ void CG_DrawTimer2(void)
 	int         w, h;
 	const float   color[4] = {1.0, 1.0, 1.0, 1.0};
 
-	msec = cg.time - cgs.levelStartTime;
+	if ( cgs.gametype == GT_CTFS ) {
+		if ( cgs.atdRoundStartTime > 0 ) {
+			msec = cgs.atdAccumulatedPlayMs + ( cg.time - cgs.atdRoundStartTime );
+		} else {
+			msec = cgs.atdAccumulatedPlayMs;
+		}
+	} else {
+		msec = cg.time - cgs.levelStartTime;
+	}
 
 	if (msec < 0) msec *= -1;
 

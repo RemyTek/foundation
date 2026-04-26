@@ -30,7 +30,15 @@ void CG_SHUDElementGameTimeRoutine(void* context)
 	{
 		int         mins, seconds, tens;
 		int         msec;
-		msec = cg.time - cgs.levelStartTime;
+		if ( cgs.gametype == GT_CTFS ) {
+			if ( cgs.atdRoundStartTime > 0 ) {
+				msec = cgs.atdAccumulatedPlayMs + ( cg.time - cgs.atdRoundStartTime );
+			} else {
+				msec = cgs.atdAccumulatedPlayMs;
+			}
+		} else {
+			msec = cg.time - cgs.levelStartTime;
+		}
 
 		if (msec < 0) msec *= -1;
 

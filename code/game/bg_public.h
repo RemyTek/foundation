@@ -92,6 +92,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_ATD_ROUNDSCORES		29		// GT_CTFS: space-delimited red/blue score pairs per completed half-round
 #define CS_ATD_ROUNDSTART		30		// GT_CTFS: server time (ms) when the current round went live; "0" if not active
 #define CS_ATD_RESPAWNED		31		// GT_CTFS: epoch when players were respawned to spawns; "0" otherwise
+#define CS_ATD_ACCUMULATED		32		// GT_CTFS: total play time (ms) accumulated from completed rounds; "0" otherwise
 
 #define MAX_ATD_ROUNDS_STORED	500		// max half-rounds stored server-side (250 display rounds)
 #define MAX_ATD_ROUNDS_WINDOW	22		// half-rounds transmitted in CS sliding window (11 display rounds)

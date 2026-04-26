@@ -1432,6 +1432,7 @@ typedef struct
 	int             atdRoundStartTime;        /* GT_CTFS: server time when current round went live */
 	qboolean        atdRoundRespawned;        /* GT_CTFS: qtrue once inter-round respawn has happened */
 	int             atdRoundFreezeTime;       /* GT_CTFS: server time when inter-round freeze ends */
+	int             atdAccumulatedPlayMs;     /* GT_CTFS: total play time (ms) from completed rounds (frozen during warmup) */
 	unsigned int    g_threewave;              /* GT_CTFS: g_threewave server setting */
 
 	qboolean  newHud;

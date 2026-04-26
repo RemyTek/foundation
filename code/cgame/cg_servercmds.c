@@ -284,9 +284,10 @@ void CG_SetConfigValues(void)
 		cgs.blueflag         = s[1] - '0';
 		cgs.atdAttackingTeam = s[2] - '0';
 		CG_ParseATDRoundScores( CG_ConfigString( CS_ATD_ROUNDSCORES ) );
-		cgs.atdRoundStartTime  = atoi( CG_ConfigString( CS_ATD_ROUNDSTART ) );
-		cgs.atdRoundFreezeTime = atoi( CG_ConfigString( CS_ATD_RESPAWNED ) );
-		cgs.atdRoundRespawned  = cgs.atdRoundFreezeTime > 0;
+		cgs.atdRoundStartTime    = atoi( CG_ConfigString( CS_ATD_ROUNDSTART ) );
+		cgs.atdRoundFreezeTime   = atoi( CG_ConfigString( CS_ATD_RESPAWNED ) );
+		cgs.atdRoundRespawned    = cgs.atdRoundFreezeTime > 0;
+		cgs.atdAccumulatedPlayMs = atoi( CG_ConfigString( CS_ATD_ACCUMULATED ) );
 	}
 	cg.warmup = atoi(CG_ConfigString(CS_WARMUP));
 }
@@ -428,6 +429,9 @@ static void CG_ConfigStringModified(void)
 	else if ( num == CS_ATD_RESPAWNED ) {
 		cgs.atdRoundFreezeTime = atoi( str );
 		cgs.atdRoundRespawned  = cgs.atdRoundFreezeTime > 0;
+	}
+	else if ( num == CS_ATD_ACCUMULATED ) {
+		cgs.atdAccumulatedPlayMs = atoi( str );
 	}
 	else if (num >= CS_MODELS && num < CS_MODELS + MAX_MODELS)
 	{

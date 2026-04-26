@@ -1735,28 +1735,38 @@ static void CheckExitRules( void ) {
 	}
 
 	if ( g_timelimit.integer && !level.warmupTime ) {
-		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
-			/* GT_CTFS: never cut the game off immediately — Blue must always get a
-			   final attack round to respond.  Set atdTimelimitHit and let
-			   G_ATDEndRound handle the actual resolution after Blue's turn. */
-			if ( g_gametype.integer == GT_CTFS ) {
-				if ( !level.atdTimelimitHit ) {
+		if ( g_gametype.integer == GT_CTFS ) {
+			/* GT_CTFS: only live-round play time counts against the match timelimit.
+			   Blue always gets to finish on offense:
+			     - If Red is attacking when time expires: end Red's round early,
+			       play overtime sound, Blue gets a mandatory final offensive round.
+			     - If Blue is attacking when time expires: just flag it and let the
+			       round finish naturally; G_ATDEndRound resolves at round's end.
+			   Never call LogExit here — G_ATDEndRound owns match resolution.
+			   Fall through so mercylimit / capturelimit checks still run. */
+			if ( level.atdRoundNumber == level.atdRoundNumberStarted && !level.atdTimelimitHit ) {
+				int playMs = level.atdAccumulatedPlayMs
+				           + ( level.time - level.atdRoundStartTime );
+				if ( playMs >= g_timelimit.integer * 60000 ) {
+					qboolean blueAttacking =
+						( ( level.atdEliminationSides + level.atdRoundNumber ) % 2 != 0 );
 					level.atdTimelimitHit = qtrue;
-					/* If a round is currently live, end it immediately as a draw so
-					   the Blue-response round can begin without delay. */
-					if ( level.atdRoundNumber == level.atdRoundNumberStarted ) {
+					if ( !blueAttacking ) {
+						/* Red is on offense — flag it, play the sound, then let the
+						   round finish naturally. G_ATDEndRound will see atdTimelimitHit
+						   and give Blue a mandatory final offensive turn at round's end. */
+						G_ATDGlobalSound( "sound/vo_evil/overtime.wav" );
 						G_BroadcastServerCommand( -1,
-							"print \"Match timelimit hit! Ending round early.\n\"" );
-						G_ATDEndRound();
+							"print \"Match timelimit! ^4Blue^7 gets a final offensive round!\n\"" );
 					} else {
+						/* Blue is on offense — let the round finish naturally.
+						   G_ATDEndRound will resolve when the round ends. */
 						G_BroadcastServerCommand( -1,
-							"print \"Match timelimit hit!\n\"" );
+							"print \"Match timelimit! Finishing Blue's round...\n\"" );
 					}
 				}
-				/* Never call LogExit from here for GT_CTFS —
-				   G_ATDEndRound owns the resolution once atdTimelimitHit is set. */
-				return;
 			}
+		} else if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
 			G_BroadcastServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
 			return;
