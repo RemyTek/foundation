@@ -2285,55 +2285,69 @@ void CG_DrawWarmup(void)
 			CG_DrawStringExt((SCREEN_WIDTH - (len * width)) / 2, 25, text, colorLtGrey, 0, 1, width, (int)(1.1 * (float)width), qfalse);
 		}
 
-		if (cg.showScores == 0 && !(cgs.gametype == GT_CTFS && cgs.atdCompletedRounds > 0))
+		{
+			// Countdown sound events: run for all warmup types including GT_CTFS round warmup.
+			// Ceiling division matches missionpackplus: sound fires at the N-second mark, not N+1.
+			int soundSec;
+			if (sec < cg.time)
+			{
+				cg.warmup = 0;
+				soundSec = 0;
+			}
+			else
+			{
+				soundSec = (sec - cg.time + 999) / 1000;
+			}
+			if (soundSec != cg.warmupCount)
+			{
+				cg.warmupCount = soundSec;
+				switch (soundSec)
+				{
+					case 0:
+						// g_warmup only: fight. Inter-round warmup: silent (attack/defend fires from CG_ParseWarmup).
+						if (cgs.gametype != GT_CTFS || !cg.atdInterRound)
+							trap_S_StartLocalSound(cgs.media.countFightSound, CHAN_ANNOUNCER);
+						break;
+					case 1:
+						trap_S_StartLocalSound(cgs.media.count1Sound, CHAN_ANNOUNCER);
+						break;
+					case 2:
+						trap_S_StartLocalSound(cgs.media.count2Sound, CHAN_ANNOUNCER);
+						break;
+					case 3:
+						trap_S_StartLocalSound(cgs.media.count3Sound, CHAN_ANNOUNCER);
+						break;
+					case 5:
+						// Inter-round warmup only (not initial g_warmup).
+						if (cgs.gametype == GT_CTFS && cg.atdInterRound)
+							trap_S_StartLocalSound(cgs.media.countRoundBeginsInSound, CHAN_ANNOUNCER);
+						break;
+					default:
+						break;
+				}
+			}
+		}
+
+		if (cg.warmupCount > 0 && cg.showScores == 0 && !(cgs.gametype == GT_CTFS && cg.atdInterRound))
 		{
 			int cw;
 			float* color = colorWhite;
 			const char* s;
 			int w;
 
-			sec = (sec - cg.time) / 1000;
-			if (sec < 0)
-			{
-				cg.warmup = 0;
-				sec = 0;
-			}
-			s = va("Starts in: %i", sec + 1);
-			if (sec != cg.warmupCount)
-			{
-				cg.warmupCount = sec;
-				switch (sec)
-				{
-					case 0:
-						trap_S_StartLocalSound(cgs.media.count1Sound, CHAN_ANNOUNCER);
-						break;
-					case 1:
-						trap_S_StartLocalSound(cgs.media.count2Sound, CHAN_ANNOUNCER);
-						break;
-					case 2:
-						trap_S_StartLocalSound(cgs.media.count3Sound, CHAN_ANNOUNCER);
-						break;
-					case 4:
-						if ( cgs.gametype == GT_CTFS ) {
-							trap_S_StartLocalSound(cgs.media.countRoundBeginsInSound, CHAN_ANNOUNCER);
-						}
-						break;
-					default:
-						break;
-				}
-			}
-
+			// With ceiling division, warmupCount IS the displayed value (no +1 needed).
+			s = va("Starts in: %i", cg.warmupCount);
 			switch (cg.warmupCount)
 			{
-				case 0:
+				case 1:
 					cw = 28;
 					color = colorLtGrey;
 					break;
-				case 1:
+				case 2:
 					cw = 24;
 					color = colorYellow;
 					break;
-				case 2:
+				case 3:
 					cw = 20;
 					color = colorWhite;
 					break;
@@ -2418,27 +2432,41 @@ void CG_DrawWarmupShud(void)
 	}
 	else // warmup > 0
 	{
-		if (cg.showScores == 0 && !(cgs.gametype == GT_CTFS && cgs.atdCompletedRounds > 0))
+		if (cg.showScores == 0)
 		{
-			sec = (sec - cg.time) / 1000;
-			if (sec < 0)
+			int soundSec;
+			if (sec < cg.time)
 			{
 				cg.warmup = 0;
-				sec = 0;
+				soundSec = 0;
 			}
-			if (sec != cg.warmupCount)
+			else
 			{
-				cg.warmupCount = sec;
-				switch (sec)
+				soundSec = (sec - cg.time + 999) / 1000;
+			}
+			if (soundSec != cg.warmupCount)
+			{
+				cg.warmupCount = soundSec;
+				switch (soundSec)
 				{
 					case 0:
-						trap_S_StartLocalSound(cgs.media.count1Sound, CHAN_ANNOUNCER);
+						// g_warmup only: fight. Inter-round warmup: silent (attack/defend fires from CG_ParseWarmup).
+						if (cgs.gametype != GT_CTFS || !cg.atdInterRound)
+							trap_S_StartLocalSound(cgs.media.countFightSound, CHAN_ANNOUNCER);
 						break;
 					case 1:
-						trap_S_StartLocalSound(cgs.media.count2Sound, CHAN_ANNOUNCER);
+						trap_S_StartLocalSound(cgs.media.count1Sound, CHAN_ANNOUNCER);
 						break;
 					case 2:
+						trap_S_StartLocalSound(cgs.media.count2Sound, CHAN_ANNOUNCER);
+						break;
+					case 3:
 						trap_S_StartLocalSound(cgs.media.count3Sound, CHAN_ANNOUNCER);
+						break;
+					case 5:
+						// Inter-round warmup only (not initial g_warmup).
+						if (cgs.gametype == GT_CTFS && cg.atdInterRound)
+							trap_S_StartLocalSound(cgs.media.countRoundBeginsInSound, CHAN_ANNOUNCER);
 						break;
 					default:
 						break;

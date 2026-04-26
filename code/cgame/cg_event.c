@@ -1138,22 +1138,31 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 						CG_AddBufferedSound(cgs.media.returnYourTeamSound);
 					else
 						CG_AddBufferedSound(cgs.media.returnOpponentSound);
-					//
-					CG_AddBufferedSound(cgs.media.blueFlagReturnedSound);
+					// GT_CTFS uses round-based logic; skip the extra voice cue
+					if (cgs.gametype != GT_CTFS)
+						CG_AddBufferedSound(cgs.media.blueFlagReturnedSound);
 					break;
 				case GTS_BLUE_RETURN: // CTF red flag returned, 1FCTF: neutral flag returned
 					if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE)
 						CG_AddBufferedSound(cgs.media.returnYourTeamSound);
 					else
 						CG_AddBufferedSound(cgs.media.returnOpponentSound);
-					//
-					CG_AddBufferedSound(cgs.media.redFlagReturnedSound);
+					// GT_CTFS uses round-based logic; skip the extra voice cue
+					if (cgs.gametype != GT_CTFS)
+						CG_AddBufferedSound(cgs.media.redFlagReturnedSound);
 					break;
 
 				case GTS_RED_TAKEN: // CTF: red team took blue flag, 1FCTF: blue team took the neutral flag
-					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
+					// if this player already has the flag a sound is played in CG_CheckLocalSounds
 					if (cg.snap->ps.powerups[PW_BLUEFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG])
 					{
+						// already carrying — suppress duplicate announcement
+					}
+					else if (es->otherEntityNum < MAX_CLIENTS &&
+					         es->otherEntityNum == (unsigned)cg.snap->ps.clientNum)
+					{
+						// GT_CTFS threewave bonus touch: only the toucher hears this
+						CG_AddBufferedSound(cgs.media.youHaveFlagSound);
 					}
 					else
 					{
@@ -1168,9 +1177,16 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 					}
 					break;
 				case GTS_BLUE_TAKEN: // CTF: blue team took the red flag, 1FCTF red team took the neutral flag
-					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
+					// if this player already has the flag a sound is played in CG_CheckLocalSounds
 					if (cg.snap->ps.powerups[PW_REDFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG])
 					{
+						// already carrying — suppress duplicate announcement
+					}
+					else if (es->otherEntityNum < MAX_CLIENTS &&
+					         es->otherEntityNum == (unsigned)cg.snap->ps.clientNum)
+					{
+						// GT_CTFS threewave bonus touch: only the toucher hears this
+						CG_AddBufferedSound(cgs.media.youHaveFlagSound);
 					}
 					else
 					{

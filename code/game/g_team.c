@@ -173,7 +173,7 @@ void AddTeamScore( vec3_t origin, team_t team, int score ) {
 		eventParm = ( team == TEAM_RED ) ? GTS_REDTEAM_SCORED : GTS_BLUETEAM_SCORED;
 	}
 
-	if ( eventParm != -1 ) {
+	if ( eventParm != -1 && g_gametype.integer != GT_CTFS ) {
 		te = G_TempEntity(origin, EV_GLOBAL_TEAM_SOUND );
 		te->r.svFlags |= SVF_BROADCAST;
 		te->s.eventParm = eventParm;

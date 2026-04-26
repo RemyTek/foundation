@@ -649,6 +649,7 @@ typedef struct
 	// warmup countdown
 	int         warmup;
 	int         warmupCount;
+	qboolean    atdInterRound;   // qtrue after g_warmup ends (map_restart) for GT_CTFS
 
 	//==========================
 

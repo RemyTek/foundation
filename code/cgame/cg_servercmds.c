@@ -235,7 +235,9 @@ static void CG_ParseWarmup(void)
 	{
 		// Очистка новой статистики
 		memset(&cgs.be.newStats, 0, sizeof(cgs.be.newStats));
-		if ( cgs.gametype == GT_CTFS && cg.snap &&
+		// Round warmup ended: tell each player whether they attack or defend.
+		// Not fired during g_warmup (atdInterRound not yet set); that ends with "fight".
+		if ( cgs.gametype == GT_CTFS && cg.atdInterRound && cg.snap &&
 		     cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
 			if ( cg.snap->ps.persistant[PERS_TEAM] == cgs.atdAttackingTeam ) {
 				trap_S_StartLocalSound( cgs.media.atdAttackSound, CHAN_ANNOUNCER );
@@ -250,6 +252,7 @@ static void CG_ParseWarmup(void)
 		{
 			trap_S_StartLocalSound(cgs.media.countPrepareSound, CHAN_ANNOUNCER);
 		}
+		// GT_CTFS: no sound here — countdown in CG_DrawWarmup handles it
 	}
 
 	cg.warmup = warmup;
@@ -666,6 +669,7 @@ static void CG_MapRestart(void)
 
 	cgs.atdCompletedRounds = 0;	/* prevent stale scoreboard on map_restart */
 	cgs.atdRoundOffset     = 0;
+	if (cgs.gametype == GT_CTFS) cg.atdInterRound = qtrue; /* g_warmup just ended; inter-round warmups follow */
 
 	cgs.voteTime = 0;
 
@@ -688,7 +692,7 @@ static void CG_MapRestart(void)
 	// we really should clear more parts of cg here and stop sounds
 
 	// play the "fight" sound if this is a restart without warmup
-	if (cg.warmup == 0 /* && cgs.gametype == GT_TOURNAMENT */)
+	if (cg.warmup == 0 /* && cgs.gametype == GT_TOURNAMENT */ && cgs.gametype != GT_CTFS)
 	{
 		trap_S_StartLocalSound(cgs.media.countFightSound, CHAN_ANNOUNCER);
 		if (!cg_shud.integer) CG_CenterPrint("^1FIGHT!", 20, GIANTCHAR_WIDTH * 2);
