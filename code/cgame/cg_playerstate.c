@@ -817,6 +817,20 @@ void CG_CheckLocalSounds(playerState_t* ps, playerState_t* ops)
 		}
 	}
 
+	// GT_CTFS timelimit 1-minute warning (based on accumulated play time)
+	if ( cgs.timelimit > 0 && cgs.gametype == GT_CTFS ) {
+		int playMs;
+		if ( cgs.atdRoundStartTime > 0 ) {
+			playMs = cgs.atdAccumulatedPlayMs + ( cg.time - cgs.atdRoundStartTime );
+		} else {
+			playMs = cgs.atdAccumulatedPlayMs;
+		}
+		if ( !(cg.timelimitWarnings & 8) && playMs > ( cgs.timelimit * 60 - 60 ) * 1000 ) {
+			cg.timelimitWarnings |= 8;
+			trap_S_StartLocalSound( cgs.media.atdOneMinuteSound, CHAN_ANNOUNCER );
+		}
+	}
+
 	// fraglimit warnings
 	if (cgs.fraglimit > 0 && cgs.gametype < GT_CTF)
 	{

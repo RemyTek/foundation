@@ -1077,6 +1077,7 @@ typedef struct
 	sfxHandle_t atdAttackSound;       /* GT_CTFS: "attack the flag" cue */
 	sfxHandle_t atdDefendSound;       /* GT_CTFS: "defend the flag" cue */
 	sfxHandle_t atd30SecWarningSound; /* GT_CTFS: 30-second round warning */
+	sfxHandle_t atdOneMinuteSound;    /* GT_CTFS: 1-minute timelimit warning */
 	/* Flag POI shaders */
 	qhandle_t   flagAttackPOI;
 	qhandle_t   flagDefendPOI;
