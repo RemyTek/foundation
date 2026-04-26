@@ -2691,12 +2691,16 @@ static float CG_OSPHUDDrawScores(float y)
 				}
 			}
 		}
-		if (((cgs.gametype == GT_CTF) && (!ch_drawFlagNames.integer)) ||
-		        ((cgs.gametype != GT_CTF) && (ch_StatusbarFormat.integer < 9)))
+		if ((((cgs.gametype == GT_CTF || cgs.gametype == GT_CTFS)) && (!ch_drawFlagNames.integer)) ||
+		        ((cgs.gametype != GT_CTF && cgs.gametype != GT_CTFS) && (ch_StatusbarFormat.integer < 9)))
 		{
 			int limit;
 
-			if (cgs.gametype == GT_CTF)
+			if (cgs.gametype == GT_CTFS)
+			{
+				limit = cgs.scorelimit;
+			}
+			else if (cgs.gametype == GT_CTF)
 			{
 				limit = cgs.capturelimit;
 			}

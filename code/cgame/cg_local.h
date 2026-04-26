@@ -1401,6 +1401,7 @@ typedef struct
 	int             teamflags;
 	int             fraglimit;
 	int             capturelimit;
+	int				scorelimit;
 	int             timelimit;
 	int             atdRoundTimelimit;  /* GT_CTFS: per-round time in minutes */
 	int             maxclients;

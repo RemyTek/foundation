@@ -703,7 +703,7 @@ static void CG_CHUDDecorGetGameFragLimit(cherryhudDecorElement_t* element) {
 
 	isFreeze = cgs.osp.gameTypeFreeze;
 	gt = cgs.gametype;
-	limit = (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
+	limit = (gt == GT_CTFS) ? cgs.scorelimit : (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
 	CG_CHUDDecorApplyFormatting(element, (float)limit);
 }
 
@@ -714,7 +714,7 @@ static void CG_CHUDDecorGetGameCaptureLimit(cherryhudDecorElement_t* element) {
 
 	isFreeze = cgs.osp.gameTypeFreeze;
 	gt = cgs.gametype;
-	limit = (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
+	limit = (gt == GT_CTFS) ? cgs.scorelimit : (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
 	CG_CHUDDecorApplyFormatting(element, (float)limit);
 }
 

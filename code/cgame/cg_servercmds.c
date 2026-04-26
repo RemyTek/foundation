@@ -177,6 +177,7 @@ void CG_ParseServerinfo(void)
 	cgs.teamflags = atoi(Info_ValueForKey(info, "teamflags"));
 	cgs.fraglimit = atoi(Info_ValueForKey(info, "fraglimit"));
 	cgs.capturelimit = atoi(Info_ValueForKey(info, "capturelimit"));
+	cgs.scorelimit = atoi(Info_ValueForKey(info, "scorelimit"));
 	cgs.timelimit = atoi(Info_ValueForKey(info, "timelimit"));
 	cgs.atdRoundTimelimit = atoi( Info_ValueForKey( info, "roundtimelimit" ) );
 	cgs.g_threewave = atoi( Info_ValueForKey( info, "g_threewave" ) );

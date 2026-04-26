@@ -61,7 +61,11 @@ void* CG_SHUDElementScoreMAXCreate(const superhudConfig_t* config)
 
 static qboolean CG_SHUDScoresGetMax(int* scores)
 {
-	if (cgs.gametype == GT_CTF)
+	if (cgs.gametype == GT_CTFS)
+	{
+		*scores = cgs.scorelimit;
+	}
+	else if (cgs.gametype == GT_CTF)
 	{
 		*scores = cgs.capturelimit;
 	}
@@ -111,12 +115,12 @@ static qboolean CG_SHUDScoresGetNME(int* scores)
 		case TEAM_FREE:
 		{
 			int playerScore = cg.snap->ps.persistant[PERS_SCORE];
-			
+
 			if (cgs.scores1 != playerScore)
 			{
 				cgs.scores2 = playerScore;
 			}
-			
+
 			*scores = cgs.scores2;
 			return *scores != SCORE_NOT_PRESENT;
 		}
@@ -141,20 +145,20 @@ static qboolean CG_SHUDScoresShouldUseColor2(shudElementScoreType_t type)
 {
 	team_t team = CG_SHUDGetOurActiveTeam();
 	int playerScore;
-	
+
 	if (team != TEAM_FREE)
 		return qfalse;
-		
+
 	playerScore = cg.snap->ps.persistant[PERS_SCORE];
-	
+
 	switch (type)
 	{
 		case SHUD_ELEMENT_SCORE_OWN:
 			return (playerScore == cgs.scores1);
-			
+
 		case SHUD_ELEMENT_SCORE_NME:
 			return (cgs.scores1 != playerScore);
-		
+
 		default:
 			return qfalse;
 	}
@@ -193,7 +197,7 @@ void CG_SHUDElementScoreRoutine(void* context)
 		return;
 
 	element->ctx.text = va(element->config.text.value, scores);
-	
+
 	if (element->config.color2.isSet && CG_SHUDScoresShouldUseColor2(element->type))
 	{
 		Vector4Copy(element->config.color2.value.rgba, element->ctx.color);

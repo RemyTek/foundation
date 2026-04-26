@@ -1135,7 +1135,11 @@ static float CG_DrawScores(float y)
 			}
 		}
 
-		if (cgs.gametype >= GT_CTF)
+		if (cgs.gametype == GT_CTFS)
+		{
+			v = cgs.scorelimit;
+		}
+		else if (cgs.gametype >= GT_CTF)
 		{
 			v = cgs.capturelimit;
 		}

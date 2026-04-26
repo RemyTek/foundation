@@ -311,10 +311,18 @@ void CG_DrawInformation(void)
 
 	if (cgs.gametype >= GT_CTF)
 	{
-		value = atoi(Info_ValueForKey(info, "capturelimit"));
+		if(cgs.gametype == GT_CTFS)
+		{
+			value = atoi(Info_ValueForKey(info, "scorelimit"));
+		}
+		else
+		{
+			value = atoi(Info_ValueForKey(info, "capturelimit"));
+		}
 		if (value)
 		{
-			UI_DrawProportionalString(320, y, va("capturelimit %i", value),
+			const char *limitLabel = (cgs.gametype == GT_CTFS) ? "scorelimit" : "capturelimit";
+			UI_DrawProportionalString(320, y, va("%s %i", limitLabel, value),
 			                          UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, colorWhite);
 			y += PROP_HEIGHT;
 		}

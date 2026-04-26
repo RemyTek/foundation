@@ -1221,7 +1221,7 @@ static void CG_DrawScoreboardFrameUnified(short isTeamMode, short forceDouble, i
     frameX_right = sbSet->rightBaseX - (sbSet->space / 2);
 
     // Prepare common strings
-    limit = (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
+    limit = (gt == GT_CTFS) ? cgs.scorelimit : (isFreeze || gt == GT_CTF) ? cgs.capturelimit : cgs.fraglimit;
     Com_sprintf(limitStr, sizeof(limitStr), "Limits: %d, %d min", limit, cgs.timelimit);
     Com_sprintf(topHeader, sizeof(topHeader), "%s", gametypeStr);
 
