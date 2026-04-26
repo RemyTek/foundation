@@ -378,13 +378,16 @@ void CG_DrawFlagPOIs( void ) {
 		CG_DrawFlagPOIPair( TEAM_BLUE, 1, 0, cgs.blueflag, ourTeam );
 	} else if ( cgs.gametype == GT_CTFS ) {
 		/* One flag contested per round: the defending team's flag.
-		   Attackers see only Attack (and Capture when carrying).
-		   Defenders see only Defend. */
-		int defTeam       = ( cgs.atdAttackingTeam == TEAM_RED ) ? TEAM_BLUE : TEAM_RED;
-		int defFlagIdx    = defTeam - 1;          /* TEAM_RED=1 → 0, TEAM_BLUE=2 → 1 */
-		int atkBaseIdx    = cgs.atdAttackingTeam - 1;
-		int defFlagStatus = ( defTeam == TEAM_RED ) ? cgs.redflag : cgs.blueflag;
-		CG_DrawFlagPOIPair( defTeam, defFlagIdx, atkBaseIdx, defFlagStatus, ourTeam );
+		   Suppress POIs during inter-round warmup — atdAttackingTeam has already
+		   flipped for the next round but it hasn't started yet, so showing the new
+		   assignment would be misleading.  POIs resume once the round begins. */
+		if ( cg.warmup == 0 ) {
+			int defTeam       = ( cgs.atdAttackingTeam == TEAM_RED ) ? TEAM_BLUE : TEAM_RED;
+			int defFlagIdx    = defTeam - 1;          /* TEAM_RED=1 → 0, TEAM_BLUE=2 → 1 */
+			int atkBaseIdx    = cgs.atdAttackingTeam - 1;
+			int defFlagStatus = ( defTeam == TEAM_RED ) ? cgs.redflag : cgs.blueflag;
+			CG_DrawFlagPOIPair( defTeam, defFlagIdx, atkBaseIdx, defFlagStatus, ourTeam );
+		}
 	}
 
 	trap_R_SetColor( NULL );
