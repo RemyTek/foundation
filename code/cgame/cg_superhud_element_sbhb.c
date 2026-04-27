@@ -24,6 +24,13 @@ void CG_SHUDElementSBHBRoutine(void* context)
 	shudElementStatusbarHealthBar* element = (shudElementStatusbarHealthBar*)context;
 	float hp = cg.snap->ps.stats[STAT_HEALTH];
 
+	/* In GT_CTFS, g_startHealth is the player max.  Normalise to 200 so the
+	   bar scales proportionally against that cap instead of 200. */
+	if (cgs.gametype == GT_CTFS && cgs.startHealth > 0)
+	{
+		hp = hp * 200.0f / cgs.startHealth;
+	}
+
 	CG_SHUDFill(&element->config);
 	CG_SHUDDrawBorder(&element->config);
 

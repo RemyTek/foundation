@@ -24,6 +24,13 @@ void CG_SHUDElementSBABRoutine(void* context)
 	shudElementStatusbarArmorBar* element = (shudElementStatusbarArmorBar*)context;
 	float ap = cg.snap->ps.stats[STAT_ARMOR];
 
+	/* In GT_CTFS, g_startArmor is the player max.  Normalise to 200 so the
+	   bar scales proportionally against that cap instead of 200. */
+	if (cgs.gametype == GT_CTFS && cgs.startArmor > 0)
+	{
+		ap = ap * 200.0f / cgs.startArmor;
+	}
+
 	CG_SHUDFill(&element->config);
 	CG_SHUDDrawBorder(&element->config);
 
