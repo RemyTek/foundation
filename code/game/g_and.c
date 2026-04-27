@@ -452,17 +452,39 @@ void G_CheckATDRound( void ) {
 				( level.atdRoundNumber + 1 ) / 2,
 				( atkTeam == TEAM_RED ) ? "^1Red^7" : "^4Blue^7",
 				( defTeam == TEAM_RED ) ? "^1Red^7" : "^4Blue^7" ) );
-			/* Grant spawn protection to all living players at round-start. */
-			if ( g_spawnProtection.integer > 0 ) {
+			/* Respawn every player at round-live — alive or dead.  Warmup
+			   damage must not carry over; ClientSpawn applies g_startHealth
+			   and g_startArmor automatically.  Spawn protection is granted
+			   in a second pass because ClientSpawn clears all powerups. */
+			{
 				int spIdx;
 				for ( spIdx = 0; spIdx < level.maxclients; spIdx++ ) {
 					gentity_t *sp = g_entities + spIdx;
 					if ( !sp->inuse || !sp->client ) continue;
 					if ( sp->client->pers.connected != CON_CONNECTED ) continue;
+					/* Restore any dead-spectators left from the previous round. */
+					if ( sp->client->atdDeadSpecTeam != TEAM_FREE ) {
+						sp->client->sess.sessionTeam     = sp->client->atdDeadSpecTeam;
+						sp->client->sess.spectatorState  = SPECTATOR_NOT;
+						sp->client->atdDeadSpecTeam      = TEAM_FREE;
+						sp->client->sess.spectatorClient = spIdx;
+					}
 					if ( sp->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
-					sp->client->ps.powerups[PW_SPAWNPROTECTION] = level.time + ( g_spawnProtection.integer * 1000 );
+					respawn( sp );
 				}
-			}		}
+				/* Grant spawn protection after respawn. */
+				if ( g_spawnProtection.integer > 0 ) {
+					for ( spIdx = 0; spIdx < level.maxclients; spIdx++ ) {
+						gentity_t *sp = g_entities + spIdx;
+						if ( !sp->inuse || !sp->client ) continue;
+						if ( sp->client->pers.connected != CON_CONNECTED ) continue;
+						if ( sp->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+						sp->client->ps.powerups[PW_SPAWNPROTECTION] = level.time + ( g_spawnProtection.integer * 1000 );
+					}
+				}
+				ClearBodyQue();
+			}
+			}
 		return;
 	}
 

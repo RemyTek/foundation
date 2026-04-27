@@ -1060,11 +1060,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( level.intermissionQueued ) {
 		return;
 	}
-	// GT_CTFS: no damage to players while the round hasn't gone live yet
-	if ( g_gametype.integer == GT_CTFS && targ->client &&
-	     level.atdRoundNumber != level.atdRoundNumberStarted ) {
-		return;
-	}
+	/* GT_CTFS: damage is allowed during inter-round warmup; scoring is
+	   suppressed separately in AddScore. */
 #ifdef MISSIONPACK
 	if ( targ->client && mod != MOD_JUICED) {
 		if ( targ->client->invulnerabilityTime > level.time) {
