@@ -150,8 +150,26 @@ void TossClientItems(gentity_t *self) {
     int i;
     gentity_t *drop;
 
-    // GT_CTFS: no items on the map, nothing to toss, flags already returned.
+    /* GT_CTFS: no weapons or holdables on the map.  Drop any carried flag in
+       place so it stays on the field (Team_DroppedFlagThink returns early for
+       GT_CTFS, so the flag is never auto-returned).  LaunchItem also calls
+       Team_CheckDroppedItem which updates CS_FLAGSTATUS to FLAG_DROPPED so
+       the POI tracking reflects the dropped position. */
     if ( g_gametype.integer == GT_CTFS ) {
+        int      flagPw   = 0;
+        gitem_t *flagItem = NULL;
+        if ( self->client->ps.powerups[PW_REDFLAG] > level.time ) {
+            flagPw = PW_REDFLAG;
+        } else if ( self->client->ps.powerups[PW_BLUEFLAG] > level.time ) {
+            flagPw = PW_BLUEFLAG;
+        }
+        if ( flagPw ) {
+            flagItem = BG_FindItemForPowerup( flagPw );
+            if ( flagItem ) {
+                Drop_Item( self, flagItem, 0 );
+                self->client->ps.powerups[flagPw] = 0;
+            }
+        }
         return;
     }
 
