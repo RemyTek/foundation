@@ -335,14 +335,24 @@ void CG_ClientInfoUpdateColors(clientInfo_t* ci, int clientNum)
 		qboolean isEnemy = qfalse;
 		const float* teamColor = CG_TeamColor(ci->rt);
 
-		if (cg_spectPOV.integer)
+		/* When following as a spectator, always adopt the followed player's
+		   team perspective, regardless of cg_spectPOV. Matches kftag. */
+		if ((cg.snap->ps.pm_flags & PMF_FOLLOW) != 0 &&
+		    cg.snap->ps.clientNum >= 0 &&
+		    cg.snap->ps.clientNum < MAX_CLIENTS &&
+		    cg.snap->ps.clientNum != cg.clientNum)
+		{
+			team_t ourPerspectiveTeam = cgs.clientinfo[cg.snap->ps.clientNum].rt;
+			isEnemy = (ourPerspectiveTeam != ci->rt);
+		}
+		else if (cg_spectPOV.integer)
 		{
 			team_t ourPerspectiveTeam;
 
 			if (ourClient->rt == TEAM_SPECTATOR)
 			{
-				if (cg.snap->ps.pm_flags & PMF_FOLLOW && 
-				    cg.snap->ps.clientNum >= 0 && 
+				if (cg.snap->ps.pm_flags & PMF_FOLLOW &&
+				    cg.snap->ps.clientNum >= 0 &&
 				    cg.snap->ps.clientNum < MAX_CLIENTS)
 				{
 					ourPerspectiveTeam = cgs.clientinfo[cg.snap->ps.clientNum].rt;

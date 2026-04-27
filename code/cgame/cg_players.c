@@ -69,26 +69,21 @@ qboolean CG_IsEnemy(const clientInfo_t* target)
 
 	if (myStateTeam == TEAM_SPECTATOR)
 	{
-		/* BE: Enhanced spectator perspective logic - exact copy from OSP2-BE */
-		if (cg_spectPOV.integer && cg.snap->ps.pm_flags & PMF_FOLLOW && cg.snap->ps.clientNum >= 0 && cg.snap->ps.clientNum < MAX_CLIENTS)
+		/* When following, always use the followed player's team as perspective,
+		   regardless of cg_spectPOV. This matches kftag behavior. */
+		if (cg.snap->ps.pm_flags & PMF_FOLLOW &&
+		    cg.snap->ps.clientNum >= 0 &&
+		    cg.snap->ps.clientNum < MAX_CLIENTS &&
+		    cg.snap->ps.clientNum != cg.clientNum)
 		{
 			qboolean result;
 			team_t targetTeam;
 
-			if (CG_OSPIsGameTypeCA(cgs.gametype))
-			{
-				ourPerspectiveTeam = cgs.clientinfo[cg.snap->ps.clientNum].rt;
-				targetTeam = target->rt;
-			}
-			else
-			{
-				ourPerspectiveTeam = cgs.clientinfo[cg.snap->ps.clientNum].team;
-				targetTeam = target->team;
-			}
+			ourPerspectiveTeam = cgs.clientinfo[cg.snap->ps.clientNum].rt;
+			targetTeam = target->rt;
 
 			result = (ourPerspectiveTeam != targetTeam);
 
-			/* Debug output */
 			if (cg_debugAnim.integer)
 			{
 				CG_Printf("[CG_IsEnemy] Following %d (team %d) | Target: %s (team %d) | isEnemy=%d\n",
@@ -100,7 +95,7 @@ qboolean CG_IsEnemy(const clientInfo_t* target)
 		}
 		else
 		{
-			/* Original PBE logic */
+			/* Original PBE logic: not following anyone */
 			if (myRealTeam == TEAM_RED || myRealTeam == TEAM_SPECTATOR)
 			{
 				return enemyTeam == TEAM_BLUE;
@@ -1031,7 +1026,16 @@ static void CG_ClientInfoUpdateModel(clientInfo_t* ci, qboolean isOurClient, qbo
 		const char* forceModelString = cg_forceModel.integer ? cfgModelString : NULL;
 		const char* forceHModelString = cg_forceModel.integer ? cfgHModelString : NULL;
 		const char* enemyModelString = NULL;
-		const qboolean useOriginal = cg_spectOrigModel.integer && CG_IsFollowing() && cg.snap->ps.clientNum == clientNum;
+		/* isFollowing: true spectator (TEAM_SPECTATOR) actively following another player */
+		qboolean isFollowing;
+		qboolean useOriginal;
+
+		isFollowing = (qboolean)((cg.snap->ps.pm_flags & PMF_FOLLOW) != 0 &&
+		    cg.snap->ps.clientNum >= 0 &&
+		    cg.snap->ps.clientNum < MAX_CLIENTS &&
+		    cg.snap->ps.clientNum != cg.clientNum);
+		/* Show the followed player using their real model (not our forced override) */
+		useOriginal = (qboolean)(!isFollowing && cg_spectOrigModel.integer && CG_IsFollowing() && cg.snap->ps.clientNum == clientNum);
 
 		if (cg_enemyModel.string[0])
 		{
@@ -1087,8 +1091,13 @@ static void CG_ClientInfoUpdateModel(clientInfo_t* ci, qboolean isOurClient, qbo
 			const char* teamModelString = cg_teamModel.string[0] ? cg_teamModel.string : NULL;
 			qboolean isTeamMate;
 
-			/* BE: Enhanced spectator perspective logic */
-			if (cg_spectPOV.integer)
+			if (isFollowing)
+			{
+				/* Always use the followed player's team as our perspective */
+				team_t ourPerspectiveTeam = cgs.clientinfo[cg.snap->ps.clientNum].rt;
+				isTeamMate = (ourPerspectiveTeam == ci->rt);
+			}
+			else if (cg_spectPOV.integer)
 			{
 				team_t ourPerspectiveTeam;
 
@@ -3295,9 +3304,10 @@ void CG_AddOutline(refEntity_t* ent, centity_t* cent)
 
 	ent->customShader = isEnemy ? cgs.media.outlineShader : cgs.media.teamOutlineShader;
 
-	if (isSpectator && !cg_spectPOV.integer)
+	if (isSpectator && !cg_spectPOV.integer && !(cg.snap->ps.pm_flags & PMF_FOLLOW))
 	{
-		if (ci->team == TEAM_RED)
+		/* Not following and spectPOV is off: use fixed red=team, blue=enemy mapping */
+		if (ci->rt == TEAM_RED)
 			Vector4Copy(cgs.be.teamOutlineColor, color);
 		else
 			Vector4Copy(cgs.be.enemyOutlineColor, color);
@@ -3372,7 +3382,7 @@ void CG_Player(centity_t* cent)
 	qboolean        paintItBlack;
 	float           paintBlackLevel;
 
-	if (cg_spectPOV.integer)
+	if (cg_spectPOV.integer || cgs.gametype >= GT_TEAM)
 	{
 		static int lastFrameTime = 0;
 		if (cg.time != lastFrameTime)
