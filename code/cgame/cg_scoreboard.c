@@ -2020,15 +2020,11 @@ CG_DrawATDRoundScores
 Draws the per-round score panel during GT_CTFS inter-round warmup.
 =================
 */
-void CG_DrawATDRoundScores( float fade ) {
-	static const float	PANEL_X    = 64.0f;   /* (640 - 512) / 2          */
-	static const float	PANEL_Y    = ( 480.0f - 120.0f ) * 0.5f;
+void CG_DrawATDRoundScores( float x, float y, float fade ) {
 	static const float	PANEL_W    = 512.0f;  /* 640 * 0.8                */
 	static const float	PANEL_H    = 120.0f;
 	static const int	DISP_COLS  = 10;
-	static const int	COL0_LEFT  = 135;     /* PANEL_X + 71             */
 	static const int	COL_PITCH  = 40;      /* was 50                   */
-	static const int	TCOL_LEFT  = 537;     /* PANEL_X + 473            */
 	static const int	TCOL_W     = 37;      /* was 46                   */
 	static const int	LABEL_W    = 67;      /* label column inner width */
 	static const int	CW_NUM     = 7;   /* char width for numbers  */
@@ -2038,6 +2034,7 @@ void CG_DrawATDRoundScores( float fade ) {
 
 	int		completedHalves, completedFull, windowStart;
 	int		i, half0, half1, len, cx, iy;
+	int		col0_left, tcol_left, ix;
 	vec4_t	cBg, cBorder, cWhite, cRed, cBlu;
 	const char	*s;
 
@@ -2049,41 +2046,45 @@ void CG_DrawATDRoundScores( float fade ) {
 	completedFull = ( completedHalves + 1 ) / 2;
 	windowStart   = completedFull > DISP_COLS ? completedFull - DISP_COLS : 0;
 
+	col0_left = (int)x + 71;   /* x + 69 (divider) + 2 */
+	tcol_left = (int)x + 473;  /* x + 471 (divider) + 2 */
+	ix        = (int)x;
+
 	cBg[0]     = 0.0f;  cBg[1]     = 0.0f;  cBg[2]     = 0.0f;  cBg[3]     = 0.7f * fade;
 	cBorder[0] = 1.0f;  cBorder[1] = 1.0f;  cBorder[2] = 1.0f;  cBorder[3] = fade;
 	cWhite[0]  = 1.0f;  cWhite[1]  = 1.0f;  cWhite[2]  = 1.0f;  cWhite[3]  = fade;
 	cRed[0]    = 1.0f;  cRed[1]    = 0.3f;  cRed[2]    = 0.3f;  cRed[3]    = fade;
 	cBlu[0]    = 0.4f;  cBlu[1]    = 0.6f;  cBlu[2]    = 1.0f;  cBlu[3]    = fade;
 
-	CG_FillRect( PANEL_X,       PANEL_Y,         PANEL_W,     PANEL_H,     cBg );
-	CG_DrawRect( PANEL_X + 2,   PANEL_Y + 2,     PANEL_W - 4, PANEL_H - 4, 1.0f, cBorder );
-	CG_FillRect( PANEL_X + 69,  PANEL_Y + 2,     2,           PANEL_H - 4, cBorder );
-	CG_FillRect( PANEL_X + 471, PANEL_Y + 2,     2,           PANEL_H - 4, cBorder );
-	CG_FillRect( PANEL_X + 2,   PANEL_Y + 40,    PANEL_W - 4, 2,           cBorder );
+	CG_FillRect( x,       y,         PANEL_W,     PANEL_H,     cBg );
+	CG_DrawRect( x + 2,   y + 2,     PANEL_W - 4, PANEL_H - 4, 1.0f, cBorder );
+	CG_FillRect( x + 69,  y + 2,     2,           PANEL_H - 4, cBorder );
+	CG_FillRect( x + 471, y + 2,     2,           PANEL_H - 4, cBorder );
+	CG_FillRect( x + 2,   y + 40,    PANEL_W - 4, 2,           cBorder );
 
 	/* Header row — centre CH_NUM chars in the first 40px band */
-	iy  = (int)( PANEL_Y ) + ( 40 - CH_NUM ) / 2;
+	iy  = (int)y + ( 40 - CH_NUM ) / 2;
 	s   = "Round";
 	len = CG_DrawStrlen( s );
-	cx  = (int)( PANEL_X ) + 2 + ( LABEL_W - len * CW_NUM ) / 2;
+	cx  = ix + 2 + ( LABEL_W - len * CW_NUM ) / 2;
 	CG_DrawStringExt( cx, iy, s, cWhite, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 	for ( i = 0; i < DISP_COLS; i++ ) {
 		s   = va( "%i", windowStart + i + 1 );
 		len = CG_DrawStrlen( s );
-		cx  = COL0_LEFT + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
+		cx  = col0_left + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
 		CG_DrawStringExt( cx, iy, s, cWhite, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 	}
 	s   = "T";
 	len = CG_DrawStrlen( s );
-	cx  = TCOL_LEFT + ( TCOL_W - len * CW_NUM ) / 2;
+	cx  = tcol_left + ( TCOL_W - len * CW_NUM ) / 2;
 	CG_DrawStringExt( cx, iy, s, cWhite, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 
 	/* Red team row — centre CH_LBL chars in the second 40px band */
-	iy  = (int)( PANEL_Y ) + 40 + ( 40 - CH_LBL ) / 2;
+	iy  = (int)y + 40 + ( 40 - CH_LBL ) / 2;
 	s   = cgs.redTeam[0] ? cgs.redTeam : DEFAULT_REDTEAM_NAME;
 	len = CG_DrawStrlen( s );
-	cx  = (int)( PANEL_X ) + 2 + ( LABEL_W - len * CW_LBL ) / 2;
-	if ( cx < (int)( PANEL_X ) + 2 ) cx = (int)( PANEL_X ) + 2;
+	cx  = ix + 2 + ( LABEL_W - len * CW_LBL ) / 2;
+	if ( cx < ix + 2 ) cx = ix + 2;
 	CG_DrawStringExt( cx, iy, s, cRed, qfalse, qtrue, CW_LBL, CH_LBL, LABEL_W / CW_LBL );
 	for ( i = 0; i < DISP_COLS; i++ ) {
 		half0 = ( windowStart + i ) * 2;
@@ -2094,20 +2095,20 @@ void CG_DrawATDRoundScores( float fade ) {
 			    ? va( "%i", cgs.atdRoundScoresRed[localIdx0] ) : "-";
 		}
 		len = CG_DrawStrlen( s );
-		cx  = COL0_LEFT + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
+		cx  = col0_left + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
 		CG_DrawStringExt( cx, iy, s, cRed, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 	}
 	s   = va( "%i", cgs.scores1 );
 	len = CG_DrawStrlen( s );
-	cx  = TCOL_LEFT + ( TCOL_W - len * CW_NUM ) / 2;
+	cx  = tcol_left + ( TCOL_W - len * CW_NUM ) / 2;
 	CG_DrawStringExt( cx, iy, s, cRed, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 
 	/* Blue team row — centre CH_LBL chars in the third 40px band */
-	iy  = (int)( PANEL_Y ) + 80 + ( 40 - CH_LBL ) / 2;
+	iy  = (int)y + 80 + ( 40 - CH_LBL ) / 2;
 	s   = cgs.blueTeam[0] ? cgs.blueTeam : DEFAULT_BLUETEAM_NAME;
 	len = CG_DrawStrlen( s );
-	cx  = (int)( PANEL_X ) + 2 + ( LABEL_W - len * CW_LBL ) / 2;
-	if ( cx < (int)( PANEL_X ) + 2 ) cx = (int)( PANEL_X ) + 2;
+	cx  = ix + 2 + ( LABEL_W - len * CW_LBL ) / 2;
+	if ( cx < ix + 2 ) cx = ix + 2;
 	CG_DrawStringExt( cx, iy, s, cBlu, qfalse, qtrue, CW_LBL, CH_LBL, LABEL_W / CW_LBL );
 	for ( i = 0; i < DISP_COLS; i++ ) {
 		half0 = ( windowStart + i ) * 2;
@@ -2119,11 +2120,11 @@ void CG_DrawATDRoundScores( float fade ) {
 			    ? va( "%i", cgs.atdRoundScoresBlue[localIdx1] ) : "-";
 		}
 		len = CG_DrawStrlen( s );
-		cx  = COL0_LEFT + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
+		cx  = col0_left + i * COL_PITCH + ( COL_PITCH - len * CW_NUM ) / 2;
 		CG_DrawStringExt( cx, iy, s, cBlu, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 	}
 	s   = va( "%i", cgs.scores2 );
 	len = CG_DrawStrlen( s );
-	cx  = TCOL_LEFT + ( TCOL_W - len * CW_NUM ) / 2;
+	cx  = tcol_left + ( TCOL_W - len * CW_NUM ) / 2;
 	CG_DrawStringExt( cx, iy, s, cBlu, qfalse, qtrue, CW_NUM, CH_NUM, 0 );
 }

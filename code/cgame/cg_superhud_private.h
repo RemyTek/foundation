@@ -620,6 +620,14 @@ void* CG_SHUDElementGameTypeCreate(const superhudConfig_t* config);
 void CG_SHUDElementGameTypeRoutine(void* context);
 void CG_SHUDElementGameTypeDestroy(void* context);
 
+void* CG_SHUDElementRoundScoreboardCreate(const superhudConfig_t* config);
+void CG_SHUDElementRoundScoreboardRoutine(void* context);
+void CG_SHUDElementRoundScoreboardDestroy(void* context);
+
+void* CG_SHUDElementAttackDefendCreate(const superhudConfig_t* config);
+void CG_SHUDElementAttackDefendRoutine(void* context);
+void CG_SHUDElementAttackDefendDestroy(void* context);
+
 void* CG_SHUDElementLocationCreate(const superhudConfig_t* config);
 void CG_SHUDElementLocationRoutine(void* context);
 void CG_SHUDElementLocationDestroy(void* context);

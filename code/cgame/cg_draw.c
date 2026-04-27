@@ -3211,14 +3211,15 @@ static void CG_Draw2D(void)
 	CG_DrawFlagPOIs();
 	CG_DrawTeammatePOIs();
 
-	/* Inter-round score panel (GT_CTFS) — draws over all HUD modes, same as POIs.
-	   cg.warmup > 0 means the countdown is active (inter-round warmup phase). */
-	if ( cg.warmup > 0 &&
+	/* Inter-round score panel (GT_CTFS) — draws for non-SHUD modes only;
+	   SHUD mode uses the RoundScoreboard element in default.cfg. */
+	if ( !cg_shud.integer &&
+	     cg.warmup > 0 &&
 	     cgs.gametype == GT_CTFS &&
 	     cgs.atdCompletedRounds > 0 &&
 	     ( cgs.atdRoundStartTime || cgs.atdRoundRespawned ) &&
 	     !cg.intermissionStarted ) {
-		CG_DrawATDRoundScores( 1.0f );
+		CG_DrawATDRoundScores( 64.0f, 97.0f, 1.0f );
 	}
 }
 

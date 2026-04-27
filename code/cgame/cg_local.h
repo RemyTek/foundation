@@ -1935,7 +1935,7 @@ void CG_DrawOldTourneyScoreboard(void);
 void CG_BEStatsShowStatsInfo(void);
 qboolean CG_OSPDrawScoretable(void);
 qboolean CG_BEDrawTeamScoretable(void);
-void CG_DrawATDRoundScores( float fade );
+void CG_DrawATDRoundScores( float x, float y, float fade );
 
 
 extern int customScoreboardColorIsSet;

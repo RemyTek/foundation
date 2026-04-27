@@ -121,6 +121,8 @@ static superHUDConfigElement_t superHUDConfigItemElements[] =
 	{ "votemessagearena", 0, },
 	{ "votemessageworld", SE_IM | SE_SPECT | SE_DEAD, CG_SHUDElementVMWCreate, CG_SHUDElementVMWRoutine, CG_SHUDElementVMWDestroy },
 	{ "warmupinfo", 0, CG_SHUDElementWarmupInfoCreate, CG_SHUDElementWarmupInfoRoutine, CG_SHUDElementWarmupInfoDestroy },
+	{ "roundscoreboard", SE_TEAM_ONLY, CG_SHUDElementRoundScoreboardCreate, CG_SHUDElementRoundScoreboardRoutine, CG_SHUDElementRoundScoreboardDestroy },
+	{ "attackdefend", SE_TEAM_ONLY, CG_SHUDElementAttackDefendCreate, CG_SHUDElementAttackDefendRoutine, CG_SHUDElementAttackDefendDestroy },
 	{ "weaponlist", 0, CG_SHUDElementWeaponListCreate, CG_SHUDElementWeaponListRoutine, CG_SHUDElementWeaponListDestroy },
 	{ "weaponselection", 0, },
 	{ "weaponselectionname", 0, },

@@ -305,15 +305,9 @@ void CG_SHUDRoutine(void)
 	superhudElement_t* last = elementsHead;
 	int vflags;
 	qboolean skip;
-	/* GT_CTFS: the inter-round scoreboard covers the screen during the post-respawn
-	   phase of warmup once at least one half-round has been completed.  PM_FREEZE
-	   hides the HUD (counts as dead) only when that scoreboard is actually visible.
-	   Before the first round's respawn the player should see their full HUD. */
-	const qboolean atd_scoreboard_active = (cgs.gametype == GT_CTFS) && (cg.warmup != 0) &&
-	    (cgs.atdCompletedRounds > 0) && cgs.atdRoundRespawned && !cg.intermissionStarted;
 	const qboolean is_dead = cg.predictedPlayerState.pm_type == PM_DEAD ||
 	    (cg.predictedPlayerState.pm_type == PM_FREEZE &&
-	     (!(cgs.gametype == GT_CTFS && cg.warmup != 0) || atd_scoreboard_active));
+	     !(cgs.gametype == GT_CTFS && cg.warmup != 0));
 	const qboolean is_intermission = cg.predictedPlayerState.pm_type == PM_INTERMISSION;
 	const qboolean is_team_game = cgs.gametype >= GT_TEAM;
 	const qboolean is_spectator = CG_IsSpectatorOnScreen();

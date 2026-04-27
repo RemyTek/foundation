@@ -662,6 +662,7 @@ static void Team_TakeFlagSound( gentity_t *ent, team_t team ) {
 	else {
 		te->s.eventParm = GTS_BLUE_TAKEN;
 	}
+	te->s.otherEntityNum = ENTITYNUM_NONE; // no specific toucher; prevents spurious "you have the flag" on client 0
 	te->r.svFlags |= SVF_BROADCAST;
 }
 
