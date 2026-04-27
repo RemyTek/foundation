@@ -1000,7 +1000,7 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 		Pmove (&pm);
 #else
-	/* GT_CTFS inter-round freeze: set PM_FREEZE so client prediction is also frozen.
+	/* GT_CTFS inter-round freeze: prevent movement after respawn.
 	   pm_type is reset to PM_NORMAL at the top of ClientThink_real each frame, so
 	   there is no bleed-through when the round begins. */
 	if ( g_gametype.integer == GT_CTFS &&
@@ -1008,19 +1008,29 @@ void ClientThink_real( gentity_t *ent ) {
 	     level.atdRoundNumber != level.atdRoundNumberStarted &&
 	     level.atdRoundRespawned &&
 	     level.atdRoundFreezeTime > 0 &&
-	     level.time >= level.atdRoundFreezeTime &&
 	     client->ps.pm_type == PM_NORMAL ) {
-		client->ps.pm_type = PM_FREEZE;
-		Pmove( &pm );
+		if ( level.time >= level.atdRoundFreezeTime ) {
+			/* Settling period over: freeze the player completely. */
+			client->ps.pm_type = PM_FREEZE;
+			Pmove( &pm );
 
-		/* Allow weapon switching during freeze. */
-		if ( pm.cmd.weapon > WP_NONE && pm.cmd.weapon < WP_NUM_WEAPONS &&
-		     pm.cmd.weapon != client->ps.weapon &&
-		     ( client->ps.stats[STAT_WEAPONS] & ( 1 << pm.cmd.weapon ) ) ) {
-			BG_AddPredictableEventToPlayerstate( EV_CHANGE_WEAPON, 0, &client->ps );
-			client->ps.weapon      = pm.cmd.weapon;
-			client->ps.weaponstate = WEAPON_READY;
-			client->ps.weaponTime  = 0;
+			/* Allow weapon switching during freeze. */
+			if ( pm.cmd.weapon > WP_NONE && pm.cmd.weapon < WP_NUM_WEAPONS &&
+			     pm.cmd.weapon != client->ps.weapon &&
+			     ( client->ps.stats[STAT_WEAPONS] & ( 1 << pm.cmd.weapon ) ) ) {
+				BG_AddPredictableEventToPlayerstate( EV_CHANGE_WEAPON, 0, &client->ps );
+				client->ps.weapon      = pm.cmd.weapon;
+				client->ps.weaponstate = WEAPON_READY;
+				client->ps.weaponTime  = 0;
+			}
+		} else {
+			/* Settling period: suppress user input so gravity can land the player
+			   without allowing them to jump or walk away from the spawn point. */
+			pm.cmd.forwardmove = 0;
+			pm.cmd.rightmove   = 0;
+			pm.cmd.upmove      = 0;
+			pm.cmd.buttons    &= ~BUTTON_ATTACK;
+			Pmove( &pm );
 		}
 	} else {
 		Pmove (&pm);

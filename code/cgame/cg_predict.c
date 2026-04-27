@@ -843,6 +843,28 @@ void CG_PredictPlayerState(void)
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer - 1) / pmove_msec.integer) * pmove_msec.integer;
 		}
 
+		/* GT_CTFS: mirror server-side settle/freeze logic so prediction matches the
+		   authoritative state immediately, without waiting for a snapshot.  During the
+		   post-respawn settling window movement commands are suppressed so gravity can
+		   land the player; once the window expires the player is fully frozen.
+		   Guard on cg.warmup != 0 so we stop applying PM_FREEZE the instant the
+		   round goes live (CS_WARMUP is cleared), preventing the HUD from staying
+		   hidden after the round begins. */
+		if ( cgs.gametype == GT_CTFS &&
+		     cg.warmup != 0 &&
+		     cgs.atdRoundRespawned &&
+		     cgs.atdRoundFreezeTime > 0 &&
+		     cg_pmove.ps->pm_type == PM_NORMAL ) {
+			if ( cg_pmove.cmd.serverTime >= cgs.atdRoundFreezeTime ) {
+				cg_pmove.ps->pm_type = PM_FREEZE;
+			} else {
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove   = 0;
+				cg_pmove.cmd.upmove      = 0;
+				cg_pmove.cmd.buttons    &= ~BUTTON_ATTACK;
+			}
+		}
+
 		// run the Pmove
 		Pmove(&cg_pmove);
 
