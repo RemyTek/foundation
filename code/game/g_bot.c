@@ -182,7 +182,7 @@ static void G_LoadArenas( void ) {
 		G_LoadArenasFromFile(filename);
 	}
 	trap_Print( va( "%i arenas parsed\n", g_numArenas ) );
-	
+
 	for( n = 0; n < g_numArenas; n++ ) {
 		Info_SetValueForKey( g_arenaInfos[n], "num", va( "%i", n ) );
 	}
@@ -347,6 +347,7 @@ G_CountHumanPlayers
 static int G_CountHumanPlayers( team_t team ) {
 	int i, num;
 	gclient_t	*cl;
+	team_t effectiveTeam;
 
 	num = 0;
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
@@ -357,7 +358,12 @@ static int G_CountHumanPlayers( team_t team ) {
 		if ( g_entities[i].r.svFlags & SVF_BOT ) {
 			continue;
 		}
-		if ( team >= 0 && cl->sess.sessionTeam != team ) {
+		/* In GT_CTFS, dead players are moved to TEAM_SPECTATOR but retain
+		   their original team in atdDeadSpecTeam — count them on that team. */
+		effectiveTeam = ( g_gametype.integer == GT_CTFS && cl->atdDeadSpecTeam != TEAM_FREE )
+		                ? cl->atdDeadSpecTeam
+		                : cl->sess.sessionTeam;
+		if ( team >= 0 && effectiveTeam != team ) {
 			continue;
 		}
 		num++;
@@ -413,6 +419,12 @@ void G_CheckMinimumPlayers( void ) {
 	static int checkminimumplayers_time;
 
 	if ( level.intermissiontime )
+		return;
+
+	/* In GT_CTFS, never add/remove bots mid-round — only between rounds.
+	   Round is live when atdRoundNumber == atdRoundNumberStarted. */
+	if ( g_gametype.integer == GT_CTFS &&
+	     level.atdRoundNumber == level.atdRoundNumberStarted )
 		return;
 
 	//only check once each 10 seconds
