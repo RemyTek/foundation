@@ -8,6 +8,7 @@ typedef struct
 	superhudDrawContext_t ctx;
 	int                   lockedAttackingTeam; /* snapshot taken at each warmup start */
 	int                   prevWarmup;          /* cg.warmup from previous frame        */
+	qboolean              prevAtdInterRound;   /* to swallow stale g_warmup value      */
 	qboolean              visible;             /* stays true once shown until round ends */
 } shudElementAttackDefend_t;
 
@@ -20,6 +21,7 @@ void* CG_SHUDElementAttackDefendCreate(const superhudConfig_t* config)
 	CG_SHUDDrawMakeContext(&element->config, &element->ctx);
 	element->lockedAttackingTeam = 0;
 	element->prevWarmup          = 0;
+	element->prevAtdInterRound   = qfalse;
 	element->visible             = qfalse;
 
 	return element;
@@ -43,6 +45,14 @@ void CG_SHUDElementAttackDefendRoutine(void* context)
 		return;
 
 	warmup = cg.warmup;
+
+	/* First frame atdInterRound becomes true: sync prevWarmup so any stale
+	   g_warmup CS_WARMUP value in cg.warmup does not trigger the lock. */
+	if (!element->prevAtdInterRound)
+	{
+		element->prevWarmup      = warmup;
+		element->prevAtdInterRound = qtrue;
+	}
 
 	/* Lock in the attacking team when a new inter-round warmup countdown begins
 	   (warmup transitions from <= 0 to > 0). */
