@@ -289,6 +289,11 @@ void CG_SetConfigValues(void)
 		cgs.atdRoundFreezeTime   = atoi( CG_ConfigString( CS_ATD_RESPAWNED ) );
 		cgs.atdRoundRespawned    = cgs.atdRoundFreezeTime > 0;
 		cgs.atdAccumulatedPlayMs = atoi( CG_ConfigString( CS_ATD_ACCUMULATED ) );
+		/* When joining mid-game, CG_MapRestart was never called for this client.
+		   atdAttackingTeam being non-zero means the initial g_warmup has ended and
+		   inter-round play is already underway — mirror what CG_MapRestart would set. */
+		if ( cgs.atdAttackingTeam != 0 )
+			cg.atdInterRound = qtrue;
 	}
 	cg.warmup = atoi(CG_ConfigString(CS_WARMUP));
 }
