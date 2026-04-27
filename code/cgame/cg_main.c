@@ -1168,6 +1168,10 @@ static void CG_RegisterGraphics(void)
 	cgs.media.regenShader = trap_R_RegisterShader("powerups/regen");
 	cgs.media.hastePuffShader = trap_R_RegisterShader("hasteSmokePuff");
 
+	cgs.media.spawnProtectionShader = trap_R_RegisterShader("powerups/spawnprotect");
+	cgs.media.spawnProtectionWeaponShader = trap_R_RegisterShader("powerups/spawnProtectWeapon");
+	cgs.media.spawnProtectionIcon = trap_R_RegisterShaderNoMip("icons/spawnprotection");
+
 	cgs.media.freezeShader = trap_R_RegisterShader("freezeShader");
 	cgs.media.freezeMarkShader = trap_R_RegisterShader("freezeMarkShader");
 

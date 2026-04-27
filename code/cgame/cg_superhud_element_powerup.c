@@ -211,6 +211,9 @@ static void CG_SHUDElementPwUpdateState(struct superhudPowerupsCache_t* pw)
 				case PW_FLIGHT:
 					pw->element[i].powerup = cgs.media.flightIcon;
 					break;
+				case PW_SPAWNPROTECTION:
+					pw->element[i].powerup = cgs.media.spawnProtectionIcon;
+					break;
 				case PW_REDFLAG:
 				case PW_BLUEFLAG:
 					item = BG_FindItemForPowerup(pw->element[i].powerup);

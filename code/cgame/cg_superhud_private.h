@@ -628,6 +628,10 @@ void* CG_SHUDElementAttackDefendCreate(const superhudConfig_t* config);
 void CG_SHUDElementAttackDefendRoutine(void* context);
 void CG_SHUDElementAttackDefendDestroy(void* context);
 
+void* CG_SHUDElementSpawnProtectCreate(const superhudConfig_t* config);
+void CG_SHUDElementSpawnProtectRoutine(void* context);
+void CG_SHUDElementSpawnProtectDestroy(void* context);
+
 void* CG_SHUDElementLocationCreate(const superhudConfig_t* config);
 void CG_SHUDElementLocationRoutine(void* context);
 void CG_SHUDElementLocationDestroy(void* context);

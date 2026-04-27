@@ -859,6 +859,9 @@ typedef struct
 	// powerup shaders
 	qhandle_t freezeShader;
 	qhandle_t freezeMarkShader;
+	qhandle_t   spawnProtectionShader;
+	qhandle_t   spawnProtectionWeaponShader;
+	qhandle_t   spawnProtectionIcon;
 	qhandle_t   quadShader;
 	qhandle_t   redQuadShader;
 	qhandle_t   quadWeaponShader;

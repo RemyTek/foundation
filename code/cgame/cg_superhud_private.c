@@ -123,6 +123,7 @@ static superHUDConfigElement_t superHUDConfigItemElements[] =
 	{ "warmupinfo", 0, CG_SHUDElementWarmupInfoCreate, CG_SHUDElementWarmupInfoRoutine, CG_SHUDElementWarmupInfoDestroy },
 	{ "roundscoreboard", SE_TEAM_ONLY, CG_SHUDElementRoundScoreboardCreate, CG_SHUDElementRoundScoreboardRoutine, CG_SHUDElementRoundScoreboardDestroy },
 	{ "attackdefend", SE_TEAM_ONLY, CG_SHUDElementAttackDefendCreate, CG_SHUDElementAttackDefendRoutine, CG_SHUDElementAttackDefendDestroy },
+	{ "spawnprotect", 0, CG_SHUDElementSpawnProtectCreate, CG_SHUDElementSpawnProtectRoutine, CG_SHUDElementSpawnProtectDestroy },
 	{ "weaponlist", 0, CG_SHUDElementWeaponListCreate, CG_SHUDElementWeaponListRoutine, CG_SHUDElementWeaponListDestroy },
 	{ "weaponselection", 0, },
 	{ "weaponselectionname", 0, },

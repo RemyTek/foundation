@@ -1507,6 +1507,11 @@ static void CG_AddWeaponWithPowerups(refEntity_t* gun, int powerups)
 			gun->customShader = cgs.media.quadWeaponShader;
 			trap_R_AddRefEntityToScene(gun);
 		}
+		if (powerups & (1 << PW_SPAWNPROTECTION))
+		{
+			gun->customShader = cgs.media.spawnProtectionWeaponShader;
+			trap_R_AddRefEntityToScene(gun);
+		}
 	}
 }
 

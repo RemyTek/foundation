@@ -1064,6 +1064,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
+	/* spawn protection: immune to damage (except telefrag) */
+	if ( targ && targ->client && targ->client->ps.powerups[PW_SPAWNPROTECTION] > level.time && mod != MOD_TELEFRAG ) {
+		return;
+	}
+	if ( attacker && attacker->client && attacker->client->ps.powerups[PW_SPAWNPROTECTION] > level.time && mod != MOD_TELEFRAG ) {
+		return;
+	}
+
 	// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {
 		if ( targ->use && targ->moverState == MOVER_POS1 ) {

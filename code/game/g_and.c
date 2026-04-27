@@ -452,7 +452,17 @@ void G_CheckATDRound( void ) {
 				( level.atdRoundNumber + 1 ) / 2,
 				( atkTeam == TEAM_RED ) ? "^1Red^7" : "^4Blue^7",
 				( defTeam == TEAM_RED ) ? "^1Red^7" : "^4Blue^7" ) );
-		}
+			/* Grant spawn protection to all living players at round-start. */
+			if ( g_spawnProtection.integer > 0 ) {
+				int spIdx;
+				for ( spIdx = 0; spIdx < level.maxclients; spIdx++ ) {
+					gentity_t *sp = g_entities + spIdx;
+					if ( !sp->inuse || !sp->client ) continue;
+					if ( sp->client->pers.connected != CON_CONNECTED ) continue;
+					if ( sp->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+					sp->client->ps.powerups[PW_SPAWNPROTECTION] = level.time + ( g_spawnProtection.integer * 1000 );
+				}
+			}		}
 		return;
 	}
 

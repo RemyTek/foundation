@@ -389,4 +389,5 @@ CG_CVAR( osp_client, "osp_client", "1008_OSP2_"OSP_VERSION, CVAR_USERINFO | CVAR
 CG_CVAR( cg_flagStyle, "cg_flagStyle", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_flagPOIs,  "cg_flagPOIs",  "1", CVAR_ARCHIVE )
 
+
 #undef CG_CVAR

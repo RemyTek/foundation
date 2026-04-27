@@ -1030,7 +1030,12 @@ static void CG_ClientInfoUpdateModel(clientInfo_t* ci, qboolean isOurClient, qbo
 		qboolean isFollowing;
 		qboolean useOriginal;
 
-		isFollowing = (qboolean)((cg.snap->ps.pm_flags & PMF_FOLLOW) != 0 &&
+		/* Guard with configstring team: snapshot PMF_FOLLOW may still be set during the
+		   transition from spectator to a real team, causing models to be computed with
+		   the wrong perspective until the next snapshot arrives.  Using the already-updated
+		   configstring team (.rt) avoids this race. */
+		isFollowing = (qboolean)(cgs.clientinfo[cg.clientNum].rt == TEAM_SPECTATOR &&
+		    (cg.snap->ps.pm_flags & PMF_FOLLOW) != 0 &&
 		    cg.snap->ps.clientNum >= 0 &&
 		    cg.snap->ps.clientNum < MAX_CLIENTS &&
 		    cg.snap->ps.clientNum != cg.clientNum);
@@ -2350,6 +2355,12 @@ static void CG_PlayerPowerups(centity_t* cent, refEntity_t *torso)
 		trap_S_AddLoopingSound(cent->currentState.number, cent->lerpOrigin, vec3_origin, cgs.media.flightSound);
 	}
 
+	// spawn protection gives a red dlight
+	if (powerups & (1 << PW_SPAWNPROTECTION))
+	{
+		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 1, 0.2f, 0.2f);
+	}
+
 	// redflag
 	if (powerups & (1 << PW_REDFLAG))
 	{
@@ -2982,6 +2993,11 @@ void CG_AddRefEntityWithPowerups(refEntity_t* ent, entityState_t* state, int tea
 			}
 		}
 
+		if (state->powerups & (1 << PW_SPAWNPROTECTION))
+		{
+			ent->customShader = cgs.media.spawnProtectionShader;
+			trap_R_AddRefEntityToScene(ent);
+		}
 		if (state->powerups & (1 << PW_BATTLESUIT))
 		{
 			if (state->weapon == WP_NONE)

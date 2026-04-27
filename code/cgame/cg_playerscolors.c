@@ -336,8 +336,11 @@ void CG_ClientInfoUpdateColors(clientInfo_t* ci, int clientNum)
 		const float* teamColor = CG_TeamColor(ci->rt);
 
 		/* When following as a spectator, always adopt the followed player's
-		   team perspective, regardless of cg_spectPOV. Matches kftag. */
-		if ((cg.snap->ps.pm_flags & PMF_FOLLOW) != 0 &&
+		   team perspective, regardless of cg_spectPOV. Guard with the configstring
+		   team (.rt) so that a stale snapshot PMF_FOLLOW during the spectator→team
+		   join transition does not cause wrong colors to be locked in. */
+		if (ourClient->rt == TEAM_SPECTATOR &&
+		    (cg.snap->ps.pm_flags & PMF_FOLLOW) != 0 &&
 		    cg.snap->ps.clientNum >= 0 &&
 		    cg.snap->ps.clientNum < MAX_CLIENTS &&
 		    cg.snap->ps.clientNum != cg.clientNum)
