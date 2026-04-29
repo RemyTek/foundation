@@ -181,6 +181,7 @@ void CG_ParseServerinfo(void)
 	cgs.timelimit = atoi(Info_ValueForKey(info, "timelimit"));
 	cgs.startArmor = atoi(Info_ValueForKey(info, "g_startArmor"));
 	cgs.startHealth = atoi(Info_ValueForKey(info, "g_startHealth"));
+	cgs.g_moveType = atoi(Info_ValueForKey(info, "g_moveType"));
 	cgs.atdRoundTimelimit = atoi( Info_ValueForKey( info, "roundtimelimit" ) );
 	cgs.g_threewave = atoi( Info_ValueForKey( info, "g_threewave" ) );
 	cgs.maxclients = atoi(Info_ValueForKey(info, "sv_maxclients"));

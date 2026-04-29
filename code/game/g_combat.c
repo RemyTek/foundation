@@ -923,12 +923,7 @@ int CheckArmor (gentity_t *ent, int damage, int dflags)
 
 	// armor
 	count = client->ps.stats[STAT_ARMOR];
-/*
-	type = g_promode.integer ? ( (client->ps.stats[STAT_ARMORTYPE] <= 1) ?
-		CPM_YAPROTECTION : CPM_RAPROTECTION) : ARMOR_PROTECTION; // CPM
-*/
 	save = ceil( damage * ARMOR_PROTECTION );
-	//save = ceil( damage * type ); // CPM
 	if (save >= count)
 		save = count;
 

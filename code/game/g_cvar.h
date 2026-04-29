@@ -201,7 +201,7 @@ G_CVAR( g_rotation, "g_rotation", "0", CVAR_ARCHIVE, 0, qfalse, qfalse )
 G_CVAR( g_redteam, "g_redteam", "", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO, 0, qtrue, qtrue )
 G_CVAR( g_blueteam, "g_blueteam", "", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO, 0, qtrue, qtrue )
 
-G_CVAR( g_promode, "g_promode", "0", CVAR_SYSTEMINFO | CVAR_SERVERINFO, 0, qtrue, qtrue )
+G_CVAR( g_moveType, "g_moveType", "0", CVAR_SYSTEMINFO | CVAR_SERVERINFO, 0, qtrue, qtrue )
 
 // Attack & Defend (GT_CTFS)
 G_CVAR( g_roundtimelimit,  "roundtimelimit",    "90", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue, qfalse )
@@ -209,5 +209,14 @@ G_CVAR( atd_rounddelay,    "atd_rounddelay",    "10", CVAR_SERVERINFO | CVAR_ARC
 G_CVAR( atd_scorelimit,    "scorelimit",        "15", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue, qfalse )
 G_CVAR( g_threewave,       "g_threewave",       "0",  CVAR_SYSTEMINFO | CVAR_SERVERINFO | CVAR_LATCH,  0, qtrue, qfalse )
 G_CVAR( g_spawnProtection, "g_spawnProtection", "0",  CVAR_ARCHIVE, 0, qfalse, qfalse )
+
+// Threewave Portal voting system
+G_CVAR( p_enablePortal,              "p_enablePortal",              "0",  CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_voteSeconds,               "p_voteSeconds",               "30", CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_randomPortal,              "p_randomPortal",              "0",  CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_gametypeVote,              "p_gametypeVote",              "0",  CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_defaultGametype,           "p_defaultGametype",           "4",  CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_disableLastPlayedPortals,  "p_disableLastPlayedPortals",  "0",  CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_disablePortalList,         "p_disablePortalList",         "",   CVAR_ARCHIVE, 0, qfalse, qfalse )
 
 #undef G_CVAR

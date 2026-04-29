@@ -495,6 +495,14 @@ typedef struct {
 	qboolean	atdTimelimitHit;	// match timelimit expired; Blue still needs a response round before resolving
 	int			atdAccumulatedPlayMs;	// total play time (ms) from all completed rounds; excludes warmup gaps
 
+	// Threewave portal voting state
+	int			portalVoteTime;				// level.time when first vote cast; 0 = voting not started
+	int			portalVotes[64];			// vote tally per portal slot; [0] = portal 1, [63] = portal 64
+	qboolean	portalPlayerVoted[MAX_CLIENTS];	// has this client cast a portal vote?
+	int			portalPlayerVote[MAX_CLIENTS];	// portal number (1-64) this client voted for
+	struct gentity_s *portalEntityMap[65];	// portal number -> entity; index 0 unused (portals are 1-based)
+	qboolean	portalDisabled[64];			// portal slot is disabled (parsed from p_disablePortalList)
+
 } level_locals_t;
 
 
@@ -1059,6 +1067,18 @@ void	trap_SnapVector( float *v );
 
 // Rail jumping
 void G_RailgunRadiusDamage (vec3_t origin, gentity_t *ent);
+
+// Threewave portal-voting gametype (q3start); extends the standard GT_* enum
+#define GT_PORTAL    8
+
+//
+// g_portal.c
+//
+void G_Portal_Init( void );
+void G_Portal_Frame( void );
+void G_Portal_Vote( gentity_t *activator, int portalNum );
+qboolean G_Portal_RoomHasPortals( int roomNum );
+void SP_func_portal( gentity_t *ent );
 
 // extension interface
 

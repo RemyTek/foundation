@@ -1,18 +1,18 @@
 QA_SRC = \
  g_main $(QADIR)/g_syscalls.asm \
- bg_misc bg_lib bg_pmove bg_promode bg_slidemove \
+ bg_misc bg_lib bg_movement bg_pmove bg_slidemove \
  q_math q_shared \
  ai_dmnet ai_dmq3 ai_team ai_main ai_chat ai_cmd ai_vcmd \
  g_active g_and g_arenas g_bot g_client g_cmds g_combat g_items g_mem g_misc \
  g_missile g_mover g_rotation g_session g_spawn g_svcmds g_target g_team \
- g_trigger g_unlagged g_utils g_weapon \
+ g_trigger g_portal g_unlagged g_utils g_weapon \
 
 CG_SRC = \
  cg_main $(CGDIR)/cg_syscalls.asm \
  cg_consolecmds cg_draw cg_drawtools cg_effects cg_ents cg_event cg_info \
  cg_localents cg_players cg_playerstate cg_predict cg_scoreboard cg_marks \
  cg_servercmds cg_snapshot cg_view cg_weapons \
- bg_slidemove bg_pmove bg_promode bg_lib bg_misc \
+ bg_slidemove bg_pmove bg_movement bg_lib bg_misc \
  q_math q_shared cg_ospconfig cg_osputil cg_osphud cg_unlagged cg_playerscolors\
  cg_localevents cg_customloc cg_cvardescriptions common\
  cg_superhud cg_superhud_configparser cg_superhud_util cg_superhud_private\

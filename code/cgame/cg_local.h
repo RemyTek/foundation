@@ -1408,6 +1408,7 @@ typedef struct
 	int             timelimit;
 	int				startArmor;
 	int				startHealth;
+	int				g_moveType;
 	int             atdRoundTimelimit;  /* GT_CTFS: per-round time in minutes */
 	int             maxclients;
 	char            mapname[MAX_QPATH];

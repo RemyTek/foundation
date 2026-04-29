@@ -47,6 +47,9 @@ typedef struct {
 	trace_t		groundTrace;
 	qboolean	ladder; // tells us when the player is on a ladder
 
+	qboolean	sliding;    // crouchslide active
+	int			slideTime;  // crouchslide timer (ms)
+
 	float		impactSpeed;
 
 	vec3_t		previous_origin;

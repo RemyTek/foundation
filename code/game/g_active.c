@@ -982,8 +982,7 @@ void ClientThink_real( gentity_t *ent ) {
 
 	VectorCopy( client->ps.origin, client->oldOrigin );
 
-	//pass promode phyiscs through pm
-	pm.movetype = g_promode.integer;
+	pm.movetype = g_moveType.integer;
 
 #ifdef MISSIONPACK
 		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {

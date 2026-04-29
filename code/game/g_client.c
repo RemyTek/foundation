@@ -675,7 +675,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 #else
 	health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->pers.maxHealth = health;
-	if ( client->pers.maxHealth < 1 || g_promode.integer || client->pers.maxHealth > HEALTH_SOFT_LIMIT ) {
+	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > HEALTH_SOFT_LIMIT ) {
 		client->pers.maxHealth = HEALTH_SOFT_LIMIT;
 	}
 #endif

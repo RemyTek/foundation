@@ -422,6 +422,7 @@ CGOBJ_ = \
   \
   $(B)/$(MOD)/game/bg_lib.o \
   $(B)/$(MOD)/game/bg_misc.o \
+  $(B)/$(MOD)/game/bg_movement.o \
   $(B)/$(MOD)/game/bg_pmove.o \
   $(B)/$(MOD)/game/bg_slidemove.o \
   \
@@ -451,8 +452,8 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/ai_vcmd.o \
   $(B)/$(MOD)/game/bg_lib.o \
   $(B)/$(MOD)/game/bg_misc.o \
+  $(B)/$(MOD)/game/bg_movement.o \
   $(B)/$(MOD)/game/bg_pmove.o \
-  $(B)/$(MOD)/game/bg_promode.o \
   $(B)/$(MOD)/game/bg_slidemove.o \
   $(B)/$(MOD)/game/g_active.o \
   $(B)/$(MOD)/game/g_and.o \
@@ -473,6 +474,7 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/g_target.o \
   $(B)/$(MOD)/game/g_team.o \
   $(B)/$(MOD)/game/g_trigger.o \
+  $(B)/$(MOD)/game/g_portal.o \
   $(B)/$(MOD)/game/g_utils.o \
   $(B)/$(MOD)/game/g_unlagged.o \
   $(B)/$(MOD)/game/g_weapon.o \

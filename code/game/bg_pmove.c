@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // takes a playerstate and a usercmd as input and returns a modifed playerstate
 
 #include "bg_pmove.h"
-#include "bg_promode.h"
+#include "bg_movement.h"
 
 pmove_t		*pm;
 pml_t		pml;

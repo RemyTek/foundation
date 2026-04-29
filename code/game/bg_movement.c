@@ -1,4 +1,4 @@
-#include "bg_promode.h"
+#include "bg_movement.h"
 
 // Physics variables
 qboolean phy_initialized;
@@ -13,7 +13,7 @@ float phy_spectator_friction;
 
 // New variables
 float phy_crouch_scale;  // Default renamed
-// int   df_promode;             // pm->movetype; // Physics type selection
+// int   g_movementType;          // pm->movetype; // Physics type selection
 // Ground
 float phy_ground_basespeed;  // Movement speed on the ground (aka maxspeed). Equivalent to the default g_speed
 float phy_ground_accel;      // Acceleration when on the ground. sv_accelerate
@@ -30,6 +30,7 @@ float phy_airstrafe_basespeed;  // Maxspeed on air when in VQ3, or when strafing
 qboolean phy_aircontrol;         // Turns aircontrol on or off
 float    phy_aircontrol_amount;  // Amount you can control yourself with W/S
 float    phy_aircontrol_power;   // Aircontrol formula exponent
+float    phy_airstopaccelerate;
 float phy_wishspeed = 400;
 // Stepup
 int phy_step_size;    // Distance that will be moved up/down for step behavior. (default = STEPSIZE = 18)
@@ -37,7 +38,7 @@ int phy_step_maxvel;  // When set, it limits the maximum vertical speed at which
 // Jump
 int phy_jump_type;         // Jump type selection. Available VQ3, CPM
 int phy_jump_velocity;     // Vertical velocity that will be set/added when jumping (default = JUMP_VELOCITY = 270)
-int phy_jump_timebuffer;   // Amount of time(ms) since last jump, where CPM dj behavior can happen. (default CPM = 400)
+int phy_jump_timebuffer;   // Amount of time(ms) since last jump, where CPM dj behavior can happen. (default CPM = 500)
 int phy_jump_dj_velocity;  // Amount of velocity to add to CPM dj behavior. (default CPM = 100)
 // Powerups
 // float phy_haste_factor;           // Multiplier to apply during haste powerup (q3 default = 1.3)
@@ -48,11 +49,32 @@ float phy_water_scale;  // phy_swimScale;
 // Slick
 float       phy_water_friction;
 float       phy_slick_accel;
-
-//ladders
-float	pm_ladderScale = 0.50f;	// set max movement speed to half of normal when on a ladder.
-float	pm_ladderAccelerate = 3000.0f;	// acceleration to friction ratio 1:1
-float	pm_ladderfriction = 3000.0f;	//friction high enough so you don't slip down.
+// Jump behavior flags (set per movement type in init)
+qboolean phy_autohop;
+qboolean phy_bunnyhop;
+qboolean phy_double_jump;
+qboolean phy_chain_jump;
+float    phy_chain_jump_velocity;
+qboolean phy_step_jump;
+float    phy_step_jump_velocity;
+qboolean phy_crouchstepjump;
+qboolean phy_ramp_jump;
+float    phy_ramp_jump_scale;
+float    phy_jump_velocity_max;
+float    phy_jump_scale_add;
+float    phy_jump_time_threshold;
+float    phy_jump_time_threshold_offset;
+float    phy_jump_time_delta_min;
+// Water wade scale
+float phy_water_wade_scale;
+// Velocity ground-hit threshold
+float phy_velocity_gh;
+// Step tracking (set by q3a_WalkMove, consumed by phy_CheckJump)
+static qboolean phy_did_step;
+// Crouchslide
+qboolean phy_crouch_slide;
+float    phy_crouch_slide_friction;
+int      phy_crouch_slide_time;
 
 void phy_PmoveSingle(pmove_t* pmove);
 
@@ -97,11 +119,17 @@ void     phy_init(int movetype) {
     case CQ3:
         cq3_init();
         break;
+    case VQL:
+        vql_init();
+        break;
+    case PQL:
+        pql_init();
+        break;
     default:
 		vq3_init();
         break;
     }
-    Com_Printf("Initialized: g_promode %i\n", movetype);
+    //Com_Printf("Initialized: g_movementType %i\n", movetype);
     phy_initialized = qtrue;
 }
 
@@ -170,6 +198,12 @@ void core_GroundTrace(void) {
 		q3a_GroundTrace();
 		break;
 	case CQ3:
+		q3a_GroundTrace();
+		break;
+	case VQL:
+		q3a_GroundTrace();
+		break;
+	case PQL:
 		q3a_GroundTrace();
 		break;
 	default:
@@ -256,7 +290,7 @@ void q3a_GroundTrace(void) {
 		//don't do landing time if we were just going down a slope
 		if (pml.previous_velocity[2] < -200) {
 			//don't allow another jump for a little while
-			pm->ps->pm_flags != PMF_TIME_LAND;
+			pm->ps->pm_flags |= PMF_TIME_LAND;
 			pm->ps->pm_time = 250;
 		}
 	}
@@ -298,7 +332,7 @@ float core_CmdScale(usercmd_t* cmd, qboolean fix) {
 	}
 
 	// Calculate total input value
-	
+
 	if (fix) {
 		total = sqrt(fmove * fmove + smove * smove);
 	}  // Ignore umove for scalefix
@@ -316,7 +350,7 @@ void core_Accelerate(vec3_t wishdir, float wishspeed, float accel, float basespe
 	float wishspeed_c = wishspeed;  // Initialize clamped wishspeed
 	float currentspeed;
 	float addspeed;
-	float accelspeed;	
+	float accelspeed;
 	vec3_t accelVelocity;
 	int i;
 
@@ -366,14 +400,20 @@ void core_Friction(void) {
 		return;
 	}
 	drop = 0;
-
 	// apply ground friction
 
 	if (pm->waterlevel <= 1) {
 		if (pml.walking && !(pml.groundTrace.surfaceFlags & SURF_SLICK)) {
 			if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)) {  // if getting knocked back, no friction
-				control = speed < phy_stopspeed ? phy_stopspeed : speed;
-				drop += control * phy_friction * pml.frametime;
+				if (pml.sliding) {
+					// crouchslide: greatly reduced friction
+					drop += speed * phy_crouch_slide_friction * pml.frametime;
+				} else if (phy_bunnyhop && pm->cmd.upmove > 0) {
+					// bunnyhop: skip ground friction when jumping
+				} else {
+					control = speed < phy_stopspeed ? phy_stopspeed : speed;
+					drop += control * phy_friction * pml.frametime;
+				}
 			}
 		}
 	}
@@ -409,7 +449,7 @@ static void core_FinishWeaponChange(void) {
 
 	pm->ps->weapon      = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
-	pm->ps->weaponTime += pm->movetype == CPM ? 0 : 250;  // Instant weapon switch for cpm
+	pm->ps->weaponTime += pm->fastWeaponSwitch ? 0 : 250;  // Instant weapon switch when enabled
 	PM_StartTorsoAnim(TORSO_RAISE);
 }
 
@@ -426,7 +466,7 @@ static void core_BeginWeaponChange(int weapon) {
 
 	PM_AddEvent(EV_CHANGE_WEAPON);
 	pm->ps->weaponstate = WEAPON_DROPPING;
-	pm->ps->weaponTime += pm->movetype == CPM ? 0 : 250;
+	pm->ps->weaponTime += pm->fastWeaponSwitch ? 0 : 250;
 	PM_StartTorsoAnim(TORSO_DROP);
 }
 
@@ -521,7 +561,15 @@ void core_Weapon(void) {
 	// check for out of ammo
 	if (!pm->ps->ammo[pm->ps->weapon]) {
 		PM_AddEvent(EV_NOAMMO);
-		pm->ps->weaponTime += 500;
+		//pm->ps->weaponTime += 500;
+        //pm->ps->weaponTime += pm->fastWeaponSwitch > 1 ? 100 : 500;
+        if (pm->fastWeaponSwitch > 1) {
+            pm->ps->weaponTime += 100;
+        } else if (pm->movetype != VQ3) {
+            pm->ps->weaponTime += 100;
+        } else {
+            pm->ps->weaponTime += 500;
+        }
 		return;
 	}
 
@@ -560,8 +608,10 @@ void core_Weapon(void) {
         if( pm->fastRail >= 2 )
         {
             addTime = 1000;
-        } else {
+        } else if (pm->movetype == CPM || pm->fastRail == 1) {
             addTime = 1250;
+        } else {
+            addTime = 1500;
         }
         break;
 	case WP_BFG:
@@ -571,7 +621,7 @@ void core_Weapon(void) {
 		addTime = 400;
 		break;
 
-#ifdef TEAMARENA
+#ifdef MISSIONPACK
 	case WP_NAILGUN:
 		addTime = 1000;
 		break;
@@ -584,7 +634,7 @@ void core_Weapon(void) {
 #endif
 	}
 
-#ifdef TEAMARENA
+#ifdef MISSIONPACK
 	if (bg_itemlist[pm->ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_SCOUT) {
 		addTime /= 1.5;
 	} else if (bg_itemlist[pm->ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_AMMOREGEN) {
@@ -595,89 +645,6 @@ void core_Weapon(void) {
 		addTime /= 1.3;
 	}
 	pm->ps->weaponTime += addTime;
-}
-
-/*
-===================
-PM_LadderMove()
-by: Calrathan [Arthur Tomlin]
-
-Right now all I know is that this works for VERTICAL ladders. 
-Ladders with angles on them (urban2 for AQ2) haven't been tested.
-===================
-*/
-void PM_LadderMove( void ) {
-    int i;
-    vec3_t wishvel;
-    float wishspeed;
-    vec3_t wishdir;
-    float scale;
-    float vel;
-
-    PM_Friction ();
-
-    scale = PM_CmdScale( &pm->cmd );
-
-    // user intentions [what the user is attempting to do]
-    if ( !scale ) { 
-        wishvel[0] = 0;
-        wishvel[1] = 0;
-        wishvel[2] = 0;
-    }
-    else {   // if they're trying to move... lets calculate it
-        for (i=0 ; i<3 ; i++)
-            wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove +
-                         scale * pml.right[i]*pm->cmd.rightmove; 
-        wishvel[2] += scale * pm->cmd.upmove;
-    }
-
-    VectorCopy (wishvel, wishdir);
-    wishspeed = VectorNormalize(wishdir);
-
-    if ( wishspeed > pm->ps->speed * pm_ladderScale ) {
-        wishspeed = pm->ps->speed * pm_ladderScale;
-    }
-
-    PM_Accelerate (wishdir, wishspeed, pm_ladderAccelerate);
-
-    // This SHOULD help us with sloped ladders, but it remains untested.
-    if ( pml.groundPlane && DotProduct( pm->ps->velocity,
-        pml.groundTrace.plane.normal ) < 0 ) {
-        vel = VectorLength(pm->ps->velocity);
-        // slide along the ground plane [the ladder section under our feet] 
-        PM_ClipVelocity (pm->ps->velocity, pml.groundTrace.plane.normal, 
-            pm->ps->velocity, OVERCLIP );
-
-        VectorNormalize(pm->ps->velocity);
-        VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
-    }
-
-    PM_SlideMove( qfalse ); // move without gravity
-}
-
-
-/*
-=============
-CheckLadder [ ARTHUR TOMLIN ]
-=============
-*/
-void CheckLadder( void )
-{
-    vec3_t flatforward,spot;
-    trace_t trace;
-    pml.ladder = qfalse;
-    // check for ladder
-    flatforward[0] = pml.forward[0];
-    flatforward[1] = pml.forward[1];
-    flatforward[2] = 0;
-    VectorNormalize (flatforward);
-    VectorMA (pm->ps->origin, 1, flatforward, spot);
-    pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, spot,
-        pm->ps->clientNum, MASK_PLAYERSOLID);
-
-    if ((trace.fraction < 1) && (trace.surfaceFlags & SURF_LADDER))
-        pml.ladder = qtrue;
-
 }
 
 //================
@@ -801,6 +768,15 @@ void phy_PmoveSingle(pmove_t* pmove) {
 // Select the type of movement to execute. Flow control only.
 // Behavior happens inside each function
 void phy_move(pmove_t* pmove) {
+#ifdef CGAME
+	// cgame has no g_active.c pre-init; detect movetype changes here so the
+	// correct init (and phy_autohop etc.) fires when g_moveType changes.
+	static int lastCGMovetype = -1;
+	if (lastCGMovetype != pmove->movetype) {
+		phy_initialized  = qfalse;
+		lastCGMovetype   = pmove->movetype;
+	}
+#endif
 	if (!phy_initialized) {
 		phy_init(pmove->movetype);
 	}
@@ -814,8 +790,15 @@ void phy_move(pmove_t* pmove) {
 	case CQ3:
 		cq3_move(pmove);
 		break;
+	case VQL:
+		vql_move(pmove);
+		break;
+	case PQL:
+		pql_move(pmove);
+		break;
 	default:
-		Com_Printf("::ERR g_promode %i not recognized\n", pmove->movetype);
+		//Com_Printf("::ERR g_movementType %i not recognized\n", pmove->movetype);
+        vq3_move(pmove);
 		break;
 	}
 }
@@ -825,15 +808,19 @@ void phy_move(pmove_t* pmove) {
 //::::::::::::::::::::::
 void cpm_init(void) {
 	// Slick
-	phy_slick_accel = 15;  // CPM groundaccel value
+	phy_slick_accel = 15;                             // CPM: full ground accel on slick surfaces
 	// Water
-	phy_water_friction = 0.5;
-	// New
-	phy_ground_accel     = 15;
-	// Air movement
-	phy_air_accel      = 1;
-	phy_air_decel      = 2.5;
-	phy_air_decelAngle = 100;
+	phy_water_friction   = 0.5f;
+	phy_water_scale      = 0.5f;                      // pmove_WaterSwimScale (QVM struct +0x64 = 0.5)
+	phy_water_wade_scale = 5.0f;                      // QVM struct +0x68 = 5.0 (unrestricted wading)
+	// Ground
+	phy_ground_accel = 15.0f;                         // pmove_WalkAccel (ratoa: pm_cpm_accelerate)
+	phy_friction     = 6.0f;                          // pmove_WalkFriction
+	// Air
+	phy_air_accel         = 1.0f;                     // pmove_AirAccel (ratoa: pm_cpm_airaccelerate)
+	phy_airstopaccelerate = 2.5f;                     // pmove_AirStopAccel (ratoa: pm_cpm_airstopaccelerate)
+	phy_air_decel         = 2.5f;
+	phy_air_decelAngle    = 0;                        // smooth blend; set >0 via CVAR for legacy threshold
 	// W turning
 	phy_aircontrol        = qtrue;
 	phy_aircontrol_amount = 150;
@@ -841,135 +828,274 @@ void cpm_init(void) {
 	// AD turning
 	phy_airstrafe_basespeed = 30;
 	phy_airstrafe_accel     = 70;
+	// Step
+	phy_step_size   = 18;                             // pmove_StepHeight
 	// Jump
 	phy_jump_type        = CPM;
-	phy_jump_timebuffer  = 400;
+	phy_jump_velocity    = JUMP_VELOCITY;             // pmove_JumpVelocity = 270
+	phy_jump_timebuffer  = 500;                       // QVM struct +0x2C = 500ms
 	phy_jump_dj_velocity = 100;
-	phy_step_maxvel      = phy_jump_velocity + phy_jump_dj_velocity;
-	
-	//Print init function
-	Com_Printf("cpm_init()\n");
+	phy_step_maxvel      = JUMP_VELOCITY + 100;       // 370 (double-jump cap)
+	// Jump behavior flags
+	phy_autohop              = qfalse;                // pmove_AutoHop
+	phy_bunnyhop             = qfalse;                // pmove_BunnyHop
+	phy_double_jump          = qtrue;                 // pmove_DoubleJump
+	phy_chain_jump           = qfalse;
+	phy_chain_jump_velocity  = 0;
+	phy_step_jump            = qfalse;
+	phy_step_jump_velocity   = 0;
+	phy_crouchstepjump       = qfalse;
+	phy_ramp_jump            = qtrue;                 // pmove_RampJump
+	phy_ramp_jump_scale      = 1.25f;                 // pmove_RampJumpScale
+	phy_jump_velocity_max    = JUMP_VELOCITY;         // no speed scaling for CPM
+	phy_jump_scale_add       = 0;
+	phy_jump_time_threshold  = 0;
+	phy_jump_time_threshold_offset = 0;
+	phy_jump_time_delta_min  = 0;
+	// WishSpeed
+	phy_wishspeed = 400.0f;                           // pmove_WishSpeed
+	// Extra
+	phy_velocity_gh = 800;
+	// Crouchslide (CPM: off by default; enable via pmove_CrouchSlide 1)
+	phy_crouch_slide          = qfalse;
+	phy_crouch_slide_friction = 0.5f;
+	phy_crouch_slide_time     = 2000;
 }
 
 void vq3_init(void) {
 	// Slick
-	phy_slick_accel = 1;  // CPM groundaccel value
+	phy_slick_accel = 1;                              // VQ3: air accel on slick surfaces
 	// Water
-	phy_water_friction = pm_waterfriction;
-	// New
-	phy_ground_accel = pm_accelerate;
-	// Air movement
-	phy_air_accel = pm_airaccelerate;
-	phy_air_decel = 1;
-	//phy_air_decel = 1;
-	phy_air_decelAngle = 0;
-	// W turning
-	phy_aircontrol = qfalse;
+	phy_water_friction   = pm_waterfriction;
+	phy_water_scale      = 0.5f;                      // pmove_WaterSwimScale
+	phy_water_wade_scale = 0.75f;                     // pmove_WaterWadeScale
+	// Ground
+	phy_ground_accel = 10.0f;                         // pmove_WalkAccel (pm_accelerate)
+	phy_friction     = 6.0f;                          // pmove_WalkFriction (pm_friction)
+	// Air
+	phy_air_accel         = 1.0f;                     // pmove_AirAccel
+	phy_airstopaccelerate = 1.0f;                     // pmove_AirStopAccel
+	phy_air_decel         = 1.0f;
+	phy_air_decelAngle    = 0;
+	// W turning (none)
+	phy_aircontrol        = qfalse;
 	phy_aircontrol_amount = 0;
-	phy_aircontrol_power = 0;
-	// AD turning
+	phy_aircontrol_power  = 0;
+	// AD turning (none)
 	phy_airstrafe_basespeed = 0;
-	phy_airstrafe_accel = 0;
-	// Jump
-	phy_jump_type = VQ3;
-	phy_jump_timebuffer = 0;
-	phy_jump_dj_velocity = 0;
+	phy_airstrafe_accel     = 0;
+	// Step
+	phy_step_size   = 18;                             // pmove_StepHeight
 	phy_step_maxvel = JUMP_VELOCITY;
-
-	//Print init function
-	Com_Printf("vq3_init()\n");
+	// Jump
+	phy_jump_type        = VQ3;
+	phy_jump_velocity    = JUMP_VELOCITY;             // pmove_JumpVelocity = 270
+	phy_jump_timebuffer  = 0;
+	phy_jump_dj_velocity = 0;
+	// Jump behavior flags (all off)
+	phy_autohop              = qfalse;
+	phy_bunnyhop             = qfalse;                // pmove_BunnyHop
+	phy_double_jump          = qfalse;
+	phy_chain_jump           = qfalse;
+	phy_chain_jump_velocity  = 0;
+	phy_step_jump            = qfalse;
+	phy_step_jump_velocity   = 0;
+	phy_crouchstepjump       = qfalse;
+	phy_ramp_jump            = qfalse;
+	phy_ramp_jump_scale      = 1.0f;
+	phy_jump_velocity_max    = JUMP_VELOCITY;         // no scaling
+	phy_jump_scale_add       = 0;
+	phy_jump_time_threshold  = 0;
+	phy_jump_time_threshold_offset = 0;
+	phy_jump_time_delta_min  = 0;
+	// WishSpeed
+	phy_wishspeed = 320.0f;                           // pmove_WishSpeed = 320
+	// Extra
+	phy_velocity_gh = 800;
+	// Crouchslide (VQ3: disabled)
+	phy_crouch_slide          = qfalse;
+	phy_crouch_slide_friction = 0.5f;
+	phy_crouch_slide_time     = 2000;
 }
 
 void cq3_init(void) {
+	// CQ3: Challenge Quake3 — VQ3 base with CPMA physics fixes.
+	// Differs from VQ3: ground_accel=10.5, friction=5.6, water_scale=0.75, water_wade=5.0
+	// Enables: double_jump (timebuffer=1000ms), ramp_jump (scale=1.25) — no CPM dj_velocity bonus
 	// Slick
-	phy_slick_accel = 15; // CPM groundaccel value
+	phy_slick_accel = 1;
 	// Water
-	phy_water_friction = 0.5;
-	// New
-	phy_ground_accel = 10;
-	// Air movement
-	phy_air_accel = 1;
-	phy_air_decel = 2.5;
-	phy_air_decelAngle = 100;
-	// W turning
-	phy_aircontrol = qfalse;
+	phy_water_friction   = pm_waterfriction;
+	phy_water_scale      = 0.75f;                     // pmove_WaterSwimScale (QVM struct +0x64 = 0.75)
+	phy_water_wade_scale = 5.0f;                      // QVM struct +0x68 = 5.0
+	// Ground
+	phy_ground_accel = 10.5f;                         // pmove_WalkAccel (QVM: 0x41280000 = 10.5)
+	phy_friction     = 5.6f;                          // pmove_WalkFriction (QVM CQ3 path: 6.0 - 0.4)
+	// Air
+	phy_air_accel         = 1.0f;                     // pmove_AirAccel
+	phy_airstopaccelerate = 1.0f;                     // pmove_AirStopAccel
+	phy_air_decel         = 1.0f;
+	phy_air_decelAngle    = 0;
+	// W turning (none)
+	phy_aircontrol        = qfalse;
 	phy_aircontrol_amount = 0;
-	phy_aircontrol_power = 0;
-	// AD turning
+	phy_aircontrol_power  = 0;
+	// AD turning (none)
 	phy_airstrafe_basespeed = 0;
-	phy_airstrafe_accel = 0;
+	phy_airstrafe_accel     = 0;
+	// Step
+	phy_step_size   = 18;                             // pmove_StepHeight
+	phy_step_maxvel = JUMP_VELOCITY;
 	// Jump
-	phy_jump_type = CPM;
-	phy_jump_timebuffer = 400;
-	phy_jump_dj_velocity = 100;
-	phy_step_maxvel = phy_jump_velocity + phy_jump_dj_velocity;
-
-	//Print init function
-	Com_Printf("cq3_init()\n");
+	phy_jump_type        = VQ3;
+	phy_jump_velocity    = JUMP_VELOCITY;             // pmove_JumpVelocity = 270
+	phy_jump_timebuffer  = 1000;                      // QVM struct +0x2c = 1000ms
+	phy_jump_dj_velocity = 0;
+	// Jump behavior flags
+	phy_autohop              = qfalse;
+	phy_bunnyhop             = qfalse;                // pmove_BunnyHop
+	phy_double_jump          = qtrue;                 // QVM struct +0x10 = 1.0
+	phy_chain_jump           = qfalse;
+	phy_chain_jump_velocity  = 0;
+	phy_step_jump            = qfalse;
+	phy_step_jump_velocity   = 0;
+	phy_crouchstepjump       = qfalse;
+	phy_ramp_jump            = qtrue;                 // QVM struct +0x14 = 1.0
+	phy_ramp_jump_scale      = 1.25f;                 // QVM struct +0x74 = 1.25 (inherited from CPM template)
+	phy_jump_velocity_max    = JUMP_VELOCITY;
+	phy_jump_scale_add       = 0;
+	phy_jump_time_threshold  = 0;
+	phy_jump_time_threshold_offset = 0;
+	phy_jump_time_delta_min  = 0;
+	// WishSpeed
+	phy_wishspeed = 320.0f;                           // pmove_WishSpeed = 320
+	// Extra
+	phy_velocity_gh = 800;
+	// Crouchslide (CQ3: disabled)
+	phy_crouch_slide          = qfalse;
+	phy_crouch_slide_friction = 0.5f;
+	phy_crouch_slide_time     = 2000;
 }
 
-static qboolean q3a_CheckJump(void) {
-	
-	qboolean canDoubleJump;
-	
-	// Can't jump cases. Cannot jump again under these conditions
-	// don't allow jump until all buttons are up
-	if (pm->ps->pm_flags & PMF_RESPAWNED) {
-		return qfalse;
-	}
-	if (pm->cmd.upmove < 10) {
-		return qfalse;
-	}                                        // not holding jump
-	if (pm->ps->pm_flags & PMF_JUMP_HELD) {  // must wait for jump to be released
-		pm->cmd.upmove = 0;                  // clear upmove so cmdscale doesn't lower running speed
-		return qfalse;
-	}
+static qboolean phy_CheckJump(void) {
+    float    horizSpeed;
+    float    jumpVel;
+    int      timeDelta;
+    qboolean didCPMDouble;
 
-	// Else: Can jump. Do jump behavior
-	pml.groundPlane = qfalse;  // jumping away
-	pml.walking     = qfalse;
-	pm->ps->pm_flags |= PMF_JUMP_HELD;
-	pm->ps->groundEntityNum = ENTITYNUM_NONE;
+    // Can't jump cases
+    if (pm->ps->pm_flags & PMF_RESPAWNED) {
+        return qfalse;
+    }
 
-	//:: vq3 or CPM jump selection
-	//
-	// Select ADD or SET vertical velocity.
-	canDoubleJump = (pm->ps->velocity[2] > 0 && pm->movetype != VQ3) ? qtrue : qfalse;
-	if (canDoubleJump) {
-		pm->ps->velocity[2] += phy_jump_velocity;
-	}  // ADD velocity, without resetting current
-	else {
-		pm->ps->velocity[2] = phy_jump_velocity;
-	}  // SET velocity, resets current
-	//
-	// Timer check
-	if (pm->movetype == CPM || pm->movetype == CQ3) {
-		int      djtimer   = pm->cmd.serverTime - pm->ps->stats[STAT_TIME_LASTJUMP];
-		qboolean djtimerOn = ((djtimer <= phy_jump_timebuffer) && (djtimer > 0)) ? qtrue : qfalse;  // We can dj when this is true.
-		if (djtimerOn) {  // Increase height by +100 (default cpm). We can jump, and timer is on.
-			pm->ps->velocity[2] += phy_jump_dj_velocity;
-			if (pm->debugLevel) {
-				Com_Printf(":: DoubleJump -> Timer= %i, Lastjump= %i, servertime= %i\n", djtimer, pm->ps->stats[STAT_TIME_LASTJUMP], pm->cmd.serverTime);
-			}
-		} else {
-			pm->ps->stats[STAT_TIME_LASTJUMP] = pm->cmd.serverTime;
-		}  // Reset the timer: We can jump, but dj timer is off.
-	}
-	//:: vq3 or CPM jump selection end
+    // Auto-hop: force clear held flag when grounded and jump key held
+    // This allows holding the jump key to continuously re-jump
+    if (phy_autohop && pml.walking && pm->cmd.upmove >= 10) {
+        pm->ps->pm_flags &= ~PMF_JUMP_HELD;
+    }
 
-	PM_AddEvent(EV_JUMP);
-	if (pm->cmd.forwardmove >= 0) {
-		PM_ForceLegsAnim(LEGS_JUMP);
-		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-	} else {
-		PM_ForceLegsAnim(LEGS_JUMPB);
-		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
-	}
-	// We have jumped
-	if (pm->debugLevel) {
-		Com_Printf("%i:Jump\n", c_pmove);
-	}
-	return qtrue;
+    // Check if jump key is released
+    if (pm->cmd.upmove < 10) {
+        pm->ps->pm_flags &= ~PMF_JUMP_HELD;
+        return qfalse;
+    }
+
+    // Prevent holding jump from spamming jumps while in air
+    // (auto-hop only works on ground)
+    if (pm->ps->pm_flags & PMF_JUMP_HELD) {
+        pm->cmd.upmove = 0;
+        return qfalse;
+    }
+
+    // Commit the jump
+    pml.groundPlane          = qfalse;
+    pml.walking              = qfalse;
+    pm->ps->pm_flags        |= PMF_JUMP_HELD;
+    pm->ps->groundEntityNum  = ENTITYNUM_NONE;
+
+    // Base jump velocity (with optional horizontal-speed scaling)
+    if (phy_jump_scale_add > 0 && phy_jump_time_threshold > 0) {
+        float threshold = phy_jump_time_threshold * phy_jump_time_threshold_offset;
+        horizSpeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +
+                          pm->ps->velocity[1] * pm->ps->velocity[1]);
+        if (horizSpeed > threshold) {
+            jumpVel = (float)phy_jump_velocity + (horizSpeed - threshold) * phy_jump_scale_add;
+            if (jumpVel > phy_jump_velocity_max) {
+                jumpVel = phy_jump_velocity_max;
+            }
+        } else {
+            jumpVel = (float)phy_jump_velocity;
+        }
+    } else {
+        jumpVel = (float)phy_jump_velocity;
+    }
+
+    // SET or ADD velocity based on double-jump eligibility
+    if (phy_double_jump && pm->ps->velocity[2] > 0) {
+        pm->ps->velocity[2] += jumpVel;  // ADD: double-jump
+    } else {
+        pm->ps->velocity[2] = jumpVel;   // SET: normal jump
+    }
+
+    // Step-jump bonus: rewarded when jumping off a just-stepped ledge
+    if (phy_step_jump && phy_did_step) {
+        if (phy_crouchstepjump || !(pm->ps->pm_flags & PMF_DUCKED)) {
+            pm->ps->velocity[2] += phy_step_jump_velocity;
+            if (pm->debugLevel) {
+                Com_Printf(":: StepJump +%.1f\n", phy_step_jump_velocity);
+            }
+        }
+        phy_did_step = qfalse;
+    }
+
+    // Time since last recorded jump (used by CPM timer and chain-jump)
+    timeDelta    = pm->cmd.serverTime - pm->ps->stats[STAT_TIME_LASTJUMP];
+    didCPMDouble = qfalse;
+
+    // CPM-style double-jump timer bonus (active when timebuffer > 0)
+    if (phy_jump_timebuffer > 0 && phy_jump_dj_velocity > 0) {
+        qboolean djTimerOn = (timeDelta > 0 && timeDelta <= phy_jump_timebuffer) ? qtrue : qfalse;
+        if (djTimerOn) {
+            pm->ps->velocity[2] += phy_jump_dj_velocity;
+            didCPMDouble = qtrue;
+            if (pm->debugLevel) {
+                Com_Printf(":: DoubleJump +%i timer=%i last=%i now=%i\n",
+                           phy_jump_dj_velocity, timeDelta,
+                           pm->ps->stats[STAT_TIME_LASTJUMP], pm->cmd.serverTime);
+            }
+        }
+    }
+
+    // Chain-jump bonus (independent window, compatible with CPM double-jump)
+    if (phy_chain_jump && phy_chain_jump_velocity > 0) {
+        qboolean inChainWindow = (timeDelta >= (int)phy_jump_time_delta_min &&
+                                  timeDelta <= (int)phy_jump_time_threshold) ? qtrue : qfalse;
+        if (inChainWindow) {
+            pm->ps->velocity[2] += phy_chain_jump_velocity;
+            if (pm->debugLevel) {
+                Com_Printf(":: ChainJump +%.1f timeDelta=%i vel=%.1f\n",
+                           phy_chain_jump_velocity, timeDelta, pm->ps->velocity[2]);
+            }
+        }
+    }
+
+    // Record jump time; for CPM double-jumps, NOT updated (prevents triple-stacking)
+    if (!didCPMDouble) {
+        pm->ps->stats[STAT_TIME_LASTJUMP] = pm->cmd.serverTime;
+    }
+
+    PM_AddEvent(EV_JUMP);
+    if (pm->cmd.forwardmove >= 0) {
+        PM_ForceLegsAnim(LEGS_JUMP);
+        pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+    } else {
+        PM_ForceLegsAnim(LEGS_JUMPB);
+        pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+    }
+    if (pm->debugLevel) {
+        Com_Printf("%i:Jump vel=%.1f\n", c_pmove, pm->ps->velocity[2]);
+    }
+    return qtrue;
 }
 
 static void q3a_AirControl(vec3_t wishdir, float wishspeed) {
@@ -984,12 +1110,15 @@ static void q3a_AirControl(vec3_t wishdir, float wishspeed) {
 	pm->ps->velocity[2] = 0;
 	speed         = VectorLength(pm->ps->velocity);
 	VectorNormalize(pm->ps->velocity);
-	k = 32;  // Magic constant. Why 32?
+	k = 32;  // Base constant (matches CPMA/ratoa reference)
 
 	// Calculate turning amount
 	dot = DotProduct(pm->ps->velocity, wishdir);
 
 	if (dot > 0) {
+		// k = 32 * aircontrol_amount * dot^power * frametime
+		// VectorMAM(speed, vel_norm, k, wishdir) = speed*vel_norm + k*wishdir
+		// Equivalent to ratoa: VectorMA(origin,speed,vel) then VectorMA(vel,k,wishdir)
 		k = k * phy_aircontrol_amount * Q_powf(dot, phy_aircontrol_power) * pml.frametime;
 		VectorMAM(speed, pm->ps->velocity, k, wishdir, pm->ps->velocity);
 		VectorNormalize(pm->ps->velocity);
@@ -1002,155 +1131,83 @@ static void q3a_AirControl(vec3_t wishdir, float wishspeed) {
 
 void q3a_AirMove(void) {
 	int       i;
-	vec3_t    wishvel;  //, wishvel_c;
+	vec3_t    wishvel;
 	float     fmove, smove;
 	vec3_t    wishdir;
-	float     wishspeed;  //, wishspeed_c;
+	vec3_t    curdir;
+	float     wishspeed, wishspeed2;
+	float     dot;
 	usercmd_t cmd;
-	qboolean  doSideMove, doForwMove;
-	float		wishspeed2; // CPM
-    float accel;
-
-	qboolean  doAircontrol = qfalse;
-	float     realAccel;    // Acceleration to apply
-	float     realSpeed;    // Called maxspeed. Actually just baseSpeed (320ups)
-	float     realWishSpd;  // Wishpeed to apply in each case
-
-	// float angle;
-	// vec3_t vel2D;
+	float     realAccel, realSpeed, realWishSpd;
+	qboolean  doSideMove, doForwMove, doAircontrol;
 
 	core_Friction();
 
-	// fmove & smove = -127 to 127
-	// upmove        =    0 to  20
-	fmove = pm->cmd.forwardmove;  // AKA: finput, forward_cmd
-	smove = pm->cmd.rightmove;    //      sinput
-	cmd   = pm->cmd;              // Inputs for this AirMove = current inputs
-	PM_SetMovementDir();          // set the movementDir so clients can rotate the legs for strafing
+	fmove = pm->cmd.forwardmove;
+	smove = pm->cmd.rightmove;
+	cmd   = pm->cmd;
+	PM_SetMovementDir();
 
-	// Project moves down to flat plane. Zero out z components of movement vectors
-	// Forward & Right x/y ranges are 0/640 and 0/480 //??Not convinced
-	pml.forward[2] = 0;  // AKA: forward_viewangle
+	pml.forward[2] = 0;
 	pml.right[2]   = 0;
 	VectorNormalize(pml.forward);
 	VectorNormalize(pml.right);
 
-	// Calculate player desired velocity vector (wishvel)
-	for (i = 0; i < 2; i++) {  // Determine x and y parts of velocity
+	for (i = 0; i < 2; i++) {
 		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
 	}
-	wishvel[2] = 0;  // Zero out z part of velocity
+	wishvel[2] = 0;
 
-	// Calculate desired direction (aka normalized wishvel)
-	VectorCopy(wishvel, wishdir);  // Store wishvel in wishdir
-	VectorNormalize(wishdir);      // Normalize wishvel so its actually a 'dir'
+	VectorCopy(wishvel, wishdir);
+	VectorNormalize(wishdir);
+	wishspeed = VectorLength(wishvel);
 
-	// Calculate desired speed amount, based on wishvel (aka wishpeed)
-	wishspeed = VectorLength(wishvel);  // wishspeed = normalized speed (aka wishvel.length). Because speed = velocity.length
+	doSideMove   = (smove > 0.1f || smove < -0.1f) ? qtrue : qfalse;
+	doForwMove   = (fmove > 0.1f || fmove < -0.1f) ? qtrue : qfalse;
+	doAircontrol = (phy_aircontrol && doForwMove && !doSideMove) ? qtrue : qfalse;
 
-	// CPM specific
-	doSideMove = (smove > 0.1 || smove < -0.1) ? qtrue : qfalse;
-	doForwMove = (fmove > 0.1 || fmove < -0.1) ? qtrue : qfalse;
-
-	if (phy_aircontrol && doForwMove && !doSideMove) {
-		doAircontrol = qtrue;
-	}
-	if (pm->movetype == CPM) {
-		// We do haste in xxx_move. Default is: pm->ps->speed , which comes from g_active.c and has haste factor included in it.
-		if (doSideMove && !doForwMove) {
-			realAccel   = phy_airstrafe_accel;
-			realSpeed   = phy_airstrafe_basespeed;
-			realWishSpd = wishspeed * core_CmdScale(&cmd, qfalse);
-		} else {
-			realAccel   = phy_air_accel;
-			realSpeed   = pm->ps->speed;
-			realWishSpd = wishspeed * core_CmdScale(&cmd, qfalse);
-
-			// Deceleration behavior
-			/*
-			VectorCopy(pm->ps->velocity, vel2D);    // Store velocity in 2D vector
-			vel2D[0] = 0;                           // Zero out its vertical velocity
-			angle = acos_alt(DotProduct(wishdir, vel2D) /
-			                (VectorLength(wishdir) * VectorLength2D(vel2D)));
-			angle *= (180 / M_PI);                  // Convert radians to degrees
-			if (angle > phy_air_decelAngle){        // If the angle is over the decel angle
-			  realAccel *= phy_air_decel;           // Scale down air accel by decel factor
-			}
-			*/
-            // CPM: Air Control Deceleration
-            /*wishspeed2 = wishspeed;
-            if (DotProduct(pm->ps->velocity, wishdir) < 0)
-                accel = phy_air_decel;
-            else
-                accel = pm_airaccelerate;
-            if (pm->ps->movementDir == 2 || pm->ps->movementDir == 6)
-            {
-                if (wishspeed > phy_wishspeed)
-                    wishspeed = phy_wishspeed;
-                accel = phy_airstrafe_accel;
-            }*/
-            // !CPM
-		}
-	} else if (pm->movetype == VQ3 || pm->movetype == CQ3) {
-		realAccel   = phy_air_accel;
+	// CPM/PQL-style AD strafe turning (only when airstrafe_accel > 0)
+	if (phy_airstrafe_accel > 0 && doSideMove && !doForwMove) {
+		realAccel   = phy_airstrafe_accel;
+		realSpeed   = phy_airstrafe_basespeed;
+		realWishSpd = wishspeed * core_CmdScale(&cmd, qfalse);
+	} else {
 		realSpeed   = pm->ps->speed;
 		realWishSpd = wishspeed * core_CmdScale(&cmd, qfalse);
-
-	} else {
-		//Com_Printf("Undefined movetype in %s. pm->movetype = %i", pm->movetype, __func__);
-		return;
-	}  // Undefined physics
-	//::::::::::::::::::
-
-	
-	// CPM: Air Control
-    wishspeed2 = wishspeed;
-
-    if (DotProduct(pm->ps->velocity, wishdir) < 0)
-        realAccel = phy_air_decel;
-    else
-        realAccel = pm_airaccelerate;
-    if (pm->ps->movementDir == 2 || pm->ps->movementDir == 6)
-    {
-        if (wishspeed > phy_wishspeed)
-            wishspeed = phy_wishspeed;
-        realAccel = phy_airstrafe_accel;
-    }
-	// CPM specific
-	doSideMove = (smove > 0.1 || smove < -0.1) ? qtrue : qfalse;
-	doForwMove = (fmove > 0.1 || fmove < -0.1) ? qtrue : qfalse;
-    // !CPM
-	if (phy_aircontrol && doForwMove && !doSideMove) {
-		doAircontrol = qtrue;
+		// Smooth-blend accel between phy_air_accel and phy_airstopaccelerate based
+		// on turning angle (ratoa/Xonotic Darkplaces style).
+		// Set phy_air_decelAngle > 0 via CVAR to use the legacy angle threshold instead.
+		if (phy_air_decelAngle > 0) {
+			dot = DotProduct(pm->ps->velocity, wishdir);
+			if (dot < cos(DEG2RAD(phy_air_decelAngle))) {
+				realAccel = phy_air_decel;
+			} else {
+				realAccel = (dot < 0) ? phy_airstopaccelerate : phy_air_accel;
+			}
+		} else {
+			VectorCopy(pm->ps->velocity, curdir);
+			curdir[2] = 0;
+			VectorNormalize(curdir);
+			dot       = -DotProduct(curdir, wishdir);
+			realAccel = phy_air_accel + (phy_airstopaccelerate - phy_air_accel) * (dot > 0.0f ? dot : 0.0f);
+		}
 	}
 
-	// not on ground, so little effect on velocity
-	// PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
+	wishspeed2 = wishspeed;
+	core_Accelerate(wishdir, realWishSpd, realAccel, realSpeed);
 
-    // CPM: Air control
-    core_Accelerate(wishdir, realWishSpd, realAccel, realSpeed);
-    if (doAircontrol) {
-		phy_wishspeed = 30;
-        q3a_AirControl(wishdir, wishspeed2);
-    }
-    // !CPM
+	if (doAircontrol) {
+		q3a_AirControl(wishdir, wishspeed2);
+	}
 
-	// not on ground, so little effect on velocity
-	//core_Accelerate(wishdir, realWishSpd, realAccel, realSpeed);
-	/* if (doAircontrol) {
-		phy_air_decel = 2.5;
-		phy_wishspeed = 30;
-		q3a_AirControl(wishdir, realWishSpd);
-	} */
-
-	// we may have a ground plane that is very steep, even though we don't have a
-	// groundentity. slide along the steep plane
 	if (pml.groundPlane) {
 		VectorReflect(pm->ps->velocity, pml.groundTrace.plane.normal, pm->ps->velocity, OVERCLIP);
 	}
-	// Do the movement
 	core_StepSlideMove(qtrue);
 }
+
+// Minimum horizontal speed (ups) required to enter or maintain a crouchslide
+#define SLIDE_ENTER_SPEED 200.0f
 
 void q3a_WalkMove(void) {
 	int       i;
@@ -1162,13 +1219,49 @@ void q3a_WalkMove(void) {
 	usercmd_t cmd;
 	float     accelerate;
 	float     vel;
+	float     horizSpeed;
+	qboolean  wasDucked;
+
+	phy_did_step = qfalse;
+
+	// ---- Crouchslide state machine ----
+	if (phy_crouch_slide) {
+		horizSpeed = (float)sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +
+		                        pm->ps->velocity[1] * pm->ps->velocity[1]);
+		wasDucked  = (pm->ps->pm_flags & PMF_DUCKED) ? qtrue : qfalse;
+
+		if (pm->ps->stats[STAT_SLIDE_TIME] > 0) {
+			// slide in progress — tick the timer
+			pm->ps->stats[STAT_SLIDE_TIME] -= pml.msec;
+			if (pm->ps->stats[STAT_SLIDE_TIME] < 0) {
+				pm->ps->stats[STAT_SLIDE_TIME] = 0;
+			}
+			// cancel if player stood up, left ground, or slowed below threshold
+			if (!wasDucked || !pml.walking || horizSpeed < SLIDE_ENTER_SPEED * 0.5f) {
+				pm->ps->stats[STAT_SLIDE_TIME] = 0;
+			}
+		} else if (wasDucked && pml.walking && horizSpeed >= SLIDE_ENTER_SPEED) {
+			// slide entry — set timer and give a small entry boost
+			pm->ps->stats[STAT_SLIDE_TIME] = phy_crouch_slide_time;
+			pm->ps->velocity[0] *= 1.1f;
+			pm->ps->velocity[1] *= 1.1f;
+		}
+		pml.sliding    = (pm->ps->stats[STAT_SLIDE_TIME] > 0) ? qtrue : qfalse;
+		pml.slideTime  = pm->ps->stats[STAT_SLIDE_TIME];
+	} else {
+		// movement type has crouchslide disabled — clear any stale state
+		pm->ps->stats[STAT_SLIDE_TIME] = 0;
+		pml.sliding   = qfalse;
+		pml.slideTime = 0;
+	}
+	// ---- end crouchslide state machine ----
 
 	if (pm->waterlevel > 2 && DotProduct(pml.forward, pml.groundTrace.plane.normal) > 0) {
 		PM_WaterMove();  // begin swimming
 		return;
 	}
 
-	if (q3a_CheckJump()) {
+	if (phy_CheckJump()) {
 		if (pm->waterlevel > 1) {
 			PM_WaterMove();
 		}  // jumped away
@@ -1178,7 +1271,7 @@ void q3a_WalkMove(void) {
 		return;
 	}
 
-	PM_Friction();
+	core_Friction();
 
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
@@ -1199,44 +1292,42 @@ void q3a_WalkMove(void) {
 	for (i = 0; i < 3; i++) {
 		wishvel[i] = pml.forward[i] * fmove + pml.right[i] * smove;
 	}
-	// when going up or down slopes the wish velocity should Not be zero
-	//	wishvel[2] = 0;
-	VectorCopy(wishvel, wishdir);  // Determine magnitude of speed of move
+	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
+
 	// clamp the speed lower if ducking
 	if (pm->ps->pm_flags & PMF_DUCKED) {
 		if (wishspeed > pm->ps->speed * phy_crouch_scale) {
 			wishspeed = pm->ps->speed * phy_crouch_scale;
 		}
 	}
-	// clamp the speed lower if wading or walking on the bottom
-	if (pm->waterlevel) {
-		float waterScale;
-		waterScale = pm->waterlevel / 3.0;
-		waterScale = 1.0 - (1.0 - phy_water_scale) * waterScale;
+
+	// clamp the speed lower if wading or swimming
+	if (pm->waterlevel == 1) {
+		// feet/shins in water — wade penalty
+		if (wishspeed > pm->ps->speed * phy_water_wade_scale) {
+			wishspeed = pm->ps->speed * phy_water_wade_scale;
+		}
+	} else if (pm->waterlevel > 1) {
+		// waist-deep or swimming
+		float waterScale = 1.0f - (1.0f - phy_water_scale) * (pm->waterlevel / 3.0f);
 		if (wishspeed > pm->ps->speed * waterScale) {
 			wishspeed = pm->ps->speed * waterScale;
 		}
 	}
-	// when a player gets hit, they temporarily lose full control, which allows them to be moved a bit
-	if ((pml.groundTrace.surfaceFlags & SURF_SLICK || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) && pm->movetype != CPM) {
-		switch (pm->movetype) {
-		default: /* fall through */
-		case VQ3:
-			accelerate = phy_air_accel;
-			break;
-		case CQ3:
-			accelerate = phy_slick_accel;
-			break;
-		}
+
+	// slick surface or knockback — use slick accel; otherwise full ground accel
+	if (pml.groundTrace.surfaceFlags & SURF_SLICK || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {
+		accelerate = phy_slick_accel;
 	} else {
 		accelerate = phy_ground_accel;
 	}
+
 	core_Accelerate(wishdir, wishspeed, accelerate, pm->ps->speed);
+
 	if ((pml.groundTrace.surfaceFlags & SURF_SLICK) || pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {
 		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
-	} else {  // pm->ps->velocity[2] = 0; // don't reset the z velocity for slopes
 	}
 
 	vel = VectorLength(pm->ps->velocity);
@@ -1245,12 +1336,20 @@ void q3a_WalkMove(void) {
 	// don't decrease velocity when going up or down a slope
 	VectorNormalize(pm->ps->velocity);
 	VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
+
 	// don't do anything if standing still
 	if (!pm->ps->velocity[0] && !pm->ps->velocity[1]) {
 		return;
 	}
-	// Do the movement
-	core_StepSlideMove(qtrue);
+
+	// track step-ups for step-jump bonus
+	if (phy_step_jump) {
+		float preZ = pm->ps->origin[2];
+		core_StepSlideMove(qtrue);
+		phy_did_step = (pm->ps->origin[2] - preZ > 2.0f) ? qtrue : qfalse;
+	} else {
+		core_StepSlideMove(qtrue);
+	}
 }
 
 void q3a_move(pmove_t* pmove) {
@@ -1262,14 +1361,6 @@ void q3a_move(pmove_t* pmove) {
 	// do deadmove  :moved to top
 	// drop timers
 	PM_DropTimers();
-
-	//check for ladder
-	CheckLadder();
-
-	if(pml.ladder) {
-		PM_LadderMove();
-		return;
-	}
 
 	if (pm->ps->powerups[PW_FLIGHT]) {
 		PM_FlyMove();  // flight powerup doesn't allow jump and has different friction
@@ -1308,6 +1399,130 @@ void vq3_move(pmove_t* pmove) {
 	q3a_move(pmove);
 }
 void cq3_move(pmove_t* pmove) {
+	q3a_move(pmove);
+}
+
+void vql_init(void) {
+	// Slick
+	phy_slick_accel = 1;                              // VQL: air accel on slick surfaces
+	// Water
+	phy_water_friction   = pm_waterfriction;
+	phy_water_scale      = 0.6f;                      // pmove_WaterSwimScale
+	phy_water_wade_scale = 0.8f;                      // pmove_WaterWadeScale
+	// Ground
+	phy_ground_accel = 10.0f;                         // pmove_WalkAccel
+	phy_friction     = 6.0f;                          // pmove_WalkFriction
+	// Air
+	phy_air_accel         = 1.0f;                     // pmove_AirAccel
+	phy_airstopaccelerate = 1.0f;                     // pmove_AirStopAccel
+	phy_air_decel         = 1.0f;
+	phy_air_decelAngle    = 0;
+	// W turning (none)
+	phy_aircontrol        = qfalse;
+	phy_aircontrol_amount = 0;
+	phy_aircontrol_power  = 0;
+	// AD turning (none)
+	phy_airstrafe_basespeed = 0;
+	phy_airstrafe_accel     = 0;
+	// Step
+	phy_step_size   = 22;                             // pmove_StepHeight
+	phy_step_maxvel = 275;
+	// Jump
+	phy_jump_type        = VQ3;                       // SET velocity (no double jump)
+	phy_jump_velocity    = 275;                       // pmove_JumpVelocity
+	phy_jump_timebuffer  = 0;
+	phy_jump_dj_velocity = 0;
+	// Jump behavior flags
+	phy_autohop              = qtrue;                 // pmove_AutoHop
+	phy_bunnyhop             = qtrue;                 // pmove_BunnyHop
+	phy_double_jump          = qfalse;                // pmove_DoubleJump = 0
+	phy_chain_jump           = qtrue;                 // pmove_ChainJump
+	phy_chain_jump_velocity  = 110.0f;               // pmove_ChainJumpVelocity
+	phy_step_jump            = qtrue;                 // pmove_StepJump
+	phy_step_jump_velocity   = 48.0f;                // pmove_StepJumpVelocity
+	phy_crouchstepjump       = qtrue;                 // pmove_CrouchStepJump
+	phy_ramp_jump            = qfalse;
+	phy_ramp_jump_scale      = 1.0f;
+	phy_jump_velocity_max    = 275.0f;               // pmove_JumpVelocityMax (no speed scaling)
+	phy_jump_scale_add       = 0;                    // pmove_JumpVelocityScaleAdd
+	phy_jump_time_threshold  = 500.0f;               // pmove_JumpVelocityTimeThreshold (chain-jump window)
+	phy_jump_time_threshold_offset = 0.6f;           // pmove_JumpVelocityTimeThresholdOffset
+	phy_jump_time_delta_min  = 100.0f;               // pmove_JumpTimeDeltaMin
+	// WishSpeed
+	phy_wishspeed = 400.0f;                           // pmove_WishSpeed
+	// Extra
+	phy_velocity_gh = 800;
+	// Crouchslide (VQL: off by default; enable via pmove_CrouchSlide 1)
+	phy_crouch_slide          = qfalse;
+	phy_crouch_slide_friction = 0.5f;
+	phy_crouch_slide_time     = 2000;
+}
+
+void vql_move(pmove_t* pmove) {
+	q3a_move(pmove);
+}
+
+// PQL init uses phy_* globals exclusively (all statics replaced)
+
+void pql_init(void) {
+	// Slick
+	phy_slick_accel = 1;                              // PQL: air accel on slick surfaces
+	// Water
+	phy_water_friction   = pm_waterfriction;
+	phy_water_scale      = 0.6f;                      // pmove_WaterSwimScale
+	phy_water_wade_scale = 0.8f;                      // pmove_WaterWadeScale
+	// Ground
+	phy_ground_accel = 15.0f;                         // pmove_WalkAccel (ratoa: pm_cpm_accelerate)
+	phy_friction     = 6.0f;                          // pmove_WalkFriction
+	// Air
+	phy_air_accel         = 1.0f;                     // pmove_AirAccel (ratoa: pm_cpm_airaccelerate)
+	phy_airstopaccelerate = 2.5f;                     // pmove_AirStopAccel (ratoa: pm_cpm_airstopaccelerate)
+	phy_air_decel         = 2.5f;
+	phy_air_decelAngle    = 0;                        // smooth blend; set >0 via CVAR for legacy threshold
+	// W turning (CPM-style)
+	phy_aircontrol        = qtrue;                    // pmove_AirControl
+	phy_aircontrol_amount = 150;
+	phy_aircontrol_power  = 2;
+	// AD turning (CPM-style)
+	phy_airstrafe_basespeed = 30;
+	phy_airstrafe_accel     = 70;
+	// Step
+	phy_step_size   = 22;                             // pmove_StepHeight
+	phy_step_maxvel = 270 + 100;                      // 370 (double-jump cap)
+	// Jump
+	phy_jump_type        = CPM;                       // enables double-jump timer
+	phy_jump_velocity    = 270;                       // pmove_JumpVelocity = 270
+	phy_jump_timebuffer  = 400;
+	phy_jump_dj_velocity = 100;
+	// Jump behavior flags
+	phy_autohop              = qtrue;                 // pmove_AutoHop
+	phy_bunnyhop             = qtrue;                 // pmove_BunnyHop
+	phy_double_jump          = qtrue;                 // pmove_DoubleJump
+	phy_chain_jump           = qtrue;                 // pmove_ChainJump
+	phy_chain_jump_velocity  = 110.0f;
+	phy_step_jump            = qtrue;                 // pmove_StepJump
+	phy_step_jump_velocity   = 48.0f;
+	phy_crouchstepjump       = qtrue;                 // pmove_CrouchStepJump
+	phy_ramp_jump            = qtrue;                 // pmove_RampJump
+	phy_ramp_jump_scale      = 1.25f;                 // pmove_RampJumpScale
+	phy_jump_velocity_max    = 270.0f;               // pmove_JumpVelocityMax (no speed scaling)
+	phy_jump_scale_add       = 0;                    // pmove_JumpVelocityScaleAdd
+	phy_jump_time_threshold  = 500.0f;               // pmove_JumpVelocityTimeThreshold (chain-jump window)
+	phy_jump_time_threshold_offset = 0.6f;
+	phy_jump_time_delta_min  = 100.0f;
+	// WishSpeed
+	phy_wishspeed = 400.0f;                           // pmove_WishSpeed
+	// Extra
+	phy_velocity_gh = 800;
+	// Crouchslide (PQL: off by default; enable via pmove_CrouchSlide 1)
+	phy_crouch_slide          = qfalse;
+	phy_crouch_slide_friction = 0.5f;
+	phy_crouch_slide_time     = 2000;
+}
+
+// pql_CheckJump / pql_AirMove / pql_WalkMove replaced by unified phy_CheckJump /
+// q3a_AirMove / q3a_WalkMove — pql_move now delegates directly to q3a_move.
+void pql_move(pmove_t* pmove) {
 	q3a_move(pmove);
 }
 
@@ -1504,12 +1719,12 @@ void core_StepSlideMove(qboolean gravity) {
 		return;
 	}  // we got exactly where we wanted to go first try
 	VectorCopy(start_o, down);
-	down[2] -= STEPSIZE;
+	down[2] -= phy_step_size;
 	pm->trace(&trace, start_o, pm->mins, pm->maxs, down, pm->ps->clientNum, pm->tracemask);
 	// Step up
 	max_jumpvel    = phy_jump_velocity + phy_jump_dj_velocity;
 	timerActive    = (pm->cmd.serverTime - pm->ps->stats[STAT_TIME_LASTJUMP] < phy_jump_timebuffer) ? qtrue : qfalse;
-	cantDoubleJump = (pm->movetype == VQ3 || !timerActive || pm->ps->velocity[2] > max_jumpvel) ? qtrue : qfalse;
+	cantDoubleJump = (!phy_double_jump || !timerActive || pm->ps->velocity[2] > max_jumpvel) ? qtrue : qfalse;
 	VectorSet(up, 0, 0, 1);
 	isSteepRamp = DotProduct(trace.plane.normal, up) < MIN_WALK_NORMAL ? qtrue : qfalse;
 	// never step up when:
@@ -1525,7 +1740,7 @@ void core_StepSlideMove(qboolean gravity) {
 	// VectorCopy (pm->ps->velocity, down_v);
 
 	VectorCopy(start_o, up);
-	up[2] += STEPSIZE;
+	up[2] += phy_step_size;
 	// test the player position if they were a stepheight higher
 	pm->trace(&trace, start_o, pm->mins, pm->maxs, up, pm->ps->clientNum, pm->tracemask);
 	if (trace.allsolid) {

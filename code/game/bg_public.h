@@ -274,7 +274,8 @@ typedef enum {
     STAT_RAIL_DELAY = 8,
     STAT_ARMOR_TYPE = 9,            // armor type: red/green/yellow (OSP2-BE)
     STAT_OSP_10 = 10,
-    STAT_WEAPON_DELAY = 11
+    STAT_WEAPON_DELAY = 11,
+    STAT_SLIDE_TIME = 12            // crouchslide timer (ms)
 } statIndex_t;
 
 

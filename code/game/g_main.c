@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
-//#include "bg_promode.h" // CPM
 
 level_locals_t	level;
 
@@ -284,7 +283,8 @@ void G_RegisterCvars( void ) {
 	}
 
 	// check some things
-	if ( g_gametype.integer < 0 || g_gametype.integer >= GT_MAX_GAME_TYPE ) {
+	if ( g_gametype.integer < 0 ||
+	     ( g_gametype.integer >= GT_MAX_GAME_TYPE && g_gametype.integer != GT_PORTAL ) ) {
 		G_Printf( "g_gametype %i is out of range, defaulting to 0\n", g_gametype.integer );
 		trap_Cvar_Set( "g_gametype", "0" );
 		trap_Cvar_Update( &g_gametype );
@@ -619,14 +619,6 @@ static void G_UpdateCvars( void ) {
 	qboolean remapped = qfalse;
 
 	for ( i = 0, cv = gameCvarTable ; i < ARRAY_LEN( gameCvarTable ) ; i++, cv++ ) {
-        /*if ( cv->vmCvar == &g_promode ) {
-            // CPM: Detect if g_promode has been changed
-            CPM_UpdateSettings((cv->vmCvar->integer) ? ((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);
-
-            // Set the config string (so clients will be updated)
-            trap_SetConfigstring(CS_PROMODE, va("%d", g_promode.integer));
-            continue;
-        }*/
 		if ( cv->vmCvar ) {
 			trap_Cvar_Update( cv->vmCvar );
 
@@ -759,13 +751,8 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_InitMemory();
 
-	// CPM: Initialize
-	// Update all settings
-	/*CPM_UpdateSettings((g_promode.integer) ?
-		((g_gametype.integer == GT_TEAM) ? 2 : 1) : 0);*/
-
 	// Set the config string
-	trap_SetConfigstring(CS_PROMODE, va("%d", g_promode.integer));
+	trap_SetConfigstring(CS_PROMODE, va("%d", g_moveType.integer));
 	// !CPM
 
 	// set some level globals
@@ -843,6 +830,8 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// so Team_InitGame encodes the correct attacking team into CS_FLAGSTATUS.
 	G_ATDInitGame();
 
+		// Threewave portal voting — reset state at map start
+		G_Portal_Init();
 	// make sure we have flags for CTF, etc
 	if( g_gametype.integer >= GT_TEAM ) {
 		G_CheckTeamItems();
@@ -2462,6 +2451,9 @@ static void G_RunFrame( int levelTime ) {
 
 	// cancel vote if timed out
 	CheckVote();
+
+	// check Threewave portal vote timer
+	G_Portal_Frame();
 
 	// check team votes
 	CheckTeamVote( TEAM_RED );
