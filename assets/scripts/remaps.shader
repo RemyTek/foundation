@@ -11603,3 +11603,1193 @@ levelshots/ztn3tourney1
 	rgbGen identity
     }
 }
+
+levelshots/13dream_xt
+{
+	nopicmip
+	{
+		map levelshots/13dream_xt.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/13dream_xt_disabled
+{
+	nopicmip
+	{
+		map levelshots/13dream_xt.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/bunker_ctf1
+{
+	nopicmip
+	{
+		map levelshots/bunker_ctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/bunker_ctf1_disabled
+{
+	nopicmip
+	{
+		map levelshots/bunker_ctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ccad
+{
+	nopicmip
+	{
+		map levelshots/ccad.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ccad_disabled
+{
+	nopicmip
+	{
+		map levelshots/ccad.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/cpmctf2
+{
+	nopicmip
+	{
+		map levelshots/cpmctf2.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/cpmctf2_disabled
+{
+	nopicmip
+	{
+		map levelshots/cpmctf2.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ctf_gate1
+{
+	nopicmip
+	{
+		map levelshots/ctf_gate1.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ctf_gate1_disabled
+{
+	nopicmip
+	{
+		map levelshots/ctf_gate1.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/facelittle
+{
+	nopicmip
+	{
+		map levelshots/facelittle.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/facelittle_disabled
+{
+	nopicmip
+	{
+		map levelshots/facelittle.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/industrialaccident
+{
+	nopicmip
+	{
+		map levelshots/industrialaccident.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/industrialaccident_disabled
+{
+	nopicmip
+	{
+		map levelshots/industrialaccident.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ironwood
+{
+	nopicmip
+	{
+		map levelshots/ironwood.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ironwood_disabled
+{
+	nopicmip
+	{
+		map levelshots/ironwood.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ironworks
+{
+	nopicmip
+	{
+		map levelshots/ironworks.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ironworks_disabled
+{
+	nopicmip
+	{
+		map levelshots/ironworks.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/jumpwerkz
+{
+	nopicmip
+	{
+		map levelshots/jumpwerkz.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/jumpwerkz_disabled
+{
+	nopicmip
+	{
+		map levelshots/jumpwerkz.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ojfc-07
+{
+	nopicmip
+	{
+		map levelshots/ojfc-07.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ojfc-07_disabled
+{
+	nopicmip
+	{
+		map levelshots/ojfc-07.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/pillbox
+{
+	nopicmip
+	{
+		map levelshots/pillbox.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/pillbox_disabled
+{
+	nopicmip
+	{
+		map levelshots/pillbox.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ps37ctf-s
+{
+	nopicmip
+	{
+		map levelshots/ps37ctf-s.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ps37ctf-s_disabled
+{
+	nopicmip
+	{
+		map levelshots/ps37ctf-s.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/q3dm17_ctf
+{
+	nopicmip
+	{
+		map levelshots/q3dm17_ctf.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/q3dm17_ctf_disabled
+{
+	nopicmip
+	{
+		map levelshots/q3dm17_ctf.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/q3octoball
+{
+	nopicmip
+	{
+		map levelshots/q3octoball.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/q3octoball_disabled
+{
+	nopicmip
+	{
+		map levelshots/q3octoball.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/rv3ctf1
+{
+	nopicmip
+	{
+		map levelshots/rv3ctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/rv3ctf1_disabled
+{
+	nopicmip
+	{
+		map levelshots/rv3ctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/siberia
+{
+	nopicmip
+	{
+		map levelshots/siberia.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/siberia_disabled
+{
+	nopicmip
+	{
+		map levelshots/siberia.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/splatctf1
+{
+	nopicmip
+	{
+		map levelshots/splatctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/splatctf1_disabled
+{
+	nopicmip
+	{
+		map levelshots/splatctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/stchctf9a
+{
+	nopicmip
+	{
+		map levelshots/stchctf9a.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/stchctf9a_disabled
+{
+	nopicmip
+	{
+		map levelshots/stchctf9a.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/ut4_rctf1
+{
+	nopicmip
+	{
+		map levelshots/ut4_rctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/ut4_rctf1_disabled
+{
+	nopicmip
+	{
+		map levelshots/ut4_rctf1.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf01
+{
+	nopicmip
+	{
+		map levelshots/wtf01.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf01_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf01.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf02-pro
+{
+	nopicmip
+	{
+		map levelshots/wtf02-pro.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf02-pro_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf02-pro.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf05
+{
+	nopicmip
+	{
+		map levelshots/wtf05.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf05_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf05.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf06
+{
+	nopicmip
+	{
+		map levelshots/wtf06.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf06_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf06.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf10
+{
+	nopicmip
+	{
+		map levelshots/wtf10.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf10_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf10.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf12
+{
+	nopicmip
+	{
+		map levelshots/wtf12.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf12_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf12.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf20
+{
+	nopicmip
+	{
+		map levelshots/wtf20.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf20_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf20.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf24
+{
+	nopicmip
+	{
+		map levelshots/wtf24.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf24_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf24.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf29
+{
+	nopicmip
+	{
+		map levelshots/wtf29.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf29_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf29.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf33
+{
+	nopicmip
+	{
+		map levelshots/wtf33.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf33_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf33.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf36
+{
+	nopicmip
+	{
+		map levelshots/wtf36.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf36_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf36.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf37
+{
+	nopicmip
+	{
+		map levelshots/wtf37.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf37_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf37.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf39
+{
+	nopicmip
+	{
+		map levelshots/wtf39.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf39_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf39.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf43
+{
+	nopicmip
+	{
+		map levelshots/wtf43.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf43_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf43.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}
+
+levelshots/wtf44
+{
+	nopicmip
+	{
+		map levelshots/wtf44.tga
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}	
+}
+levelshots/wtf44_disabled
+{
+	nopicmip
+	{
+		map levelshots/wtf44.tga
+		rgbGen identity
+	}
+	{
+		map textures/q3start/portal_x.tga
+		blendFunc blend
+		rgbGen identity
+	}
+	{
+		map textures/base_wall/comp3textd.tga
+		blendfunc add
+		rgbGen wave noise 0.15 0.15 0.15 20
+		tcmod scroll 20 .25
+	}
+}

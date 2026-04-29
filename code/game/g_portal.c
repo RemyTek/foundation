@@ -340,6 +340,23 @@ void G_Portal_Init( void ) {
 			level.portalDisabled[n - 1] = qtrue;
 		tok = strtok( NULL, "," );
 	}
+
+	// Broadcast portal info to clients via configstrings
+	{
+		int  i;
+		char mapname[MAX_QPATH];
+		char info[MAX_INFO_STRING];
+
+		for ( i = 1; i <= MAX_PORTAL_MAPS; i++ ) {
+			G_Portal_MapForNum( i, mapname, sizeof( mapname ) );
+			info[0] = '\0';
+			if ( mapname[0] ) {
+				Info_SetValueForKey( info, "m", mapname );
+				Info_SetValueForKey( info, "e", level.portalDisabled[i - 1] ? "0" : "1" );
+			}
+			trap_SetConfigstring( CS_PORTALS + i - 1, info );
+		}
+	}
 }
 
 /* -----------------------------------------------------------------------

@@ -1678,6 +1678,51 @@ void CG_InitCvars(void)
 
 /*
 =================
+CG_Portal_RemapShaders
+
+Remap textures/q3start/pm## to levelshots/<mapname> for each portal slot
+that has a map configured via p_portalMap## cvars.
+================
+*/
+void CG_Portal_RemapShaders( void ) {
+	int         i;
+	const char  *cs;
+	const char  *mapname;
+	const char  *enabled;
+	char        oldShader[64];
+	const char  *newShader;
+
+	for ( i = 1; i <= 64; i++ ) {
+		cs = CG_ConfigString( CS_PORTALS + i - 1 );
+		Com_sprintf( oldShader, sizeof( oldShader ), "textures/q3start/pm%02i", i );
+
+		if ( !cs || !cs[0] ) {
+			trap_R_RemapShader( oldShader, "textures/q3start/x.tga", "0.0" );
+			continue;
+		}
+
+		mapname = Info_ValueForKey( cs, "m" );
+		if ( !mapname[0] ) {
+			trap_R_RemapShader( oldShader, "textures/q3start/x.tga", "0.0" );
+			continue;
+		}
+
+		enabled = Info_ValueForKey( cs, "e" );
+		if ( atoi( enabled ) ) {
+			newShader = va( "levelshots/%s", mapname );
+		} else {
+			newShader = va( "levelshots/%s_disabled", mapname );
+		}
+
+		// Pre-register with NoMip so the engine loads it as a 2D/unlit shader
+		// rather than generating it on-the-fly with default mipmap/lightmap settings.
+		trap_R_RegisterShaderNoMip( newShader );
+		trap_R_RemapShader( oldShader, newShader, "0.001" );
+	}
+}
+
+/*
+================
 CG_Init
 
 Called after every level change or subsystem restart
@@ -2025,6 +2070,9 @@ int CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 	{
 		trap_SendConsoleCommand("clear");
 	}
+
+	CG_Portal_RemapShaders();
+
 	return 0;
 }
 

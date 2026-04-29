@@ -106,6 +106,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define CS_MAX					(CS_PARTICLES+MAX_LOCATIONS)
 
+// Portal configstrings — 64 slots, one per portal map slot (portals 1..64)
+#define CS_PORTALS				(CS_MAX)
+
 //CPM
 #define CS_PROMODE             16
 

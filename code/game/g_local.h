@@ -1069,7 +1069,7 @@ void	trap_SnapVector( float *v );
 void G_RailgunRadiusDamage (vec3_t origin, gentity_t *ent);
 
 // Threewave portal-voting gametype (q3start); extends the standard GT_* enum
-#define GT_PORTAL    8
+#define GT_PORTAL    6
 
 //
 // g_portal.c

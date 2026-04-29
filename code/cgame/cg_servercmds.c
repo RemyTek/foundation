@@ -523,6 +523,10 @@ static void CG_ConfigStringModified(void)
 	{
 		CG_OSPConfigFreezeModeSet(atoi(str));
 	}
+	else if (num >= CS_PORTALS && num < CS_PORTALS + 64)
+	{
+		CG_Portal_RemapShaders();
+	}
 	else if (num == CS_SHADERSTATE)
 	{
 		CG_ShaderStateChanged();

@@ -1985,6 +1985,7 @@ void CG_ExecuteNewServerCommands(int latestSequence);
 void CG_ParseServerinfo(void);
 void CG_SetConfigValues(void);
 void CG_ShaderStateChanged(void);
+void CG_Portal_RemapShaders(void);
 void CG_RemoveChatEscapeChar(char* text);
 void CG_RemoveChatEscapeCharAll(char* text);
 void CG_StringMakeEscapeCharRAW(const char* in, char* out, int max);
