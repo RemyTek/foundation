@@ -827,8 +827,8 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
 
-	// Cache mini-game teleporter entities for GT_PORTAL (q3start has minigame0..4)
-	if ( g_gametype.integer == GT_PORTAL )
+	// Cache mini-game teleporter entities when portal hub is active (runs as GT_FFA)
+	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA )
 		G_Portal_FindMinigames();
 
 	// general initialization

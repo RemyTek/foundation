@@ -428,10 +428,7 @@ static void Touch_Portal( gentity_t *self, gentity_t *other, trace_t *trace ) {
 	if ( !other->client )
 		return;
 
-	// Portal voting only runs in the portal-voting gametype (q3start)
-	if ( g_gametype.integer != GT_PORTAL )
-		return;
-
+	// Portal voting only runs when the portal system is active (hub is GT_FFA)
 	if ( !p_enablePortal.integer ) {
 		trap_SendServerCommand( other - g_entities,
 			"print \"The portal is disabled on this server.\\n\"" );
@@ -488,7 +485,7 @@ void SP_func_portal( gentity_t *ent ) {
 	if ( portalNum == 0 ) {
 		// RandomPortal entity: active when p_randomPortal is set and gametype is portal
 		G_SpawnInt( "RandomPortal", "0", &randomFlag );
-		if ( randomFlag && g_gametype.integer != GT_FFA )
+		if ( randomFlag && p_enablePortal.integer )
 			isValid = qtrue;
 	} else if ( portalNum >= 1 && portalNum <= MAX_PORTAL_MAPS ) {
 		if ( !level.portalDisabled[portalNum - 1] ) {

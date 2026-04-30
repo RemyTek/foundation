@@ -129,6 +129,10 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 			//return firstSpawn ? SPAWN_HEALTH : RESPAWN_HEALTH;
 
 	case IT_POWERUP:
+		// item_silly uses a fixed 3-second respawn; it does not obey g_randomPU
+		// or standard powerup respawn cvars.
+		if ( ent->item && ent->item->giTag == PW_SILLY )
+			return 3000;
 		if ( firstSpawn )
 			if ( g_randomPU.integer )
 				return GenerateRandomSpawnTime();
@@ -161,6 +165,39 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 }
 
 
+/*
+==============
+Pickup_Silly
+
+Mini-game only. Awards PW_SILLY for the item's quantity duration and announces
+the pickup globally. Does not obey g_removepowerup or standard powerup respawn
+timing -- see SpawnTime().
+==============
+*/
+int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
+	gentity_t	*te;
+
+	if ( !other->client->ps.powerups[PW_SILLY] ) {
+		other->client->ps.powerups[PW_SILLY] = level.time - ( level.time % 1000 );
+	}
+	other->client->ps.powerups[PW_SILLY] += ent->item->quantity * 1000;
+
+	// global broadcast: "<name> grabbed a silly quad!"
+	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
+	te->s.eventParm = ent->s.modelindex;
+	te->r.svFlags |= SVF_BROADCAST;
+
+	G_Printf( "%s grabbed a silly quad!\n",
+	          other->client->pers.netname );
+
+	return 3000; // fixed 3-second respawn; SpawnTime() also enforces this
+}
+
+/*
+==============
+Pickup_Powerup
+==============
+*/
 int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 	int			quantity;
 	int			i;
@@ -661,12 +698,17 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		respawn = Pickup_Health(ent, other);
 		break;
 	case IT_POWERUP:
-		respawn = Pickup_Powerup(ent, other);
-		// allow prediction for some powerups
-		if ( ent->item->giTag >= PW_QUAD && ent->item->giTag <= PW_FLIGHT )
-			predict = qtrue;
-		else
-			predict = qfalse;
+		if ( ent->item->giTag == PW_SILLY ) {
+			respawn = Pickup_Silly(ent, other);
+			predict = qfalse; // silly quad is not client-predicted
+		} else {
+			respawn = Pickup_Powerup(ent, other);
+			// allow prediction for standard powerups
+			if ( ent->item->giTag >= PW_QUAD && ent->item->giTag <= PW_FLIGHT )
+				predict = qtrue;
+			else
+				predict = qfalse;
+		}
 		break;
 #ifdef MISSIONPACK
 	case IT_PERSISTANT_POWERUP:
@@ -1418,12 +1460,7 @@ void G_SpawnItem( gentity_t *ent, gitem_t *item ) {
 		return;
 	}
 
-	// GT_CTFS (Attack & Defend): only the two CTF flags should exist on the map.
-	// Remove all weapons, pickups, powerups, holdables, ammo, and health.
-	if ( g_gametype.integer == GT_CTFS && item->giType != IT_TEAM ) {
-		ent->tag = TAG_DONTSPAWN;
-		return;
-	}
+	// GT_CTFS == GT_PORTAL: items always spawn (portal hub + CTFS mini-games both need them).
 
 	ent->item = item;
 	// some movers spawn on the second frame, so delay item

@@ -697,6 +697,16 @@ icons/ready
 		rgbgen vertex
 	}
 }
+
+icons/sillyquadicon
+{
+	nopicmip
+	{
+		map icons/qua2.tga
+		blendfunc blend
+	}
+}
+
 // freeze gametype
 freezeShader
 {

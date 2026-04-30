@@ -340,7 +340,7 @@ typedef enum {
 
 #define EF_NOPREDICT ( EF_AWARDS | EF_PERSISTANT | EF_TALK )
 
-// NOTE: may not have more than 16
+// NOTE: may not have more than 17
 typedef enum {
 	PW_NONE,
 
@@ -362,6 +362,7 @@ typedef enum {
 	PW_INVULNERABILITY,
 
         PW_SPAWNPROTECTION,     /* spawn protection timer */
+        PW_SILLY,               /* silly quad — mini-game only powerup */
 
         PW_NUM_POWERUPS
 

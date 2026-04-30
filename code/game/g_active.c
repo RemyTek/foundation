@@ -766,6 +766,11 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 		// except the client who generated the event
 		seq = ps->entityEventSequence & (MAX_PS_EVENTS-1);
 		event = ps->events[ seq ] | ( ( ps->entityEventSequence & 3 ) << 8 );
+		// skip zero or out-of-range events
+		if ( (event & ~EV_EVENT_BITS) == 0 || (event & ~EV_EVENT_BITS) >= EV_MAX ) {
+			ps->entityEventSequence++;
+			return;
+		}
 		// set external event to zero before calling BG_PlayerStateToEntityState
 		extEvent = ps->externalEvent;
 		ps->externalEvent = 0;

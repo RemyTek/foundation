@@ -864,6 +864,7 @@ typedef struct
 	qhandle_t   spawnProtectionIcon;
 	qhandle_t   quadShader;
 	qhandle_t   redQuadShader;
+	qhandle_t   sillyShader;     /* PW_SILLY: mini-game silly quad */
 	qhandle_t   quadWeaponShader;
 	qhandle_t   invisShader;
 	qhandle_t   regenShader;

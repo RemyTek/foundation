@@ -828,6 +828,24 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*taunt.wav"));
 			}
 			break;
+		case EV_TAUNT_YES:
+			DEBUGNAME("EV_TAUNT_YES");
+			break;
+		case EV_TAUNT_NO:
+			DEBUGNAME("EV_TAUNT_NO");
+			break;
+		case EV_TAUNT_FOLLOWME:
+			DEBUGNAME("EV_TAUNT_FOLLOWME");
+			break;
+		case EV_TAUNT_GETFLAG:
+			DEBUGNAME("EV_TAUNT_GETFLAG");
+			break;
+		case EV_TAUNT_GUARDBASE:
+			DEBUGNAME("EV_TAUNT_GUARDBASE");
+			break;
+		case EV_TAUNT_PATROL:
+			DEBUGNAME("EV_TAUNT_PATROL");
+			break;
 		case EV_WATER_TOUCH:
 			DEBUGNAME("EV_WATER_TOUCH");
 			trap_S_StartSound(NULL, es->number, CHAN_AUTO, cgs.media.watrInSound);
@@ -1319,7 +1337,7 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 
 		default:
 			DEBUGNAME("UNKNOWN");
-			CG_Error("Unknown event: %i", event);
+			CG_Printf("^3WARNING: unknown event %i for entity %i\n", event, es->number);
 			break;
 	}
 
@@ -1362,6 +1380,11 @@ void CG_CheckEvents(centity_t* cent)
 		{
 			return;
 		}
+	}
+
+	// Silently discard out-of-range events (EV_MAX is a sentinel, not a real event)
+	if ( ( cent->currentState.event & ~EV_EVENT_BITS ) >= EV_MAX ) {
+		return;
 	}
 
 	// calculate the position at exactly the frame time

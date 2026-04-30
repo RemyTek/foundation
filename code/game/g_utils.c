@@ -591,6 +591,10 @@ void G_AddEvent( gentity_t *ent, int event, int eventParm ) {
 		G_Printf( "G_AddEvent: zero event added for entity %i\n", ent->s.number );
 		return;
 	}
+	if ( event >= EV_MAX ) {
+		G_Printf( "^1G_AddEvent: bad event %i (parm %i) for entity %i\n", event, eventParm, ent->s.number );
+		return;
+	}
 
 	// clients need to add the event in playerState_t instead of entityState_t
 	if ( ent->client ) {

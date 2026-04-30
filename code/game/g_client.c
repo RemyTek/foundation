@@ -134,9 +134,9 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 	else
 		isBot = qfalse;
 
-	// GT_PORTAL: use CTX_MINIGAME_N when a mini-game is active, CTX_MAIN_VOTING otherwise.
+	// Portal hub (GT_FFA + enablePortal): use CTX_MINIGAME_N when a mini-game is active, CTX_MAIN_VOTING otherwise.
 	portalCtxFilter = NULL;
-	if ( g_gametype.integer == GT_PORTAL ) {
+	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA ) {
 		if ( level.portalCurrentMinigame >= 0 ) {
 			Com_sprintf( portalMgCtx, sizeof( portalMgCtx ), "CTX_MINIGAME_%i",
 			             level.portalCurrentMinigame );
@@ -873,6 +873,11 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	G_ReadClientSessionData( client );
 
+	// Portal hub (GT_FFA + enablePortal): override stale or mismatched saved team — hub is FFA
+	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA ) {
+		client->sess.sessionTeam = TEAM_FREE;
+	}
+
 	if( isBot ) {
 		if( !G_BotConnect( clientNum, !firstTime ) ) {
 			return "BotConnectfailed";
@@ -1087,8 +1092,8 @@ void ClientSpawn(gentity_t *ent) {
 	// ranging doesn't count this client
 	if ( isSpectator ) {
 		spawnPoint = SelectSpectatorSpawnPoint( spawn_origin, spawn_angles );
-	} else if ( g_gametype.integer == GT_PORTAL ) {
-		// GT_PORTAL uses q3start's CTX_MAIN_VOTING tagged spawn points.
+	} else if ( p_enablePortal.integer ) {
+		// Portal hub: use q3start's CTX_MAIN_VOTING tagged spawn points.
 		// Bypass the CTF team-spawn path so SelectRandomFurthestSpawnPoint
 		// can apply the CTX_MAIN_VOTING filter.
 		spawnPoint = SelectSpawnPoint( ent, client->ps.origin, spawn_origin, spawn_angles );

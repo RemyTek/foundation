@@ -620,6 +620,24 @@ gitem_t	bg_itemlist[] =
 /* sounds */ "sound/items/flight.wav"
 	},
 
+/*QUAKED item_silly (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+Mini-game only. Does not obey g_removepowerup or standard powerup respawn timing.
+*/
+	{
+		"item_silly",
+		"sound/items/sillyquad.wav",
+        { "models/powerups/instant/qua2.md3",
+		"models/powerups/instant/qua2_ring.md3",
+		0, 0 },
+/* icon */		"icons/qua2",
+/* pickup */	"Silly Quad",
+		30,
+		IT_POWERUP,
+		PW_SILLY,
+/* precache */ "",
+/* sounds */ "sound/items/sillyquad.wav"
+	},
+
 /*QUAKED team_CTF_redflag (1 0 0) (-16 -16 -16) (16 16 16)
 Only in CTF games
 */
@@ -1456,6 +1474,7 @@ const char *eventnames[EV_MAX] = {
 	"EV_GENERAL_SOUND",
 	"EV_GLOBAL_SOUND",		// no attenuation
 	"EV_GLOBAL_TEAM_SOUND",
+	"EV_ATD_30SEC_WARNING",
 
 	"EV_BULLET_HIT_FLESH",
 	"EV_BULLET_HIT_WALL",
@@ -1514,6 +1533,12 @@ Handles the sequence numbers
 void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps ) {
+
+	if ( newEvent <= EV_NONE || newEvent >= EV_MAX ) {
+		Com_Printf( "^1BG_AddPredictableEventToPlayerstate: bad event %i (parm %i, seq %i)\n",
+			newEvent, eventParm, ps->eventSequence );
+		return;
+	}
 
 #ifdef _DEBUG
 	{
