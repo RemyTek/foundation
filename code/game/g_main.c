@@ -820,6 +820,10 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	ClearRegisteredItems();
 
+	// Threewave portal voting — initialise before entity spawning so that
+	// SP_func_portal can read portal state and encode brush centres into CS.
+	G_Portal_Init();
+
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
 
@@ -829,9 +833,6 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// Attack & Defend (GT_CTFS) round initialisation — must precede G_CheckTeamItems()
 	// so Team_InitGame encodes the correct attacking team into CS_FLAGSTATUS.
 	G_ATDInitGame();
-
-		// Threewave portal voting — reset state at map start
-		G_Portal_Init();
 	// make sure we have flags for CTF, etc
 	if( g_gametype.integer >= GT_TEAM ) {
 		G_CheckTeamItems();

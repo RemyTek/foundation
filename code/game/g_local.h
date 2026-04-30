@@ -1068,8 +1068,7 @@ void	trap_SnapVector( float *v );
 // Rail jumping
 void G_RailgunRadiusDamage (vec3_t origin, gentity_t *ent);
 
-// Threewave portal-voting gametype (q3start); extends the standard GT_* enum
-#define GT_PORTAL    6
+// GT_PORTAL is defined in bg_public.h (shared with cgame; equals GT_CTFS = 6)
 
 //
 // g_portal.c

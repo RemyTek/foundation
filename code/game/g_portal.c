@@ -185,6 +185,27 @@ static void G_Portal_Resolve( void ) {
 
 /*
 ================
+G_Portal_UpdateVoteCS
+
+Re-broadcasts the vote count ("v" key) for one portal slot.
+Call after any change to level.portalVotes[].
+================
+*/
+static void G_Portal_UpdateVoteCS( int portalNum ) {
+	char info[MAX_INFO_STRING];
+	char val[16];
+
+	if ( portalNum < 1 || portalNum > MAX_PORTAL_MAPS )
+		return;
+
+	trap_GetConfigstring( CS_PORTALS + portalNum - 1, info, sizeof( info ) );
+	Com_sprintf( val, sizeof( val ), "%i", level.portalVotes[portalNum - 1] );
+	Info_SetValueForKey( info, "v", val );
+	trap_SetConfigstring( CS_PORTALS + portalNum - 1, info );
+}
+
+/*
+================
 G_Portal_Vote
 
 Records or updates a player's vote for the given portal number.
@@ -192,7 +213,7 @@ Called from Touch_Portal.
 ================
 */
 void G_Portal_Vote( gentity_t *activator, int portalNum ) {
-	int  clientNum, prev;
+	int  clientNum, prev = 0;
 	char mapname[64];
 
 	if ( !p_enablePortal.integer )
@@ -239,6 +260,11 @@ void G_Portal_Vote( gentity_t *activator, int portalNum ) {
 	level.portalPlayerVoted[clientNum] = qtrue;
 	level.portalPlayerVote[clientNum]  = portalNum;
 	level.portalVotes[portalNum - 1]++;
+
+	// Broadcast updated tallies for affected portals
+	if ( prev >= 1 && prev <= MAX_PORTAL_MAPS )
+		G_Portal_UpdateVoteCS( prev );
+	G_Portal_UpdateVoteCS( portalNum );
 
 	trap_SendServerCommand( activator - g_entities,
 		va( "print \"^2You voted for: ^3%s\n\"", mapname ) );
@@ -446,4 +472,24 @@ void SP_func_portal( gentity_t *ent ) {
 	}
 
 	trap_LinkEntity( ent );
+
+	/* After linking the bounds are resolved — encode the brush centre into the
+	   portal configstring so cgame can show the map label on the crosshair. */
+	if ( isValid && portalNum >= 1 && portalNum <= MAX_PORTAL_MAPS ) {
+		char   info[MAX_INFO_STRING];
+		char   val[16];
+		vec3_t center;
+
+		trap_GetConfigstring( CS_PORTALS + portalNum - 1, info, sizeof( info ) );
+		center[0] = ( ent->r.absmin[0] + ent->r.absmax[0] ) * 0.5f;
+		center[1] = ( ent->r.absmin[1] + ent->r.absmax[1] ) * 0.5f;
+		center[2] = ( ent->r.absmin[2] + ent->r.absmax[2] ) * 0.5f;
+		Com_sprintf( val, sizeof( val ), "%i", (int)center[0] );
+		Info_SetValueForKey( info, "px", val );
+		Com_sprintf( val, sizeof( val ), "%i", (int)center[1] );
+		Info_SetValueForKey( info, "py", val );
+		Com_sprintf( val, sizeof( val ), "%i", (int)center[2] );
+		Info_SetValueForKey( info, "pz", val );
+		trap_SetConfigstring( CS_PORTALS + portalNum - 1, info );
+	}
 }

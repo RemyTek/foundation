@@ -1857,6 +1857,85 @@ CROSSHAIR
 
 /*
 =================
+CG_DrawPortalLabel
+
+When playing in the portal-voting gametype (q3start) and the crosshair is
+aimed at a portal brush, draws the destination map name and (if votes > 0)
+the current vote count just above the default crosshair-name position.
+=================
+*/
+void CG_DrawPortalLabel( void ) {
+	int         i, bestPortal;
+	float       bestDot;
+	vec3_t      vieworg, viewfwd, toPortal;
+	const char  *cs, *val;
+	float       dist, dot;
+	char        mapname[MAX_QPATH];
+	int         px, py, pz, votes;
+
+	if ( cgs.gametype != GT_PORTAL )
+		return;
+	if ( cg.renderingThirdPerson )
+		return;
+
+	VectorCopy( cg.refdef.vieworg,     vieworg );
+	VectorCopy( cg.refdef.viewaxis[0], viewfwd );
+
+	bestPortal = -1;
+	bestDot    = 0.95f;   // ~18° half-angle cone
+
+	for ( i = 1; i <= 64; i++ ) {
+		cs = CG_ConfigString( CS_PORTALS + i - 1 );
+		if ( !cs || !cs[0] )
+			continue;
+
+		val = Info_ValueForKey( cs, "px" );
+		if ( !val[0] )
+			continue;
+		px = atoi( val );
+		val = Info_ValueForKey( cs, "py" );
+		py = atoi( val );
+		val = Info_ValueForKey( cs, "pz" );
+		pz = atoi( val );
+
+		toPortal[0] = (float)px - vieworg[0];
+		toPortal[1] = (float)py - vieworg[1];
+		toPortal[2] = (float)pz - vieworg[2];
+
+		dist = VectorLength( toPortal );
+		if ( dist < 1.0f || dist > 3000.0f )
+			continue;
+
+		VectorScale( toPortal, 1.0f / dist, toPortal );
+		dot = DotProduct( viewfwd, toPortal );
+		if ( dot > bestDot ) {
+			bestDot    = dot;
+			bestPortal = i;
+		}
+	}
+
+	if ( bestPortal < 0 )
+		return;
+
+	cs = CG_ConfigString( CS_PORTALS + bestPortal - 1 );
+	val = Info_ValueForKey( cs, "m" );
+	Q_strncpyz( mapname, val, sizeof( mapname ) );
+	if ( !mapname[0] )
+		return;
+
+	val   = Info_ValueForKey( cs, "v" );
+	votes = val[0] ? atoi( val ) : 0;
+
+	CG_DrawBigString( SCREEN_WIDTH / 2, 155, mapname, 1.0f, DS_HCENTER | DS_SHADOW, 0 );
+	if ( votes > 0 ) {
+		CG_DrawBigString( SCREEN_WIDTH / 2, 175, va( "Votes: %i", votes ), 0.75f,
+		                  DS_HCENTER | DS_SHADOW, 0 );
+	}
+}
+
+
+/*
+=================
 CG_ScanForCrosshairEntity
 =================
 */
@@ -3205,6 +3284,9 @@ static void CG_Draw2D(void)
 			CG_OSPDrawCenterString();
 		}
 	}
+
+	/* Portal map label — draws on top of all HUD modes when aiming at a portal brush. */
+	CG_DrawPortalLabel();
 
 	/* Flag and teammate POIs draw on top of any HUD mode (SHUD, OSPHUD, default).
 	   They are intentionally skipped during intermission (early return above). */

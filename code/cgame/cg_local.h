@@ -1747,6 +1747,7 @@ void CG_DrawAmmoWarning(void);
 void CG_DrawReward(void);
 void CG_DrawWarmup(void);
 void CG_ScanForCrosshairEntity(void);
+void CG_DrawPortalLabel(void);
 // void CG_OSPDrawLeftSlidingWindowsRoutine(OSP_SlidingPrintContext_t* context);
 // int CG_OSPDrawLeftSlidingWindow(float arg0, float arg1, float arg2, float time3Sec, int numberOfLines, int sizeOfLine, int w, int h, char* text, int windowPosX, float* borderColor, float* bodyColor);
 void CG_OSPDrawIntermission(void);

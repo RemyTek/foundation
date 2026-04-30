@@ -162,6 +162,10 @@ typedef enum {
 	GT_MAX_GAME_TYPE
 } gametype_t;
 
+// Portal-voting gametype used on q3start. Occupies the GT_CTFS slot (6),
+// which is unused in this mod. Defined here so both game and cgame can use it.
+#define GT_PORTAL GT_CTFS
+
 typedef enum { GENDER_MALE, GENDER_FEMALE, GENDER_NEUTER } gender_t;
 
 /*
