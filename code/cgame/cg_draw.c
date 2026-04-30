@@ -1903,7 +1903,7 @@ void CG_DrawPortalLabel( void ) {
 		toPortal[2] = (float)pz - vieworg[2];
 
 		dist = VectorLength( toPortal );
-		if ( dist < 1.0f || dist > 3000.0f )
+		if ( dist < 1.0f || dist > 50.0f )
 			continue;
 
 		VectorScale( toPortal, 1.0f / dist, toPortal );
