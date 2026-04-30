@@ -122,6 +122,7 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 	int			checkTelefrag;
 	int			checkType;
 	int			checkMask;
+	int			checkPortalCtx;
 	qboolean	isBot;
 
 	checkType = qtrue;
@@ -131,6 +132,10 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 		isBot = ((ent->r.svFlags & SVF_BOT) == SVF_BOT);
 	else
 		isBot = qfalse;
+
+	// GT_PORTAL: q3start tags spawn points by context via targetname.
+	// Initially only the portal lobby spawns (CTX_MAIN_VOTING) should be used.
+	checkPortalCtx = ( g_gametype.integer == GT_PORTAL );
 
 	checkMask = 3;
 
@@ -145,6 +150,13 @@ __search:
 
 		if ( spot->fteam != TEAM_FREE && level.numSpawnSpotsFFA > 0 )
 			continue;
+
+		// GT_PORTAL: restrict initial spawning to portal lobby spots.
+		// Mini-game and gametype-voting spots have different CTX_* targetnames.
+		if ( checkPortalCtx ) {
+			if ( !spot->targetname || Q_stricmp( spot->targetname, "CTX_MAIN_VOTING" ) != 0 )
+				continue;
+		}
 
 		if ( checkTelefrag && SpotWouldTelefrag( spot ) )
 			continue;
@@ -190,6 +202,13 @@ __search:
 	}
 
 	if ( !numSpots ) {
+		if ( checkPortalCtx ) {
+			// No CTX_MAIN_VOTING spots found — fall back to accepting all spawns
+			// (shouldn't happen on q3start, but guards against other maps in GT_PORTAL).
+			checkPortalCtx = 0;
+			checkMask = 3;
+			goto __search;
+		}
 		if ( checkMask <= 0 ) {
 			G_Error( "Couldn't find a spawn point" );
 			return NULL;
