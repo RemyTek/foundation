@@ -827,6 +827,10 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
 
+	// Cache mini-game teleporter entities for GT_PORTAL (q3start has minigame0..4)
+	if ( g_gametype.integer == GT_PORTAL )
+		G_Portal_FindMinigames();
+
 	// general initialization
 	G_FindTeams();
 

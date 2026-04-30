@@ -122,7 +122,8 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 	int			checkTelefrag;
 	int			checkType;
 	int			checkMask;
-	int			checkPortalCtx;
+	const char	*portalCtxFilter;
+	char		portalMgCtx[24];
 	qboolean	isBot;
 
 	checkType = qtrue;
@@ -133,9 +134,17 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 	else
 		isBot = qfalse;
 
-	// GT_PORTAL: q3start tags spawn points by context via targetname.
-	// Initially only the portal lobby spawns (CTX_MAIN_VOTING) should be used.
-	checkPortalCtx = ( g_gametype.integer == GT_PORTAL );
+	// GT_PORTAL: use CTX_MINIGAME_N when a mini-game is active, CTX_MAIN_VOTING otherwise.
+	portalCtxFilter = NULL;
+	if ( g_gametype.integer == GT_PORTAL ) {
+		if ( level.portalCurrentMinigame >= 0 ) {
+			Com_sprintf( portalMgCtx, sizeof( portalMgCtx ), "CTX_MINIGAME_%i",
+			             level.portalCurrentMinigame );
+			portalCtxFilter = portalMgCtx;
+		} else {
+			portalCtxFilter = "CTX_MAIN_VOTING";
+		}
+	}
 
 	checkMask = 3;
 
@@ -151,10 +160,9 @@ __search:
 		if ( spot->fteam != TEAM_FREE && level.numSpawnSpotsFFA > 0 )
 			continue;
 
-		// GT_PORTAL: restrict initial spawning to portal lobby spots.
-		// Mini-game and gametype-voting spots have different CTX_* targetnames.
-		if ( checkPortalCtx ) {
-			if ( !spot->targetname || Q_stricmp( spot->targetname, "CTX_MAIN_VOTING" ) != 0 )
+		// GT_PORTAL: restrict spawning to the player's current context.
+		if ( portalCtxFilter ) {
+			if ( !spot->targetname || Q_stricmp( spot->targetname, portalCtxFilter ) != 0 )
 				continue;
 		}
 
@@ -202,10 +210,13 @@ __search:
 	}
 
 	if ( !numSpots ) {
-		if ( checkPortalCtx ) {
-			// No CTX_MAIN_VOTING spots found — fall back to accepting all spawns
-			// (shouldn't happen on q3start, but guards against other maps in GT_PORTAL).
-			checkPortalCtx = 0;
+		if ( portalCtxFilter ) {
+			// Couldn't find spots for current context — step back:
+			// minigame room → try lobby; lobby → accept any spawn.
+			if ( Q_stricmp( portalCtxFilter, "CTX_MAIN_VOTING" ) != 0 )
+				portalCtxFilter = "CTX_MAIN_VOTING";
+			else
+				portalCtxFilter = NULL;
 			checkMask = 3;
 			goto __search;
 		}

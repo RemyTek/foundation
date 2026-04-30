@@ -346,6 +346,30 @@ qboolean G_Portal_RoomHasPortals( int roomNum ) {
 	return qfalse;
 }
 
+/*
+================
+G_Portal_FindMinigames
+
+Caches the five target_teleporter entities named minigame0..minigame4 from
+the q3start BSP. Call after G_SpawnEntitiesFromString(). Safe to call on any
+map; missing entities just leave their slot NULL.
+================
+*/
+void G_Portal_FindMinigames( void ) {
+	int  i;
+	char tname[12];
+
+	for ( i = 0; i < 5; i++ ) {
+		Com_sprintf( tname, sizeof( tname ), "minigame%i", i );
+		level.portalMinigameEnt[i] = G_Find( NULL, FOFS(targetname), tname );
+		if ( level.portalMinigameEnt[i] )
+			G_Printf( "Portal: cached minigame%i -> %s\n", i,
+			          level.portalMinigameEnt[i]->classname );
+		else
+			G_Printf( "Portal: minigame%i not found in map\n", i );
+	}
+}
+
 void G_Portal_Init( void ) {
 	char list[256], *tok;
 	int  n;
@@ -355,6 +379,7 @@ void G_Portal_Init( void ) {
 	memset( level.portalPlayerVote,   0, sizeof( level.portalPlayerVote ) );
 	memset( level.portalEntityMap,    0, sizeof( level.portalEntityMap ) );
 	memset( level.portalDisabled,     0, sizeof( level.portalDisabled ) );
+	level.portalCurrentMinigame = -1;
 	level.portalVoteTime = 0;
 
 	// Parse p_disablePortalList: comma-separated portal numbers to exclude from voting
@@ -422,6 +447,23 @@ static void Touch_Portal( gentity_t *self, gentity_t *other, trace_t *trace ) {
 		portalNum = G_Portal_RandomPortal();
 		if ( portalNum == 0 )
 			return;
+	}
+
+	// Teleport to mini-game on first vote only; all players share the same room.
+	if ( !level.portalPlayerVoted[other - g_entities] ) {
+		int        miniGame = ( portalNum - 1 ) % 5;
+		char       mgName[12];
+		gentity_t *dest;
+
+		// Lock in the server-wide mini-game on the very first vote.
+		if ( level.portalCurrentMinigame < 0 )
+			level.portalCurrentMinigame = miniGame;
+
+		Com_sprintf( mgName, sizeof( mgName ), "minigame%i", level.portalCurrentMinigame );
+		dest = G_PickTarget( mgName );
+		if ( dest ) {
+			TeleportPlayer( other, dest->s.origin, dest->s.angles );
+		}
 	}
 
 	G_Portal_Vote( other, portalNum );

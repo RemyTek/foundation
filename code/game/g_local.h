@@ -502,6 +502,8 @@ typedef struct {
 	int			portalPlayerVote[MAX_CLIENTS];	// portal number (1-64) this client voted for
 	struct gentity_s *portalEntityMap[65];	// portal number -> entity; index 0 unused (portals are 1-based)
 	qboolean	portalDisabled[64];			// portal slot is disabled (parsed from p_disablePortalList)
+	struct gentity_s *portalMinigameEnt[5];	// target_teleporter entities: minigame0..4
+	int			portalCurrentMinigame;			// active mini-game room for all players (0-4); -1 = none
 
 } level_locals_t;
 
@@ -1074,6 +1076,7 @@ void G_RailgunRadiusDamage (vec3_t origin, gentity_t *ent);
 // g_portal.c
 //
 void G_Portal_Init( void );
+void G_Portal_FindMinigames( void );
 void G_Portal_Frame( void );
 void G_Portal_Vote( gentity_t *activator, int portalNum );
 qboolean G_Portal_RoomHasPortals( int roomNum );
