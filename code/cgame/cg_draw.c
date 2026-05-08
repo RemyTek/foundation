@@ -1873,8 +1873,6 @@ void CG_DrawPortalLabel( void ) {
 	char        mapname[MAX_QPATH];
 	int         px, py, pz, votes;
 
-	if ( cgs.gametype != GT_PORTAL )
-		return;
 	if ( cg.renderingThirdPerson )
 		return;
 
@@ -1928,7 +1926,7 @@ void CG_DrawPortalLabel( void ) {
 
 	CG_DrawBigString( SCREEN_WIDTH / 2, 155, mapname, 1.0f, DS_HCENTER | DS_SHADOW, 0 );
 	if ( votes > 0 ) {
-		CG_DrawBigString( SCREEN_WIDTH / 2, 175, va( "Votes: %i", votes ), 0.75f,
+		CG_DrawBigString( SCREEN_WIDTH / 2, 175, va( "%i Votes So Far", votes ), 0.75f,
 		                  DS_HCENTER | DS_SHADOW, 0 );
 	}
 }
