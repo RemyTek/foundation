@@ -633,7 +633,7 @@ Mini-game only. Does not obey g_removepowerup or standard powerup respawn timing
 /* pickup */	"Silly Quad",
 		30,
 		IT_POWERUP,
-		PW_SILLY,
+		PW_QUAD,
 /* precache */ "",
 /* sounds */ "sound/items/sillyquad.wav"
 	},

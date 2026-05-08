@@ -793,7 +793,7 @@ static void CG_RegisterSounds(void)
 	cgs.media.countFightSound = trap_S_RegisterSound("sound/feedback/fight.wav", qtrue);
 	cgs.media.countPrepareSound = trap_S_RegisterSound("sound/feedback/prepare.wav", qtrue);
 	if ( cgs.gametype == GT_CTFS || cg_buildScript.integer ) {
-		// cgs.media.countPrepareTeamSound    = trap_S_RegisterSound( "sound/feedback/prepare_team.wav", qtrue );
+		cgs.media.countPrepareTeamSound    = trap_S_RegisterSound( "sound/feedback/prepare_team.wav", qtrue );
 		cgs.media.countRoundBeginsInSound  = trap_S_RegisterSound( "sound/vo_evil/round_begins_in.wav", qtrue );
 		cgs.media.atdAttackSound       = trap_S_RegisterSound( "sound/vo_evil/attack_the_flag.wav", qtrue );
 		cgs.media.atdDefendSound       = trap_S_RegisterSound( "sound/vo_evil/defend_the_flag.wav", qtrue );
@@ -856,14 +856,14 @@ static void CG_RegisterSounds(void)
 	cgs.media.talkSound = trap_S_RegisterSound("sound/player/talk.wav", qfalse);
 	cgs.media.landSound = trap_S_RegisterSound("sound/player/land1.wav", qfalse);
 
-	// cgs.media.hitLowestSound = trap_S_RegisterSound("sound/feedback/hitlowest.wav", qfalse);
-	// cgs.media.hitLowSound = trap_S_RegisterSound("sound/feedback/hitlow.wav", qfalse);
+	cgs.media.hitLowestSound = trap_S_RegisterSound("sound/feedback/hitlowest.wav", qfalse);
+	cgs.media.hitLowSound = trap_S_RegisterSound("sound/feedback/hitlow.wav", qfalse);
 	cgs.media.hitSound = trap_S_RegisterSound("sound/feedback/hit.wav", qfalse);
 	cgs.media.hitSounds[0] = trap_S_RegisterSound("sound/feedback/hit25.wav", qfalse);
 	cgs.media.hitSounds[1] = trap_S_RegisterSound("sound/feedback/hit50.wav", qfalse);
 	cgs.media.hitSounds[2] = trap_S_RegisterSound("sound/feedback/hit75.wav", qfalse);
 	cgs.media.hitSounds[3] = trap_S_RegisterSound("sound/feedback/hit100.wav", qfalse);
-	// cgs.media.hitHighSound = trap_S_RegisterSound("sound/feedback/hithigh.wav", qfalse);
+	cgs.media.hitHighSound = trap_S_RegisterSound("sound/feedback/hithigh.wav", qfalse);
 	// QC incoming damage sound
 	cgs.media.gotDamageSounds[0] = trap_S_RegisterSound("sound/feedback/damage_qc25.wav", qfalse);
 	cgs.media.gotDamageSounds[1] = trap_S_RegisterSound("sound/feedback/damage_qc50.wav", qfalse);
@@ -1159,7 +1159,6 @@ static void CG_RegisterGraphics(void)
 
 	// powerup shaders
 	cgs.media.quadShader = trap_R_RegisterShader("powerups/quad");
-	cgs.media.sillyShader = trap_R_RegisterShader("powerups/quad"); // silly quad reuses quad gfx with distinct dlight
 	cgs.media.quadWeaponShader = trap_R_RegisterShader("powerups/quadWeapon");
 	cgs.media.battleSuitShader = trap_R_RegisterShader("powerups/battleSuit");
 	cgs.media.battleSuitShaderNew = trap_R_RegisterShader("powerups/battleSuitNew");

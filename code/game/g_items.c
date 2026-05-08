@@ -57,6 +57,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //======================================================================
 
+static qboolean G_ItemDisabledForGTCTFS( gitem_t *item );
+
 int GenerateRandomSpawnTime() {
     static unsigned int seed = 0; // Static seed to maintain state between calls
     int randomValue;
@@ -131,7 +133,7 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 	case IT_POWERUP:
 		// item_silly uses a fixed 3-second respawn; it does not obey g_randomPU
 		// or standard powerup respawn cvars.
-		if ( ent->item && ent->item->giTag == PW_SILLY )
+		if ( ent->item && ent->item->classname && !Q_stricmp(ent->item->classname, "item_silly") )
 			return 3000;
 		if ( firstSpawn )
 			if ( g_randomPU.integer )
@@ -169,7 +171,7 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 ==============
 Pickup_Silly
 
-Mini-game only. Awards PW_SILLY for the item's quantity duration and announces
+Mini-game only. Awards PW_QUAD for the item's quantity duration and announces
 the pickup globally. Does not obey g_removepowerup or standard powerup respawn
 timing -- see SpawnTime().
 ==============
@@ -177,10 +179,10 @@ timing -- see SpawnTime().
 int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 	gentity_t	*te;
 
-	if ( !other->client->ps.powerups[PW_SILLY] ) {
-		other->client->ps.powerups[PW_SILLY] = level.time - ( level.time % 1000 );
+	if ( !other->client->ps.powerups[PW_QUAD] ) {
+		other->client->ps.powerups[PW_QUAD] = level.time - ( level.time % 1000 );
 	}
-	other->client->ps.powerups[PW_SILLY] += ent->item->quantity * 1000;
+	other->client->ps.powerups[PW_QUAD] += ent->item->quantity * 1000;
 
 	// global broadcast: "<name> grabbed a silly quad!"
 	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
@@ -673,6 +675,8 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;
 	if (other->health < 1)
 		return;		// dead people can't pickup
+	if ( ent->item && G_ItemDisabledForGTCTFS( ent->item ) )
+		return;
 
 	// the same pickup rules are used for client side and server side
 	if ( !BG_CanItemBeGrabbed( g_gametype.integer, &ent->s, &other->client->ps, qfalse ) ) {
@@ -698,7 +702,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		respawn = Pickup_Health(ent, other);
 		break;
 	case IT_POWERUP:
-		if ( ent->item->giTag == PW_SILLY ) {
+		if ( ent->item && ent->item->classname && !Q_stricmp(ent->item->classname, "item_silly") ) {
 			respawn = Pickup_Silly(ent, other);
 			predict = qfalse; // silly quad is not client-predicted
 		} else {
@@ -1438,6 +1442,19 @@ int G_ItemDisabled( gitem_t *item ) {
 	return trap_Cvar_VariableIntegerValue( name );
 }
 
+static qboolean G_ItemDisabledForGTCTFS( gitem_t *item ) {
+	if ( !item ) {
+		return qfalse;
+	}
+
+	if ( g_gametype.integer != GT_CTFS ) {
+		return qfalse;
+	}
+
+	// Keep CTFS flags/team entities working, disable all other pickups.
+	return item->giType != IT_TEAM;
+}
+
 /*
 ============
 G_SpawnItem
@@ -1460,7 +1477,10 @@ void G_SpawnItem( gentity_t *ent, gitem_t *item ) {
 		return;
 	}
 
-	// GT_CTFS == GT_PORTAL: items always spawn (portal hub + CTFS mini-games both need them).
+	if ( G_ItemDisabledForGTCTFS( item ) ) {
+		ent->tag = TAG_DONTSPAWN;
+		return;
+	}
 
 	ent->item = item;
 	// some movers spawn on the second frame, so delay item

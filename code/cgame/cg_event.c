@@ -830,21 +830,45 @@ void CG_EntityEvent(centity_t* cent, vec3_t position)
 			break;
 		case EV_TAUNT_YES:
 			DEBUGNAME("EV_TAUNT_YES");
+			if (cg_noTaunt.integer == 0)
+			{
+				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*yes.wav"));
+			}
 			break;
 		case EV_TAUNT_NO:
 			DEBUGNAME("EV_TAUNT_NO");
+			if (cg_noTaunt.integer == 0)
+			{
+				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*no.wav"));
+			}
 			break;
 		case EV_TAUNT_FOLLOWME:
 			DEBUGNAME("EV_TAUNT_FOLLOWME");
+			if (cg_noTaunt.integer == 0)
+			{
+				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*followme.wav"));
+			}
 			break;
 		case EV_TAUNT_GETFLAG:
 			DEBUGNAME("EV_TAUNT_GETFLAG");
+			if (cg_noTaunt.integer == 0)
+			{
+				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*getflag.wav"));
+			}
 			break;
 		case EV_TAUNT_GUARDBASE:
 			DEBUGNAME("EV_TAUNT_GUARDBASE");
+			if (cg_noTaunt.integer == 0)
+			{
+				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*guard.wav"));
+			}
 			break;
 		case EV_TAUNT_PATROL:
 			DEBUGNAME("EV_TAUNT_PATROL");
+			if (cg_noTaunt.integer == 0)
+			{
+				trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*patrol.wav"));
+			}
 			break;
 		case EV_WATER_TOUCH:
 			DEBUGNAME("EV_WATER_TOUCH");

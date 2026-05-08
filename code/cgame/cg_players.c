@@ -2349,12 +2349,6 @@ static void CG_PlayerPowerups(centity_t* cent, refEntity_t *torso)
 		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 0.2f, 0.2f, 1);
 	}
 
-	// silly quad gives a distinct green-yellow dlight so observers can spot the holder
-	if (powerups & (1 << PW_SILLY))
-	{
-		trap_R_AddLightToScene(cent->lerpOrigin, 200 + (rand() & 31), 0.4f, 1.0f, 0.2f);
-	}
-
 	// flight plays a looped sound
 	if (powerups & (1 << PW_FLIGHT))
 	{
@@ -2988,12 +2982,6 @@ void CG_AddRefEntityWithPowerups(refEntity_t* ent, entityState_t* state, int tea
 				ent->customShader = cgs.media.redQuadShader;
 			else
 				ent->customShader = cgs.media.quadShader;
-			trap_R_AddRefEntityToScene(ent);
-		}
-		// silly quad: green-tinted overlay so observers can spot the holder
-		if (state->powerups & (1 << PW_SILLY))
-		{
-			ent->customShader = cgs.media.sillyShader;
 			trap_R_AddRefEntityToScene(ent);
 		}
 		if (state->powerups & (1 << PW_REGEN))
