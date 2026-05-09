@@ -22,6 +22,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "g_local.h"
 
+
+static qboolean G_IsSillyItem( const gitem_t *item ) {
+	if ( !item || !item->classname )
+		return qfalse;
+	return ( Q_stricmp( item->classname, "item_silly" ) == 0 );
+}
+
+static qboolean G_IsCoinItem( const gitem_t *item ) {
+	if ( !item || !item->classname )
+		return qfalse;
+	return ( Q_strncmp( item->classname, "item_coin", 9 ) == 0 );
+}
+
 /*
 
   Items are any object that a player can touch to gain some effect.
@@ -131,9 +144,11 @@ int SpawnTime( gentity_t *ent, qboolean firstSpawn )
 			//return firstSpawn ? SPAWN_HEALTH : RESPAWN_HEALTH;
 
 	case IT_POWERUP:
+		if ( G_IsCoinItem( ent->item ) )
+			return 10000;
 		// item_silly uses a fixed 3-second respawn; it does not obey g_randomPU
 		// or standard powerup respawn cvars.
-		if ( ent->item && ent->item->classname && !Q_stricmp(ent->item->classname, "item_silly") )
+		if ( G_IsSillyItem( ent->item ) )
 			return 3000;
 		if ( firstSpawn )
 			if ( g_randomPU.integer )
@@ -193,6 +208,25 @@ int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 	          other->client->pers.netname );
 
 	return 3000; // fixed 3-second respawn; SpawnTime() also enforces this
+}
+
+/*
+==============
+Pickup_Coin
+
+Mini-game coin pickup. Awards score using the coin quantity value.
+==============
+*/
+int Pickup_Coin( gentity_t *ent, gentity_t *other ) {
+	int points;
+
+	points = ent->item->quantity;
+	if ( points < 1 )
+		points = 1;
+
+	AddScore( other, ent->s.pos.trBase, points );
+
+	return SpawnTime( ent, qfalse );
 }
 
 /*
@@ -628,6 +662,15 @@ void RespawnItem( gentity_t *ent ) {
 		// play powerup spawn sound to all clients
 		gentity_t	*te;
 
+		if ( G_IsCoinItem( ent->item ) ) {
+			te = G_TempEntity( ent->s.pos.trBase, EV_GENERAL_SOUND );
+			te->s.eventParm = G_SoundIndex( "sound/items/medium_coin.wav" );
+			te->r.svFlags |= SVF_BROADCAST;
+			G_AddEvent( ent, EV_ITEM_RESPAWN, 0 );
+			ent->nextthink = 0;
+			return;
+		}
+
 		// if the powerup respawn sound should Not be global
 		if ( ent->speed ) {
 			te = G_TempEntity( ent->s.pos.trBase, EV_GENERAL_SOUND );
@@ -702,9 +745,12 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		respawn = Pickup_Health(ent, other);
 		break;
 	case IT_POWERUP:
-		if ( ent->item && ent->item->classname && !Q_stricmp(ent->item->classname, "item_silly") ) {
+		if ( G_IsSillyItem( ent->item ) ) {
 			respawn = Pickup_Silly(ent, other);
 			predict = qfalse; // silly quad is not client-predicted
+		} else if ( G_IsCoinItem( ent->item ) ) {
+			respawn = Pickup_Coin( ent, other );
+			predict = qtrue;
 		} else {
 			respawn = Pickup_Powerup(ent, other);
 			// allow prediction for standard powerups
@@ -741,7 +787,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	}
 
 	// powerup pickups are global broadcasts
-	if ( ent->item->giType == IT_POWERUP || ent->item->giType == IT_TEAM) {
+	if ( ( ent->item->giType == IT_POWERUP && !G_IsCoinItem( ent->item ) ) || ent->item->giType == IT_TEAM) {
 		// if we want the global sound to play
 		if (!ent->speed) {
 			gentity_t	*te;

@@ -628,6 +628,7 @@ typedef struct
 	// powerup active flashing
 	int         powerupActive;
 	int         powerupTime;
+	int         sillyQuadEndTime;
 
 	// attacking player
 	int         attackerTime;

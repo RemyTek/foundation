@@ -620,6 +620,57 @@ gitem_t	bg_itemlist[] =
 /* sounds */ "sound/items/flight.wav"
 	},
 
+/*QUAKED item_coin_big (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+Mini-game coin pickup.
+*/
+	{
+		"item_coin_big",
+		"sound/items/big_coin.wav",
+        { "models/powerups/special/big_coin.md3",
+		0, 0, 0 },
+/* icon */		"icons/coin_icon",
+/* pickup */	"THE coin",
+		15,
+		IT_POWERUP,
+		0,
+/* precache */ "",
+/* sounds */ "sound/items/big_coin.wav"
+	},
+
+/*QUAKED item_coin_medium (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+Mini-game coin pickup.
+*/
+	{
+		"item_coin_medium",
+		"sound/items/medium_coin.wav",
+        { "models/powerups/special/medium_coin.md3",
+		0, 0, 0 },
+/* icon */		"icons/coin_icon",
+/* pickup */	"Good enough coin",
+		5,
+		IT_POWERUP,
+		0,
+/* precache */ "",
+/* sounds */ "sound/items/medium_coin.wav"
+	},
+
+/*QUAKED item_coin_small (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+Mini-game coin pickup.
+*/
+	{
+		"item_coin_small",
+		"sound/items/small_coin.wav",
+        { "models/powerups/special/small_coin.md3",
+		0, 0, 0 },
+/* icon */		"icons/coin_icon",
+/* pickup */	"Worthless coin",
+		1,
+		IT_POWERUP,
+		0,
+/* precache */ "",
+/* sounds */ "sound/items/small_coin.wav"
+	},
+
 /*QUAKED item_silly (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 Mini-game only. Does not obey g_removepowerup or standard powerup respawn timing.
 */
@@ -629,7 +680,7 @@ Mini-game only. Does not obey g_removepowerup or standard powerup respawn timing
         { "models/powerups/instant/qua2.md3",
 		"models/powerups/instant/qua2_ring.md3",
 		0, 0 },
-/* icon */		"icons/qua2",
+/* icon */		"icons/sillyquadicon",
 /* pickup */	"Silly Quad",
 		30,
 		IT_POWERUP,

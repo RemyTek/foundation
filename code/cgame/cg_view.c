@@ -639,6 +639,20 @@ static int CG_CalcFov(void)
 		inwater = qfalse;
 	}
 
+	if ( cg.sillyQuadEndTime > cg.time ) {
+		float phase1;
+		float phase2;
+		float v1;
+		float v2;
+
+		phase1 = ( cg.time / 1000.0f ) * 2.35f * M_PI * 2.0f;
+		phase2 = ( cg.time / 1000.0f ) * 1.05f * M_PI * 2.0f;
+		v1 = 2.8f * sin( phase1 );
+		v2 = 1.4f * cos( phase2 );
+		fov_x += ( v1 + v2 );
+		fov_y -= ( v1 * 0.75f );
+	}
+
 
 	// set it
 	cg.refdef.fov_x = fov_x;
@@ -975,6 +989,10 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
+
+	if ( cg.sillyQuadEndTime && cg.predictedPlayerState.powerups[PW_QUAD] <= cg.time ) {
+		cg.sillyQuadEndTime = 0;
+	}
 
 	// decide on third person view
 	cg.renderingThirdPerson = (cg_thirdPerson.integer && (cg.demoPlayback || cgs.localServer)) || (cg.snap->ps.stats[STAT_HEALTH] <= 0);

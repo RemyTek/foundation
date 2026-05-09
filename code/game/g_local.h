@@ -503,6 +503,8 @@ typedef struct {
 	struct gentity_s *portalEntityMap[65];	// portal number -> entity; index 0 unused (portals are 1-based)
 	qboolean	portalDisabled[64];			// portal slot is disabled (parsed from p_disablePortalList)
 	struct gentity_s *portalMinigameEnt[5];	// target_teleporter entities: minigame0..4
+	qboolean	portalMinigameEnabled[5];	// worldspawn enableMinigames mask (0..4)
+	int			portalNumEnabledMinigames;	// number of enabled minigames from worldspawn
 	int			portalCurrentMinigame;			// active mini-game room for all players (0-4); -1 = none
 
 } level_locals_t;

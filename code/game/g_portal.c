@@ -33,6 +33,25 @@ with the most votes wins and the server loads that map.
 
 #define MAX_PORTAL_MAPS     64
 
+static int G_Portal_SelectMinigameForPortal( int portalNum ) {
+	int desired;
+	int i;
+
+	desired = ( portalNum - 1 ) % 5;
+
+	if ( desired >= 0 && desired < 5
+		&& level.portalMinigameEnabled[desired]
+		&& level.portalMinigameEnt[desired] )
+		return desired;
+
+	for ( i = 0; i < 5; i++ ) {
+		if ( level.portalMinigameEnabled[i] && level.portalMinigameEnt[i] )
+			return i;
+	}
+
+	return -1;
+}
+
 /*
 ================
 G_Portal_MapForNum
@@ -358,21 +377,35 @@ map; missing entities just leave their slot NULL.
 void G_Portal_FindMinigames( void ) {
 	int  i;
 	char tname[12];
+	int  foundCount = 0;
 
 	for ( i = 0; i < 5; i++ ) {
+		if ( !level.portalMinigameEnabled[i] ) {
+			level.portalMinigameEnt[i] = NULL;
+			G_Printf( "Portal: minigame%i disabled by worldspawn\n", i );
+			continue;
+		}
+
 		Com_sprintf( tname, sizeof( tname ), "minigame%i", i );
 		level.portalMinigameEnt[i] = G_Find( NULL, FOFS(targetname), tname );
-		if ( level.portalMinigameEnt[i] )
+		if ( level.portalMinigameEnt[i] ) {
+			foundCount++;
 			G_Printf( "Portal: cached minigame%i -> %s\n", i,
 			          level.portalMinigameEnt[i]->classname );
-		else
+		} else {
 			G_Printf( "Portal: minigame%i not found in map\n", i );
+		}
+	}
+
+	if ( foundCount < 2 ) {
+		G_Printf( "There needs to be at least two minigames hardcoded.\n" );
 	}
 }
 
 void G_Portal_Init( void ) {
 	char list[256], *tok;
 	int  n;
+	int  i;
 
 	memset( level.portalVotes,        0, sizeof( level.portalVotes ) );
 	memset( level.portalPlayerVoted,  0, sizeof( level.portalPlayerVoted ) );
@@ -381,6 +414,12 @@ void G_Portal_Init( void ) {
 	memset( level.portalDisabled,     0, sizeof( level.portalDisabled ) );
 	level.portalCurrentMinigame = -1;
 	level.portalVoteTime = 0;
+
+	if ( level.portalNumEnabledMinigames <= 0 ) {
+		for ( i = 0; i < 5; i++ )
+			level.portalMinigameEnabled[i] = qtrue;
+		level.portalNumEnabledMinigames = 5;
+	}
 
 	// Parse p_disablePortalList: comma-separated portal numbers to exclude from voting
 	trap_Cvar_VariableStringBuffer( "p_disablePortalList", list, sizeof( list ) );
@@ -448,12 +487,18 @@ static void Touch_Portal( gentity_t *self, gentity_t *other, trace_t *trace ) {
 
 	// Teleport to mini-game on first vote only; all players share the same room.
 	if ( !level.portalPlayerVoted[other - g_entities] ) {
-		int        miniGame = ( portalNum - 1 ) % 5;
+		int        miniGame = G_Portal_SelectMinigameForPortal( portalNum );
 		char       mgName[12];
 		gentity_t *dest;
 
+		if ( miniGame < 0 ) {
+			G_Printf( "Portal: no valid mini-game destination available\n" );
+			G_Portal_Vote( other, portalNum );
+			return;
+		}
+
 		// Lock in the server-wide mini-game on the very first vote.
-		if ( level.portalCurrentMinigame < 0 )
+		if ( level.portalCurrentMinigame < 0 || !level.portalMinigameEnt[level.portalCurrentMinigame] )
 			level.portalCurrentMinigame = miniGame;
 
 		Com_sprintf( mgName, sizeof( mgName ), "minigame%i", level.portalCurrentMinigame );

@@ -595,6 +595,9 @@ Every map should have exactly one worldspawn.
 */
 void SP_worldspawn( void ) {
 	char	*s;
+	char	list[64];
+	char	*tok;
+	int		i;
 
 	G_SpawnString( "classname", "", &s );
 	if ( Q_stricmp( s, "worldspawn" ) ) {
@@ -622,6 +625,42 @@ void SP_worldspawn( void ) {
 
 	G_SpawnString( "enableBreath", "0", &s );
 	trap_Cvar_Set( "g_enableBreath", s );
+
+	for ( i = 0; i < 5; i++ ) {
+		level.portalMinigameEnabled[i] = qtrue;
+	}
+	level.portalNumEnabledMinigames = 5;
+
+	G_SpawnString( "enableMinigames", "", &s );
+	if ( s[0] ) {
+		int enabledCount = 0;
+
+		for ( i = 0; i < 5; i++ ) {
+			level.portalMinigameEnabled[i] = qfalse;
+		}
+
+		Q_strncpyz( list, s, sizeof( list ) );
+		tok = strtok( list, "," );
+		while ( tok ) {
+			int mg = atoi( tok );
+			if ( mg < 0 || mg >= 5 ) {
+				G_Printf( "In worldspawn: %i is out of range.  Max minigame is %i.\n", mg, 4 );
+			} else if ( !level.portalMinigameEnabled[mg] ) {
+				level.portalMinigameEnabled[mg] = qtrue;
+				enabledCount++;
+			}
+			tok = strtok( NULL, "," );
+		}
+
+		if ( enabledCount <= 0 ) {
+			for ( i = 0; i < 5; i++ ) {
+				level.portalMinigameEnabled[i] = qtrue;
+			}
+			enabledCount = 5;
+		}
+
+		level.portalNumEnabledMinigames = enabledCount;
+	}
 
 	g_entities[ENTITYNUM_WORLD].s.number = ENTITYNUM_WORLD;
 	g_entities[ENTITYNUM_WORLD].r.ownerNum = ENTITYNUM_NONE;
