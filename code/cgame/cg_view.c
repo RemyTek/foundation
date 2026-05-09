@@ -990,7 +990,7 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
 
-	if ( cg.sillyQuadEndTime && cg.predictedPlayerState.powerups[PW_QUAD] <= cg.time ) {
+	if ( cg.sillyQuadEndTime && cg.sillyQuadEndTime <= cg.time ) {
 		cg.sillyQuadEndTime = 0;
 	}
 

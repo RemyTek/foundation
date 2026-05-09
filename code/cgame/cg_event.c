@@ -579,10 +579,20 @@ static void CG_ItemPickup(int itemNum)
 
 	if ( bg_itemlist[itemNum].classname && !Q_stricmp( bg_itemlist[itemNum].classname, "item_silly" ) ) {
 		int sillyMs = bg_itemlist[itemNum].quantity * 1000;
+		int quadEnd = cg.predictedPlayerState.powerups[PW_QUAD];
+		int newEnd;
+
 		if ( sillyMs < 1000 )
 			sillyMs = 1000;
-		if ( cg.sillyQuadEndTime < cg.time + sillyMs )
-			cg.sillyQuadEndTime = cg.time + sillyMs;
+
+		newEnd = cg.time + sillyMs;
+		if ( quadEnd > newEnd ) {
+			newEnd = quadEnd;
+		}
+
+		if ( cg.sillyQuadEndTime < newEnd ) {
+			cg.sillyQuadEndTime = newEnd;
+		}
 	}
 
 	// see if it should be the grabbed weapon
