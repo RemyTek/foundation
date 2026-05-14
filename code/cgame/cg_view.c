@@ -336,6 +336,161 @@ static void CG_StepOffset(void)
 
 /*
 ===============
+CG_SillyQuadTransition
+
+Deterministic 10s silly-quad transition: staged roll plus horizontal collapse.
+===============
+*/
+static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
+{
+	float phase;
+	float t;
+	float eased;
+	int remainingMs;
+	int segment;
+	static const float phaseKeys[6] = { 0.0f, 0.20f, 0.40f, 0.60f, 0.80f, 1.0f };
+	static const float rollKeys[6] = { 45.0f, 0.0f, -45.0f, 0.0f, 45.0f, 0.0f };
+	static const float collapseKeys[6] = { 0.90f, 1.00f, 0.50f, 0.00f, 0.60f, 1.00f };
+
+	if (rollDeg)
+	{
+		*rollDeg = 0.0f;
+	}
+	if (collapse)
+	{
+		*collapse = 0.0f;
+	}
+
+	if (cg.sillyQuadEndTime <= cg.time)
+	{
+		return;
+	}
+
+	remainingMs = cg.sillyQuadEndTime - cg.time;
+	if (remainingMs < 0)
+	{
+		remainingMs = 0;
+	}
+	if (remainingMs > 10000)
+	{
+		remainingMs = 10000;
+	}
+
+	phase = 1.0f - (remainingMs / 10000.0f);
+	if (phase < 0.0f)
+	{
+		phase = 0.0f;
+	}
+	else if (phase > 1.0f)
+	{
+		phase = 1.0f;
+	}
+
+	segment = 0;
+	while (segment < 4 && phase > phaseKeys[segment + 1])
+	{
+		segment++;
+	}
+
+	t = (phase - phaseKeys[segment]) / (phaseKeys[segment + 1] - phaseKeys[segment]);
+	if (t < 0.0f)
+	{
+		t = 0.0f;
+	}
+	else if (t > 1.0f)
+	{
+		t = 1.0f;
+	}
+
+	eased = 0.5f - 0.5f * cos(t * M_PI);
+
+	if (rollDeg)
+	{
+		*rollDeg = rollKeys[segment] + ((rollKeys[segment + 1] - rollKeys[segment]) * eased);
+	}
+	if (collapse)
+	{
+		*collapse = collapseKeys[segment] + ((collapseKeys[segment + 1] - collapseKeys[segment]) * eased);
+	}
+}
+
+/*
+===============
+CG_AddSillyQuadSceneFx
+
+Silly quad uses the same base powerup state bucket as quad (f73c0/f73c4
+equivalent is cg.powerupActive/cg.powerupTime) but adds an extra "silly"
+scene pulse and screen-space transition.
+===============
+*/
+static void CG_AddSillyQuadSceneFx(void)
+{
+	float collapse;
+	float pulse;
+	float intensity;
+
+	if (cg.sillyQuadEndTime <= cg.time)
+	{
+		return;
+	}
+
+	CG_SillyQuadTransition(NULL, &collapse);
+	pulse = 0.5f + 0.5f * sin(cg.time * 0.022f);
+	intensity = 120.0f + (220.0f * collapse) + (90.0f * pulse);
+
+	/* Slightly unstable color mix is intentional for silly quad. */
+	trap_R_AddLightToScene(cg.refdef.vieworg, intensity,
+		0.35f + (0.25f * pulse),
+		0.15f + (0.45f * (1.0f - collapse)),
+		0.95f);
+}
+
+/*
+===============
+CG_DrawSillyQuadOverlay
+
+Draws the silly-only screen transition using trap_R_SetColor + whiteShader.
+Standard quad does not apply this overlay.
+===============
+*/
+static void CG_DrawSillyQuadOverlay(void)
+{
+	float collapse;
+	float pulse;
+	float overlay[4];
+	float edge[4];
+	float sideWidth;
+
+	if (cg.sillyQuadEndTime <= cg.time)
+	{
+		return;
+	}
+
+	CG_SillyQuadTransition(NULL, &collapse);
+	pulse = 0.5f + 0.5f * sin(cg.time * 0.031f);
+
+	overlay[0] = 0.10f + 0.08f * pulse;
+	overlay[1] = 0.02f;
+	overlay[2] = 0.20f + 0.10f * (1.0f - pulse);
+	overlay[3] = 0.06f + 0.10f * collapse;
+
+	edge[0] = 0.0f;
+	edge[1] = 0.0f;
+	edge[2] = 0.0f;
+	edge[3] = 0.35f + 0.45f * collapse;
+
+	sideWidth = 320.0f * collapse;
+
+	trap_R_SetColor(overlay);
+	CG_DrawPic(0, 0, 640, 480, cgs.media.whiteShader);
+	trap_R_SetColor(edge);
+	CG_DrawPic(0, 0, sideWidth, 480, cgs.media.whiteShader);
+	CG_DrawPic(640.0f - sideWidth, 0, sideWidth, 480, cgs.media.whiteShader);
+	trap_R_SetColor(NULL);
+}
+
+/*
+===============
 CG_OffsetFirstPersonView
 
 ===============
@@ -373,7 +528,7 @@ static void CG_OffsetFirstPersonView(void)
 	VectorAdd(angles, cg.kick_angles, angles);
 
 	// add angles based on damage kick
-	if (cg.damageTime && cg_damageKick.integer)
+	if (cg.damageTime)
 	{
 		ratio = cg.time - cg.damageTime;
 		if (ratio < DAMAGE_DEFLECT_TIME)
@@ -425,6 +580,14 @@ static void CG_OffsetFirstPersonView(void)
 	if (cg.bobcycle & 1)
 		delta = -delta;
 	angles[ROLL] += delta;
+
+	if (cg.sillyQuadEndTime > cg.time)
+	{
+		float sillyRoll;
+
+		CG_SillyQuadTransition(&sillyRoll, NULL);
+		angles[ROLL] += sillyRoll;
+	}
 
 //===================================
 
@@ -639,20 +802,18 @@ static int CG_CalcFov(void)
 		inwater = qfalse;
 	}
 
-	if ( cg.sillyQuadEndTime > cg.time ) {
-		float phase1;
-		float phase2;
-		float v1;
-		float v2;
+	if (cg.sillyQuadEndTime > cg.time)
+	{
+		float sillyCollapse;
+		const float collapsedFovX = 4.0f;
 
-		phase1 = ( cg.time / 1000.0f ) * 2.35f * M_PI * 2.0f;
-		phase2 = ( cg.time / 1000.0f ) * 1.05f * M_PI * 2.0f;
-		v1 = 2.8f * sin( phase1 );
-		v2 = 1.4f * cos( phase2 );
-		fov_x += ( v1 + v2 );
-		fov_y -= ( v1 * 0.75f );
+		CG_SillyQuadTransition(NULL, &sillyCollapse);
+		fov_x = fov_x + ((collapsedFovX - fov_x) * sillyCollapse);
+		if (fov_x < collapsedFovX)
+		{
+			fov_x = collapsedFovX;
+		}
 	}
-
 
 	// set it
 	cg.refdef.fov_x = fov_x;
@@ -664,14 +825,7 @@ static int CG_CalcFov(void)
 	}
 	else
 	{
-		if (cg_zoomSensitivityAuto.integer)
-		{
-			cg.zoomSensitivity = cg.refdef.fov_y / 75.0;
-		}
-		else
-		{
-			cg.zoomSensitivity = cg_zoomSensitivityMultiplier.value;
-		}
+		cg.zoomSensitivity = cg.refdef.fov_y / 75.0;
 	}
 
 	return inwater;
@@ -1016,6 +1170,7 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 	}
 
 	CG_AddViewWeapon(&cg.predictedPlayerState);
+	CG_AddSillyQuadSceneFx();
 
 	// add buffered sounds
 	CG_PlayBufferedSounds();
@@ -1068,6 +1223,7 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 
 	// actually issue the rendering calls
 	CG_DrawActive(stereoView);
+	CG_DrawSillyQuadOverlay();
 
 	if (cg_stats.integer)
 	{

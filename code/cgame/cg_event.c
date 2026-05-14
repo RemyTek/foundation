@@ -582,6 +582,16 @@ static void CG_ItemPickup(int itemNum)
 		int quadEnd = cg.predictedPlayerState.powerups[PW_QUAD];
 		int newEnd;
 
+		/*
+		 * 3Wave disassembly parity notes:
+		 * - f73c0 behaves like "active powerup visual state"
+		 * - f73c4 behaves like "powerup pickup time"
+		 * For silly quad, state is the same base bucket as quad, but it drives
+		 * an additional silly-only transition path in cg_view.
+		 */
+		cg.powerupActive = PW_QUAD;
+		cg.powerupTime = cg.time;
+
 		if ( sillyMs < 1000 )
 			sillyMs = 1000;
 

@@ -193,11 +193,12 @@ timing -- see SpawnTime().
 */
 int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 	gentity_t	*te;
+	int durationMs = 10000;
 
 	if ( !other->client->ps.powerups[PW_QUAD] ) {
 		other->client->ps.powerups[PW_QUAD] = level.time - ( level.time % 1000 );
 	}
-	other->client->ps.powerups[PW_QUAD] += ent->item->quantity * 1000;
+	other->client->ps.powerups[PW_QUAD] += durationMs;
 
 	// global broadcast: "<name> grabbed a silly quad!"
 	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );

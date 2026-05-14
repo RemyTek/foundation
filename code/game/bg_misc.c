@@ -682,7 +682,7 @@ Mini-game only. Does not obey g_removepowerup or standard powerup respawn timing
 		0, 0 },
 /* icon */		"icons/sillyquadicon",
 /* pickup */	"Silly Quad",
-		30,
+		10,
 		IT_POWERUP,
 		PW_QUAD,
 /* precache */ "",
