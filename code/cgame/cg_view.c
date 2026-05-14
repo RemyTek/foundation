@@ -338,9 +338,11 @@ static void CG_StepOffset(void)
 ===============
 CG_SillyQuadTransition
 
-Camera-space silly quad transition (no screen overlay):
-- roll cycles +45 -> 0 -> -45 -> 0 -> +45
-- horizontal collapse cycles 0.6 -> 1.0 -> 0.6 -> 0.0 -> 0.6
+Matches exact frame behavior:
+- Phase 1: -45 -> 0, collapse 0.6 -> 0.0 (FULL COLLAPSE at center)
+- Phase 2: 0 -> +45, collapse 0.0 -> 0.6
+- Phase 3: +45 -> 0, collapse 0.6 -> 1.0 (FULL EXPANSION at center)
+- Phase 4: 0 -> -45, collapse 1.0 -> 0.6
 ===============
 */
 static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
@@ -351,10 +353,10 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	int elapsedMs;
 	int cycleMs;
 	int segment;
-	const int transitionCycleMs = 10000;
-	static const float phaseKeys[5] = { 0.0f, 0.25f, 0.50f, 0.75f, 1.0f };
-	static const float rollKeys[5] = { 45.0f, 0.0f, -45.0f, 0.0f, 45.0f };
-	static const float collapseKeys[5] = { 0.60f, 1.00f, 0.60f, 0.00f, 0.60f };
+	const int transitionCycleMs = 8000;
+	static const float phaseKeys[5] = { 0.00f, 0.25f, 0.50f, 0.75f, 1.00f };
+	static const float rollKeys[5] = { -45.0f, 0.0f, 45.0f, 0.0f, -45.0f };
+	static const float collapseKeys[5] = { 0.60f, 0.00f, 0.60f, 1.00f, 0.60f };
 
 	if (rollDeg)
 	{
@@ -389,7 +391,7 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	phase = cycleMs / (float)transitionCycleMs;
 
 	segment = 0;
-	while (segment < 3 && phase > phaseKeys[segment + 1])
+	while (segment < 4 && phase > phaseKeys[segment + 1])
 	{
 		segment++;
 	}
@@ -399,17 +401,18 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	{
 		t = 0.0f;
 	}
-	else if (t > 1.0f)
+	if (t > 1.0f)
 	{
 		t = 1.0f;
 	}
 
-	eased = 0.5f - 0.5f * cos(t * M_PI);
+	eased = t * t * (3.0f - 2.0f * t);
 
 	if (rollDeg)
 	{
 		*rollDeg = rollKeys[segment] + ((rollKeys[segment + 1] - rollKeys[segment]) * eased);
 	}
+
 	if (collapse)
 	{
 		*collapse = collapseKeys[segment] + ((collapseKeys[segment + 1] - collapseKeys[segment]) * eased);
@@ -732,10 +735,10 @@ static int CG_CalcFov(void)
 	if (cg.sillyQuadEndTime > cg.time)
 	{
 		float sillyCollapse;
-		const float collapsedFovX = 7.0f;
+		const float collapsedFovX = 1.0f;
 
 		CG_SillyQuadTransition(NULL, &sillyCollapse);
-		fov_x = fov_x + ((collapsedFovX - fov_x) * sillyCollapse);
+		fov_x = collapsedFovX + (fov_x - collapsedFovX) * sillyCollapse;
 		if (fov_x < collapsedFovX)
 		{
 			fov_x = collapsedFovX;
