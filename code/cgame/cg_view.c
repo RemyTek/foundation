@@ -338,7 +338,9 @@ static void CG_StepOffset(void)
 ===============
 CG_SillyQuadTransition
 
-Deterministic 10s silly-quad transition: staged roll plus horizontal collapse.
+Camera-space silly quad transition (no screen overlay):
+- roll cycles +45 -> 0 -> -45 -> 0 -> +45
+- horizontal collapse cycles 0.6 -> 1.0 -> 0.6 -> 0.0 -> 0.6
 ===============
 */
 static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
@@ -346,11 +348,13 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	float phase;
 	float t;
 	float eased;
-	int remainingMs;
+	int elapsedMs;
+	int cycleMs;
 	int segment;
-	static const float phaseKeys[6] = { 0.0f, 0.20f, 0.40f, 0.60f, 0.80f, 1.0f };
-	static const float rollKeys[6] = { 45.0f, 0.0f, -45.0f, 0.0f, 45.0f, 0.0f };
-	static const float collapseKeys[6] = { 0.90f, 1.00f, 0.50f, 0.00f, 0.60f, 1.00f };
+	const int transitionCycleMs = 10000;
+	static const float phaseKeys[5] = { 0.0f, 0.25f, 0.50f, 0.75f, 1.0f };
+	static const float rollKeys[5] = { 45.0f, 0.0f, -45.0f, 0.0f, 45.0f };
+	static const float collapseKeys[5] = { 0.60f, 1.00f, 0.60f, 0.00f, 0.60f };
 
 	if (rollDeg)
 	{
@@ -365,29 +369,27 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	{
 		return;
 	}
-
-	remainingMs = cg.sillyQuadEndTime - cg.time;
-	if (remainingMs < 0)
+	if (cg.powerupTime <= 0)
 	{
-		remainingMs = 0;
-	}
-	if (remainingMs > 10000)
-	{
-		remainingMs = 10000;
+		return;
 	}
 
-	phase = 1.0f - (remainingMs / 10000.0f);
-	if (phase < 0.0f)
+	elapsedMs = cg.time - cg.powerupTime;
+	if (elapsedMs < 0)
 	{
-		phase = 0.0f;
+		elapsedMs = 0;
 	}
-	else if (phase > 1.0f)
+
+	cycleMs = elapsedMs % transitionCycleMs;
+	if (cycleMs < 0)
 	{
-		phase = 1.0f;
+		cycleMs += transitionCycleMs;
 	}
+
+	phase = cycleMs / (float)transitionCycleMs;
 
 	segment = 0;
-	while (segment < 4 && phase > phaseKeys[segment + 1])
+	while (segment < 3 && phase > phaseKeys[segment + 1])
 	{
 		segment++;
 	}
@@ -412,81 +414,6 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	{
 		*collapse = collapseKeys[segment] + ((collapseKeys[segment + 1] - collapseKeys[segment]) * eased);
 	}
-}
-
-/*
-===============
-CG_AddSillyQuadSceneFx
-
-Silly quad uses the same base powerup state bucket as quad (f73c0/f73c4
-equivalent is cg.powerupActive/cg.powerupTime) but adds an extra "silly"
-scene pulse and screen-space transition.
-===============
-*/
-static void CG_AddSillyQuadSceneFx(void)
-{
-	float collapse;
-	float pulse;
-	float intensity;
-
-	if (cg.sillyQuadEndTime <= cg.time)
-	{
-		return;
-	}
-
-	CG_SillyQuadTransition(NULL, &collapse);
-	pulse = 0.5f + 0.5f * sin(cg.time * 0.022f);
-	intensity = 120.0f + (220.0f * collapse) + (90.0f * pulse);
-
-	/* Slightly unstable color mix is intentional for silly quad. */
-	trap_R_AddLightToScene(cg.refdef.vieworg, intensity,
-		0.35f + (0.25f * pulse),
-		0.15f + (0.45f * (1.0f - collapse)),
-		0.95f);
-}
-
-/*
-===============
-CG_DrawSillyQuadOverlay
-
-Draws the silly-only screen transition using trap_R_SetColor + whiteShader.
-Standard quad does not apply this overlay.
-===============
-*/
-static void CG_DrawSillyQuadOverlay(void)
-{
-	float collapse;
-	float pulse;
-	float overlay[4];
-	float edge[4];
-	float sideWidth;
-
-	if (cg.sillyQuadEndTime <= cg.time)
-	{
-		return;
-	}
-
-	CG_SillyQuadTransition(NULL, &collapse);
-	pulse = 0.5f + 0.5f * sin(cg.time * 0.031f);
-
-	overlay[0] = 0.10f + 0.08f * pulse;
-	overlay[1] = 0.02f;
-	overlay[2] = 0.20f + 0.10f * (1.0f - pulse);
-	overlay[3] = 0.06f + 0.10f * collapse;
-
-	edge[0] = 0.0f;
-	edge[1] = 0.0f;
-	edge[2] = 0.0f;
-	edge[3] = 0.35f + 0.45f * collapse;
-
-	sideWidth = 320.0f * collapse;
-
-	trap_R_SetColor(overlay);
-	CG_DrawPic(0, 0, 640, 480, cgs.media.whiteShader);
-	trap_R_SetColor(edge);
-	CG_DrawPic(0, 0, sideWidth, 480, cgs.media.whiteShader);
-	CG_DrawPic(640.0f - sideWidth, 0, sideWidth, 480, cgs.media.whiteShader);
-	trap_R_SetColor(NULL);
 }
 
 /*
@@ -805,7 +732,7 @@ static int CG_CalcFov(void)
 	if (cg.sillyQuadEndTime > cg.time)
 	{
 		float sillyCollapse;
-		const float collapsedFovX = 4.0f;
+		const float collapsedFovX = 7.0f;
 
 		CG_SillyQuadTransition(NULL, &sillyCollapse);
 		fov_x = fov_x + ((collapsedFovX - fov_x) * sillyCollapse);
@@ -1170,7 +1097,6 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 	}
 
 	CG_AddViewWeapon(&cg.predictedPlayerState);
-	CG_AddSillyQuadSceneFx();
 
 	// add buffered sounds
 	CG_PlayBufferedSounds();
@@ -1223,7 +1149,6 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 
 	// actually issue the rendering calls
 	CG_DrawActive(stereoView);
-	CG_DrawSillyQuadOverlay();
 
 	if (cg_stats.integer)
 	{
