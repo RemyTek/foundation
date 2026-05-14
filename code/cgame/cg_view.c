@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // for a 3D rendering
 #include "cg_local.h"
 
+static void CG_SillyQuadTransition(float* rollDeg, float* collapse);
+
 
 /*
 =============================================================================
@@ -228,6 +230,30 @@ static void CG_CalcVrect(void)
 	cg.refdef.height = cgs.glconfig.vidHeight * size / 100;
 	cg.refdef.height &= ~1;
 
+	if (cg.sillyQuadEndTime > cg.time)
+	{
+		float sillyCollapse;
+		int baseWidth = cg.refdef.width;
+
+		CG_SillyQuadTransition(NULL, &sillyCollapse);
+
+		if (sillyCollapse > 1.0f)
+		{
+			sillyCollapse = 1.0f;
+		}
+		if (sillyCollapse < 0.0f)
+		{
+			sillyCollapse = 0.0f;
+		}
+
+		cg.refdef.width = (int)(baseWidth * sillyCollapse);
+		cg.refdef.width &= ~1;
+		if (cg.refdef.width < 2)
+		{
+			cg.refdef.width = 2;
+		}
+	}
+
 	cg.refdef.x = (cgs.glconfig.vidWidth - cg.refdef.width) / 2;
 	cg.refdef.y = (cgs.glconfig.vidHeight - cg.refdef.height) / 2;
 }
@@ -338,11 +364,12 @@ static void CG_StepOffset(void)
 ===============
 CG_SillyQuadTransition
 
-Matches exact frame behavior:
-- Phase 1: -45 -> 0, collapse 0.6 -> 0.0 (FULL COLLAPSE at center)
-- Phase 2: 0 -> +45, collapse 0.0 -> 0.6
-- Phase 3: +45 -> 0, collapse 0.6 -> 1.0 (FULL EXPANSION at center)
-- Phase 4: 0 -> -45, collapse 1.0 -> 0.6
+Roll/collapse timing:
+0%   -> roll -45, collapse 0.60
+25%  -> roll   0, collapse 0.00 (full collapse)
+50%  -> roll +45, collapse 0.60
+75%  -> roll   0, collapse 1.00 (full expansion)
+100% -> roll -45, collapse 0.60
 ===============
 */
 static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
@@ -416,6 +443,15 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	if (collapse)
 	{
 		*collapse = collapseKeys[segment] + ((collapseKeys[segment + 1] - collapseKeys[segment]) * eased);
+
+		if (*collapse > 1.0f)
+		{
+			*collapse = 1.0f;
+		}
+		if (*collapse < 0.0f)
+		{
+			*collapse = 0.0f;
+		}
 	}
 }
 
@@ -730,19 +766,6 @@ static int CG_CalcFov(void)
 	else
 	{
 		inwater = qfalse;
-	}
-
-	if (cg.sillyQuadEndTime > cg.time)
-	{
-		float sillyCollapse;
-		const float collapsedFovX = 1.0f;
-
-		CG_SillyQuadTransition(NULL, &sillyCollapse);
-		fov_x = collapsedFovX + (fov_x - collapsedFovX) * sillyCollapse;
-		if (fov_x < collapsedFovX)
-		{
-			fov_x = collapsedFovX;
-		}
 	}
 
 	// set it
