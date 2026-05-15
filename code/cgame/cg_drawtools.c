@@ -1484,6 +1484,8 @@ void CG_TileClear(void)
 {
 	int     top, bottom, left, right;
 	int     w, h;
+	qhandle_t clearShader;
+	qboolean forceBlack;
 
 	w = cgs.glconfig.vidWidth;
 	h = cgs.glconfig.vidHeight;
@@ -1494,22 +1496,34 @@ void CG_TileClear(void)
 		return;     // full screen rendering
 	}
 
+	forceBlack = (cg.sillyQuadEndTime > cg.time);
+	clearShader = forceBlack ? cgs.media.whiteShader : cgs.media.backTileShader;
+	if (forceBlack)
+	{
+		trap_R_SetColor(colorBlack);
+	}
+
 	top = cg.refdef.y;
-	bottom = top + cg.refdef.height - 1;
+	bottom = top + cg.refdef.height;
 	left = cg.refdef.x;
-	right = left + cg.refdef.width - 1;
+	right = left + cg.refdef.width;
 
 	// clear above view screen
-	CG_TileClearBox(0, 0, w, top, cgs.media.backTileShader);
+	CG_TileClearBox(0, 0, w, top, clearShader);
 
 	// clear below view screen
-	CG_TileClearBox(0, bottom, w, h - bottom, cgs.media.backTileShader);
+	CG_TileClearBox(0, bottom, w, h - bottom, clearShader);
 
 	// clear left of view screen
-	CG_TileClearBox(0, top, left, bottom - top + 1, cgs.media.backTileShader);
+	CG_TileClearBox(0, top, left, bottom - top, clearShader);
 
 	// clear right of view screen
-	CG_TileClearBox(right, top, w - right, bottom - top + 1, cgs.media.backTileShader);
+	CG_TileClearBox(right, top, w - right, bottom - top, clearShader);
+
+	if (forceBlack)
+	{
+		trap_R_SetColor(NULL);
+	}
 }
 
 

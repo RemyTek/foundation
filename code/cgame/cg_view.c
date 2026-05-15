@@ -291,9 +291,9 @@ static void CG_OffsetThirdPersonView(void)
 		cg.refdefViewAngles[YAW] = cg.predictedPlayerState.stats[STAT_DEAD_YAW];
 	}
 
-	if (focusAngles[PITCH] > 45)
+	if (focusAngles[PITCH] > 30)
 	{
-		focusAngles[PITCH] = 45;        // don't go too far overhead
+		focusAngles[PITCH] = 30;        // don't go too far overhead
 	}
 	AngleVectors(focusAngles, forward, NULL, NULL);
 
@@ -364,26 +364,19 @@ static void CG_StepOffset(void)
 ===============
 CG_SillyQuadTransition
 
-Roll/collapse timing:
-0%   -> roll -45, collapse 0.60
-25%  -> roll   0, collapse 0.00 (full collapse)
-50%  -> roll +45, collapse 0.60
-75%  -> roll   0, collapse 1.00 (full expansion)
-100% -> roll -45, collapse 0.60
+Smooth trigonometric cycle:
+roll = 30 * cos(t)
+collapse uses sin(t) with asymmetric mapping
 ===============
 */
 static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 {
 	float phase;
-	float t;
-	float eased;
+	float angle;
+	float s;
 	int elapsedMs;
 	int cycleMs;
-	int segment;
-	const int transitionCycleMs = 8000;
-	static const float phaseKeys[5] = { 0.00f, 0.25f, 0.50f, 0.75f, 1.00f };
-	static const float rollKeys[5] = { -45.0f, 0.0f, 45.0f, 0.0f, -45.0f };
-	static const float collapseKeys[5] = { 0.60f, 0.00f, 0.60f, 1.00f, 0.60f };
+	const int transitionCycleMs = 2500;
 
 	if (rollDeg)
 	{
@@ -416,33 +409,28 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	}
 
 	phase = cycleMs / (float)transitionCycleMs;
-
-	segment = 0;
-	while (segment < 4 && phase > phaseKeys[segment + 1])
-	{
-		segment++;
-	}
-
-	t = (phase - phaseKeys[segment]) / (phaseKeys[segment + 1] - phaseKeys[segment]);
-	if (t < 0.0f)
-	{
-		t = 0.0f;
-	}
-	if (t > 1.0f)
-	{
-		t = 1.0f;
-	}
-
-	eased = t * t * (3.0f - 2.0f * t);
+	angle = phase * (2.0f * M_PI);
+	s = sin(angle);
 
 	if (rollDeg)
 	{
-		*rollDeg = rollKeys[segment] + ((rollKeys[segment + 1] - rollKeys[segment]) * eased);
+		*rollDeg = 30.0f * cos(angle);
 	}
 
 	if (collapse)
 	{
-		*collapse = collapseKeys[segment] + ((collapseKeys[segment + 1] - collapseKeys[segment]) * eased);
+		if (s >= 0.0f)
+		{
+			// Left-tilt half (t=0.5 to t=0.75, roll moving from -45 to 0): OPEN
+			// Map s from 0->1 to collapse from 0.60->1.00
+			*collapse = 0.60f + (0.40f * s);
+		}
+		else
+		{
+			// Right-tilt half (t=0.75 to t=1.0, roll moving from 0 to +45): CLOSE
+			// Map s from -1->0 to collapse from 0.00->0.60
+			*collapse = 0.60f + (0.60f * s);
+		}
 
 		if (*collapse > 1.0f)
 		{
@@ -672,6 +660,8 @@ static int CG_CalcFov(void)
 	float   zoomFov;
 	float   f;
 	int     inwater;
+	int     size;
+	int     fovCalcWidth;
 	int     zoomTime = cg_zoomTime.integer;
 
 	if (cg.predictedPlayerState.pm_type == PM_INTERMISSION)
@@ -749,7 +739,29 @@ static int CG_CalcFov(void)
 		}
 	}
 
-	x = cg.refdef.width / tan(fov_x / 360 * M_PI);
+	if (cg.predictedPlayerState.pm_type == PM_INTERMISSION)
+	{
+		size = 100;
+	}
+	else if (cg_viewsize.integer < 30)
+	{
+		size = 30;
+	}
+	else if (cg_viewsize.integer > 100)
+	{
+		size = 100;
+	}
+	else
+	{
+		size = cg_viewsize.integer;
+	}
+
+	// Keep projection FOV tied to unclipped viewsize dimensions.
+	// Silly Quad narrows the viewport for black side borders only.
+	fovCalcWidth = cgs.glconfig.vidWidth * size / 100;
+	fovCalcWidth &= ~1;
+
+	x = fovCalcWidth / tan(fov_x / 360 * M_PI);
 	fov_y = atan2(cg.refdef.height, x);
 	fov_y = fov_y * 360 / M_PI;
 

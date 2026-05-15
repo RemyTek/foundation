@@ -1494,7 +1494,11 @@ static qboolean G_ItemDisabledForGTCTFS( gitem_t *item ) {
 		return qfalse;
 	}
 
-	if ( g_gametype.integer != GT_CTFS ) {
+	/*
+	 * GT_PORTAL shares the numeric slot with GT_CTFS. Keep pickup stripping
+	 * strictly tied to Attack & Defend gameplay.
+	 */
+	if ( g_gametype.integer != GT_CTFS || p_enablePortal.integer ) {
 		return qfalse;
 	}
 
