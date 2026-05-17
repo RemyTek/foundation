@@ -230,30 +230,6 @@ static void CG_CalcVrect(void)
 	cg.refdef.height = cgs.glconfig.vidHeight * size / 100;
 	cg.refdef.height &= ~1;
 
-	if (cg.sillyQuadEndTime > cg.time)
-	{
-		float sillyCollapse;
-		int baseWidth = cg.refdef.width;
-
-		CG_SillyQuadTransition(NULL, &sillyCollapse);
-
-		if (sillyCollapse > 1.0f)
-		{
-			sillyCollapse = 1.0f;
-		}
-		if (sillyCollapse < 0.0f)
-		{
-			sillyCollapse = 0.0f;
-		}
-
-		cg.refdef.width = (int)(baseWidth * sillyCollapse);
-		cg.refdef.width &= ~1;
-		if (cg.refdef.width < 2)
-		{
-			cg.refdef.width = 2;
-		}
-	}
-
 	cg.refdef.x = (cgs.glconfig.vidWidth - cg.refdef.width) / 2;
 	cg.refdef.y = (cgs.glconfig.vidHeight - cg.refdef.height) / 2;
 }
@@ -662,6 +638,7 @@ static int CG_CalcFov(void)
 	int     inwater;
 	int     size;
 	int     fovCalcWidth;
+	float   baseFovY;
 	int     zoomTime = cg_zoomTime.integer;
 
 	if (cg.predictedPlayerState.pm_type == PM_INTERMISSION)
@@ -757,13 +734,44 @@ static int CG_CalcFov(void)
 	}
 
 	// Keep projection FOV tied to unclipped viewsize dimensions.
-	// Silly Quad narrows the viewport for black side borders only.
 	fovCalcWidth = cgs.glconfig.vidWidth * size / 100;
 	fovCalcWidth &= ~1;
 
 	x = fovCalcWidth / tan(fov_x / 360 * M_PI);
 	fov_y = atan2(cg.refdef.height, x);
 	fov_y = fov_y * 360 / M_PI;
+	baseFovY = fov_y;
+
+	if (cg.sillyQuadEndTime > cg.time)
+	{
+		float sillyCollapse;
+		int projectionWidth;
+		float collapsedX;
+
+		CG_SillyQuadTransition(NULL, &sillyCollapse);
+
+		if (sillyCollapse > 1.0f)
+		{
+			sillyCollapse = 1.0f;
+		}
+		if (sillyCollapse < 0.0f)
+		{
+			sillyCollapse = 0.0f;
+		}
+
+		projectionWidth = (int)(fovCalcWidth * sillyCollapse);
+		projectionWidth &= ~1;
+		if (projectionWidth < 2)
+		{
+			projectionWidth = 2;
+		}
+
+		// Horizontal-only collapse: widen horizontal FOV based on collapsed
+		// projection width while preserving the baseline vertical FOV.
+		collapsedX = projectionWidth / tan(fov_x / 360 * M_PI);
+		fov_x = atan2(fovCalcWidth, collapsedX) * 360 / M_PI;
+		fov_y = baseFovY;
+	}
 
 	// warp if underwater
 	contents = CG_PointContents(cg.refdef.vieworg, -1);
