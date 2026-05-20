@@ -157,7 +157,7 @@ __search:
 	for ( n = 0 ; n < level.numSpawnSpots ; n++ ) {
 		spot = level.spawnSpots[n];
 
-		if ( spot->fteam != TEAM_FREE && level.numSpawnSpotsFFA > 0 )
+		if ( !portalCtxFilter && spot->fteam != TEAM_FREE && level.numSpawnSpotsFFA > 0 )
 			continue;
 
 		// GT_PORTAL: restrict spawning to the player's current context.
@@ -211,14 +211,13 @@ __search:
 
 	if ( !numSpots ) {
 		if ( portalCtxFilter ) {
-			// Couldn't find spots for current context — step back:
-			// minigame room → try lobby; lobby → accept any spawn.
-			if ( Q_stricmp( portalCtxFilter, "CTX_MAIN_VOTING" ) != 0 )
-				portalCtxFilter = "CTX_MAIN_VOTING";
-			else
+			// Active mini-game should never respawn into the lobby.
+			// Keep context locked to CTX_MINIGAME_N and relax checks only.
+			if ( Q_stricmp( portalCtxFilter, "CTX_MAIN_VOTING" ) == 0 ) {
 				portalCtxFilter = NULL;
-			checkMask = 3;
-			goto __search;
+				checkMask = 3;
+				goto __search;
+			}
 		}
 		if ( checkMask <= 0 ) {
 			G_Error( "Couldn't find a spawn point" );
@@ -1264,9 +1263,20 @@ void ClientSpawn(gentity_t *ent) {
 	if (!isSpectator)
 		G_KillBox(ent);
 	G_SpawnWeapon(client);
+	if ( !isSpectator ) {
+		G_PortalApplyLobbyLoadout( ent );
+		G_PortalApplyMiniGameLoadout( ent );
+	}
 
 	// force the base weapon up
-	client->ps.weapon = WP_MACHINEGUN;
+	if ( !( client->ps.stats[STAT_WEAPONS] & ( 1 << client->ps.weapon ) ) ) {
+		for ( i = WP_NUM_WEAPONS - 1; i > 0; i-- ) {
+			if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+				client->ps.weapon = i;
+				break;
+			}
+		}
+	}
 	client->ps.weaponstate = WEAPON_READY;
 
 	// don't allow full run speed for a bit
@@ -1277,7 +1287,8 @@ void ClientSpawn(gentity_t *ent) {
 	client->inactivityTime = level.time + g_inactivity.integer * 1000;
 	client->latched_buttons = 0;
 
-	if ( g_spawnProtection.integer > 0 && g_gametype.integer != GT_CTFS ) {
+	if ( g_spawnProtection.integer > 0 && g_gametype.integer != GT_CTFS
+		&& !G_PortalLobbyRulesEnabled() && !G_PortalMiniGameRulesEnabled() ) {
 		ent->client->ps.powerups[PW_SPAWNPROTECTION] = ent->client->respawnTime + ( g_spawnProtection.integer * 1000 );
 	}
 
@@ -1305,6 +1316,15 @@ void ClientSpawn(gentity_t *ent) {
 			}
 		} else {
 			client->ps.weapon = g_startingWeapon.integer;
+			if ( client->ps.weapon <= WP_NONE || client->ps.weapon >= WP_NUM_WEAPONS
+				|| !( client->ps.stats[STAT_WEAPONS] & ( 1 << client->ps.weapon ) ) ) {
+				for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
+					if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+						client->ps.weapon = i;
+						break;
+					}
+				}
+			}
 		}
 		if (g_startArmor.integer > 0) {
 			client->ps.stats[STAT_ARMOR] = g_startArmor.integer;

@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "g_local.h"
 
+static int g_portalSillyQuadCursor = -1;
+
 
 static qboolean G_IsSillyItem( const gitem_t *item ) {
 	if ( !item || !item->classname )
@@ -208,7 +210,97 @@ int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 	G_Printf( "%s grabbed a silly quad!\n",
 	          other->client->pers.netname );
 
-	return 3000; // fixed 3-second respawn; SpawnTime() also enforces this
+	if ( G_PortalCurrentMiniGame() == 1 ) {
+		gentity_t *next = NULL;
+		int start, i;
+
+		/* Hide the picked silly immediately so there is never more than one
+		   world-spawned silly active at a time. */
+		ent->s.eFlags |= EF_NODRAW;
+		ent->r.svFlags |= SVF_NOCLIENT;
+		ent->r.contents = 0;
+		trap_LinkEntity( ent );
+
+		if ( g_portalSillyQuadCursor < 0 || g_portalSillyQuadCursor >= level.num_entities ) {
+			g_portalSillyQuadCursor = ent->s.number + 1;
+		}
+
+		start = g_portalSillyQuadCursor;
+		for ( i = 0; i < level.num_entities; i++ ) {
+			int idx = ( start + i ) % level.num_entities;
+			gentity_t *cand = &g_entities[idx];
+
+			if ( cand == ent )
+				continue;
+			if ( !cand->inuse || !cand->item || !G_IsSillyItem( cand->item ) )
+				continue;
+			next = cand;
+			g_portalSillyQuadCursor = idx + 1;
+			if ( g_portalSillyQuadCursor >= level.num_entities )
+				g_portalSillyQuadCursor = 0;
+			break;
+		}
+
+		if ( !next ) {
+			next = ent;
+		}
+
+		next->r.contents = CONTENTS_TRIGGER;
+		next->s.eFlags &= ~EF_NODRAW;
+		next->r.svFlags &= ~SVF_NOCLIENT;
+		trap_LinkEntity( next );
+
+		/* Chain mode: picked silly does not use timer-based respawn. */
+		return -1;
+	}
+
+	return 3000; // fixed 3-second respawn outside mini-game-1 chain mode
+}
+
+void G_PortalSillyQuadSetupForMiniGame( int miniGame ) {
+	gentity_t *first = NULL;
+	gentity_t *active = NULL;
+	int i;
+
+	if ( miniGame != 1 )
+		return;
+
+	for ( i = MAX_CLIENTS; i < level.num_entities; i++ ) {
+		gentity_t *ent = &g_entities[i];
+
+		if ( !ent->inuse || !ent->item || !G_IsSillyItem( ent->item ) )
+			continue;
+
+		if ( !first )
+			first = ent;
+
+		if ( active == NULL && !( ent->s.eFlags & EF_NODRAW ) && !( ent->r.svFlags & SVF_NOCLIENT ) ) {
+			active = ent;
+			continue;
+		}
+
+		ent->s.eFlags |= EF_NODRAW;
+		ent->r.svFlags |= SVF_NOCLIENT;
+		ent->r.contents = 0;
+		ent->nextthink = 0;
+		ent->think = 0;
+		trap_LinkEntity( ent );
+	}
+
+	if ( !active )
+		active = first;
+
+	if ( active ) {
+		active->r.contents = CONTENTS_TRIGGER;
+		active->s.eFlags &= ~EF_NODRAW;
+		active->r.svFlags &= ~SVF_NOCLIENT;
+		active->nextthink = 0;
+		active->think = 0;
+		trap_LinkEntity( active );
+		g_portalSillyQuadCursor = active->s.number + 1;
+		if ( g_portalSillyQuadCursor >= level.num_entities )
+			g_portalSillyQuadCursor = 0;
+	}
 }
 
 /*
@@ -400,6 +492,44 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
 static void Add_Ammo( gentity_t *ent, int weapon, int count )
 {
+	int prevAmmo;
+	int miniGame;
+
+	prevAmmo = ent->client->ps.ammo[weapon];
+
+	miniGame = G_PortalCurrentMiniGame();
+	if ( miniGame >= 0 ) {
+		if ( !G_PortalIsWeaponAllowed( miniGame, weapon ) ) {
+			return;
+		}
+
+		if ( miniGame == 1 || miniGame == 2 ) {
+			if ( weapon != WP_GAUNTLET && weapon != WP_GRAPPLING_HOOK ) {
+				ent->client->ps.ammo[weapon] = AMMO_HARD_LIMIT;
+				return;
+			}
+		}
+
+		if ( miniGame == 3 && weapon == WP_GRENADE_LAUNCHER ) {
+			if ( prevAmmo < 50 ) {
+				ent->client->ps.ammo[weapon] = 50;
+			} else {
+				ent->client->ps.ammo[weapon] = prevAmmo + 1;
+				if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT ) {
+					ent->client->ps.ammo[weapon] = AMMO_HARD_LIMIT;
+				}
+			}
+			return;
+		}
+
+		if ( miniGame == 4 ) {
+			if ( weapon == WP_SHOTGUN || weapon == WP_ROCKET_LAUNCHER || weapon == WP_RAILGUN ) {
+				ent->client->ps.ammo[weapon] = 50;
+				return;
+			}
+		}
+	}
+
     // if ammo already above limit from /give cheat don't bother
     if ( ent->client->ps.ammo[weapon] > AMMO_HARD_LIMIT ) {
         return;
@@ -714,6 +844,7 @@ Touch_Item
 void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	int			respawn;
 	qboolean	predict;
+	int miniGame;
 
 	if (!other->client)
 		return;
@@ -721,6 +852,15 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;		// dead people can't pickup
 	if ( ent->item && G_ItemDisabledForGTCTFS( ent->item ) )
 		return;
+
+	miniGame = G_PortalCurrentMiniGame();
+	if ( miniGame >= 0 && ent->item ) {
+		if ( ent->item->giType == IT_WEAPON || ent->item->giType == IT_AMMO ) {
+			if ( !G_PortalIsWeaponAllowed( miniGame, ent->item->giTag ) ) {
+				return;
+			}
+		}
+	}
 
 	// the same pickup rules are used for client side and server side
 	if ( !BG_CanItemBeGrabbed( g_gametype.integer, &ent->s, &other->client->ps, qfalse ) ) {

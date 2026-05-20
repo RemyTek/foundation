@@ -1082,6 +1082,13 @@ void G_Portal_FindMinigames( void );
 void G_Portal_Frame( void );
 void G_Portal_Vote( gentity_t *activator, int portalNum );
 qboolean G_Portal_RoomHasPortals( int roomNum );
+qboolean G_PortalMiniGameRulesEnabled( void );
+qboolean G_PortalLobbyRulesEnabled( void );
+int G_PortalCurrentMiniGame( void );
+qboolean G_PortalIsWeaponAllowed( int miniGame, int weapon );
+void G_PortalApplyMiniGameLoadout( gentity_t *ent );
+void G_PortalApplyLobbyLoadout( gentity_t *ent );
+void G_PortalSillyQuadSetupForMiniGame( int miniGame );
 void SP_func_portal( gentity_t *ent );
 
 // extension interface

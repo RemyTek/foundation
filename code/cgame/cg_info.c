@@ -32,6 +32,24 @@ static int          loadingItemIconCount;
 static qhandle_t    loadingPlayerIcons[MAX_LOADING_PLAYER_ICONS];
 static qhandle_t    loadingItemIcons[MAX_LOADING_ITEM_ICONS];
 
+static qboolean CG_ShouldHidePortalGametypeInfo( void )
+{
+	int i;
+
+	if ( cgs.gametype != GT_FFA ) {
+		return qfalse;
+	}
+
+	for ( i = 0; i < 64; i++ ) {
+		const char *portalInfo = CG_ConfigString( CS_PORTALS + i );
+		if ( portalInfo[0] && Info_ValueForKey( portalInfo, "m" )[0] ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
 
 /*
 ===================
@@ -259,36 +277,38 @@ void CG_DrawInformation(void)
 		y += PROP_HEIGHT;
 	}
 
-	// game type
-	switch (cgs.gametype)
-	{
-		case GT_FFA:
-			s = "Free For All";
-			break;
-		case GT_SINGLE_PLAYER:
-			s = "Single Player";
-			break;
-		case GT_TOURNAMENT:
-			s = "Tournament";
-			break;
-		case GT_TEAM:
-			s = "Team Deathmatch";
-			break;
-		case GT_CTF:
-			s = "Capture The Flag";
-			break;
-		case GT_CA:
-			s = "Clan Arena";
-		case GT_CTFS:
-			s = "Attack & Defend";
-			break;
-		default:
-			s = "Unknown Gametype";
-			break;
+	if ( !CG_ShouldHidePortalGametypeInfo() ) {
+		// game type
+		switch (cgs.gametype)
+		{
+			case GT_FFA:
+				s = "Free For All";
+				break;
+			case GT_SINGLE_PLAYER:
+				s = "Single Player";
+				break;
+			case GT_TOURNAMENT:
+				s = "Tournament";
+				break;
+			case GT_TEAM:
+				s = "Team Deathmatch";
+				break;
+			case GT_CTF:
+				s = "Capture The Flag";
+				break;
+			case GT_CA:
+				s = "Clan Arena";
+			case GT_CTFS:
+				s = "Attack & Defend";
+				break;
+			default:
+				s = "Unknown Gametype";
+				break;
+		}
+		UI_DrawProportionalString(320, y, s,
+		                          UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, colorWhite);
+		y += PROP_HEIGHT;
 	}
-	UI_DrawProportionalString(320, y, s,
-	                          UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, colorWhite);
-	y += PROP_HEIGHT;
 
 	value = atoi(Info_ValueForKey(info, "timelimit"));
 	if (value)

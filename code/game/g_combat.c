@@ -1074,12 +1074,26 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
-	/* spawn protection: immune to damage (except telefrag) */
-	if ( targ && targ->client && targ->client->ps.powerups[PW_SPAWNPROTECTION] > level.time && mod != MOD_TELEFRAG ) {
+	/* Portal map-voting room: no damage at all while selecting maps. */
+	if ( G_PortalLobbyRulesEnabled() && targ->client ) {
 		return;
 	}
-	if ( attacker && attacker->client && attacker->client->ps.powerups[PW_SPAWNPROTECTION] > level.time && mod != MOD_TELEFRAG ) {
-		return;
+
+	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA && targ->client && attacker->client && targ != attacker ) {
+		/* Mini-game 2 (steps): rail can only break platforms, never damage players. */
+		if ( level.portalCurrentMinigame == 2 && mod == MOD_RAILGUN ) {
+			return;
+		}
+	}
+
+	/* spawn protection: immune to damage (except telefrag), except in portal contexts */
+	if ( !G_PortalLobbyRulesEnabled() && !G_PortalMiniGameRulesEnabled() ) {
+		if ( targ && targ->client && targ->client->ps.powerups[PW_SPAWNPROTECTION] > level.time && mod != MOD_TELEFRAG ) {
+			return;
+		}
+		if ( attacker && attacker->client && attacker->client->ps.powerups[PW_SPAWNPROTECTION] > level.time && mod != MOD_TELEFRAG ) {
+			return;
+		}
 	}
 
 	// shootable doors / buttons don't actually have any health

@@ -33,6 +33,117 @@ with the most votes wins and the server loads that map.
 
 #define MAX_PORTAL_MAPS     64
 
+qboolean G_PortalMiniGameRulesEnabled( void ) {
+	return ( p_enablePortal.integer
+		&& g_gametype.integer == GT_FFA
+		&& level.portalCurrentMinigame >= 0
+		&& level.portalCurrentMinigame < 5 );
+}
+
+qboolean G_PortalLobbyRulesEnabled( void ) {
+	return ( p_enablePortal.integer
+		&& g_gametype.integer == GT_FFA
+		&& level.portalCurrentMinigame < 0 );
+}
+
+int G_PortalCurrentMiniGame( void ) {
+	if ( !G_PortalMiniGameRulesEnabled() )
+		return -1;
+	return level.portalCurrentMinigame;
+}
+
+qboolean G_PortalIsWeaponAllowed( int miniGame, int weapon ) {
+	switch ( miniGame ) {
+		case 0:
+			return weapon == WP_GAUNTLET;
+		case 1:
+			return weapon == WP_GAUNTLET || weapon == WP_RAILGUN || weapon == WP_SHOTGUN;
+		case 2:
+			return weapon == WP_RAILGUN;
+		case 3:
+			return weapon == WP_GAUNTLET || weapon == WP_GRENADE_LAUNCHER;
+		case 4:
+			return weapon == WP_GAUNTLET || weapon == WP_SHOTGUN
+				|| weapon == WP_ROCKET_LAUNCHER || weapon == WP_RAILGUN;
+		default:
+			return qtrue;
+	}
+}
+
+void G_PortalApplyMiniGameLoadout( gentity_t *ent ) {
+	int i;
+	int miniGame;
+
+	if ( !ent || !ent->client )
+		return;
+
+	miniGame = G_PortalCurrentMiniGame();
+	if ( miniGame < 0 )
+		return;
+
+	ent->client->ps.stats[STAT_WEAPONS] = 0;
+	for ( i = 0; i < MAX_WEAPONS; i++ ) {
+		ent->client->ps.ammo[i] = 0;
+	}
+	ent->client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+	ent->client->ps.powerups[PW_SPAWNPROTECTION] = 0;
+
+	switch ( miniGame ) {
+		case 0:
+			ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+			ent->client->ps.ammo[WP_GAUNTLET] = -1;
+			ent->client->ps.weapon = WP_GAUNTLET;
+			break;
+		case 1:
+			ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET ) | ( 1 << WP_RAILGUN ) | ( 1 << WP_SHOTGUN );
+			ent->client->ps.ammo[WP_GAUNTLET] = -1;
+			ent->client->ps.ammo[WP_RAILGUN] = AMMO_HARD_LIMIT;
+			ent->client->ps.ammo[WP_SHOTGUN] = AMMO_HARD_LIMIT;
+			ent->client->ps.weapon = WP_RAILGUN;
+			break;
+		case 2:
+			ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_RAILGUN );
+			ent->client->ps.ammo[WP_RAILGUN] = AMMO_HARD_LIMIT;
+			ent->client->ps.weapon = WP_RAILGUN;
+			break;
+		case 3:
+			ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+			ent->client->ps.ammo[WP_GAUNTLET] = -1;
+			ent->client->ps.weapon = WP_GAUNTLET;
+			break;
+		case 4:
+			ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET ) | ( 1 << WP_SHOTGUN )
+				| ( 1 << WP_ROCKET_LAUNCHER ) | ( 1 << WP_RAILGUN );
+			ent->client->ps.ammo[WP_GAUNTLET] = -1;
+			ent->client->ps.ammo[WP_SHOTGUN] = 50;
+			ent->client->ps.ammo[WP_ROCKET_LAUNCHER] = 50;
+			ent->client->ps.ammo[WP_RAILGUN] = 50;
+			ent->client->ps.weapon = WP_ROCKET_LAUNCHER;
+			break;
+		default:
+			break;
+	}
+}
+
+void G_PortalApplyLobbyLoadout( gentity_t *ent ) {
+	int i;
+
+	if ( !ent || !ent->client )
+		return;
+
+	if ( !G_PortalLobbyRulesEnabled() )
+		return;
+
+	ent->client->ps.stats[STAT_WEAPONS] = ( 1 << WP_GAUNTLET );
+	for ( i = 0; i < MAX_WEAPONS; i++ ) {
+		ent->client->ps.ammo[i] = 0;
+	}
+	ent->client->ps.ammo[WP_GAUNTLET] = -1;
+	ent->client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+	ent->client->ps.powerups[PW_SPAWNPROTECTION] = 0;
+	ent->client->ps.weapon = WP_GAUNTLET;
+}
+
 static int G_Portal_SelectMinigameForPortal( int portalNum ) {
 	int desired;
 	int i;
@@ -500,10 +611,12 @@ static void Touch_Portal( gentity_t *self, gentity_t *other, trace_t *trace ) {
 		// Lock in the server-wide mini-game on the very first vote.
 		if ( level.portalCurrentMinigame < 0 || !level.portalMinigameEnt[level.portalCurrentMinigame] )
 			level.portalCurrentMinigame = miniGame;
+		G_PortalSillyQuadSetupForMiniGame( level.portalCurrentMinigame );
 
 		Com_sprintf( mgName, sizeof( mgName ), "minigame%i", level.portalCurrentMinigame );
 		dest = G_PickTarget( mgName );
 		if ( dest ) {
+			G_PortalApplyMiniGameLoadout( other );
 			TeleportPlayer( other, dest->s.origin, dest->s.angles );
 		}
 	}
