@@ -1081,6 +1081,7 @@ void G_Portal_Init( void );
 void G_Portal_FindMinigames( void );
 void G_Portal_Frame( void );
 void G_Portal_Vote( gentity_t *activator, int portalNum );
+qboolean G_Portal_HandleVoteTouch( gentity_t *activator, int portalNum );
 qboolean G_Portal_RoomHasPortals( int roomNum );
 qboolean G_PortalMiniGameRulesEnabled( void );
 qboolean G_PortalLobbyRulesEnabled( void );

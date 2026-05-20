@@ -33,6 +33,8 @@ with the most votes wins and the server loads that map.
 
 #define MAX_PORTAL_MAPS     64
 
+static int G_Portal_RandomPortal( void );
+
 qboolean G_PortalMiniGameRulesEnabled( void ) {
 	return ( p_enablePortal.integer
 		&& g_gametype.integer == GT_FFA
@@ -161,6 +163,55 @@ static int G_Portal_SelectMinigameForPortal( int portalNum ) {
 	}
 
 	return -1;
+}
+
+qboolean G_Portal_HandleVoteTouch( gentity_t *activator, int portalNum ) {
+	if ( !activator || !activator->client )
+		return qfalse;
+
+	// Portal voting only runs when the portal system is active (hub is GT_FFA)
+	if ( !p_enablePortal.integer ) {
+		trap_SendServerCommand( activator - g_entities,
+			"print \"The portal is disabled on this server.\\n\"" );
+		return qfalse;
+	}
+
+	if ( portalNum == 0 ) {
+		// RandomPortal touch: pick a fresh random configured portal every touch
+		if ( !p_randomPortal.integer )
+			return qfalse;
+		portalNum = G_Portal_RandomPortal();
+		if ( portalNum == 0 )
+			return qfalse;
+	}
+
+	{
+		int        miniGame;
+		char       mgName[12];
+		gentity_t *dest;
+
+		miniGame = level.portalCurrentMinigame;
+		if ( miniGame < 0 || miniGame >= 5 || !level.portalMinigameEnt[miniGame] ) {
+			miniGame = G_Portal_SelectMinigameForPortal( portalNum );
+			if ( miniGame < 0 ) {
+				G_Printf( "Portal: no valid mini-game destination available\n" );
+				G_Portal_Vote( activator, portalNum );
+				return qtrue;
+			}
+			level.portalCurrentMinigame = miniGame;
+			G_PortalSillyQuadSetupForMiniGame( level.portalCurrentMinigame );
+		}
+
+		Com_sprintf( mgName, sizeof( mgName ), "minigame%i", level.portalCurrentMinigame );
+		dest = G_PickTarget( mgName );
+		if ( dest ) {
+			G_PortalApplyMiniGameLoadout( activator );
+			TeleportPlayer( activator, dest->s.origin, dest->s.angles );
+		}
+	}
+
+	G_Portal_Vote( activator, portalNum );
+	return qtrue;
 }
 
 /*
@@ -573,55 +624,7 @@ Records their vote and triggers the button animation for visual feedback.
 ================
 */
 static void Touch_Portal( gentity_t *self, gentity_t *other, trace_t *trace ) {
-	int portalNum;
-
-	if ( !other->client )
-		return;
-
-	// Portal voting only runs when the portal system is active (hub is GT_FFA)
-	if ( !p_enablePortal.integer ) {
-		trap_SendServerCommand( other - g_entities,
-			"print \"The portal is disabled on this server.\\n\"" );
-		return;
-	}
-
-	portalNum = self->count;
-
-	if ( portalNum == 0 ) {
-		// RandomPortal entity: pick a random configured portal to vote for
-		if ( !p_randomPortal.integer )
-			return;
-		portalNum = G_Portal_RandomPortal();
-		if ( portalNum == 0 )
-			return;
-	}
-
-	// Teleport to mini-game on first vote only; all players share the same room.
-	if ( !level.portalPlayerVoted[other - g_entities] ) {
-		int        miniGame = G_Portal_SelectMinigameForPortal( portalNum );
-		char       mgName[12];
-		gentity_t *dest;
-
-		if ( miniGame < 0 ) {
-			G_Printf( "Portal: no valid mini-game destination available\n" );
-			G_Portal_Vote( other, portalNum );
-			return;
-		}
-
-		// Lock in the server-wide mini-game on the very first vote.
-		if ( level.portalCurrentMinigame < 0 || !level.portalMinigameEnt[level.portalCurrentMinigame] )
-			level.portalCurrentMinigame = miniGame;
-		G_PortalSillyQuadSetupForMiniGame( level.portalCurrentMinigame );
-
-		Com_sprintf( mgName, sizeof( mgName ), "minigame%i", level.portalCurrentMinigame );
-		dest = G_PickTarget( mgName );
-		if ( dest ) {
-			G_PortalApplyMiniGameLoadout( other );
-			TeleportPlayer( other, dest->s.origin, dest->s.angles );
-		}
-	}
-
-	G_Portal_Vote( other, portalNum );
+	G_Portal_HandleVoteTouch( other, self->count );
 }
 
 /*QUAKED func_portal (0 .5 .8) ?
@@ -641,9 +644,11 @@ void SP_func_portal( gentity_t *ent ) {
 	G_SpawnInt( "portal", "0", &portalNum );
 
 	if ( portalNum == 0 ) {
-		// RandomPortal entity: active when p_randomPortal is set and gametype is portal
+		// RandomPortal entity is identified by key or target name; cvar gating is done at touch-time.
 		G_SpawnInt( "RandomPortal", "0", &randomFlag );
-		if ( randomFlag && p_enablePortal.integer )
+		if ( !randomFlag && ent->target && !Q_stricmp( ent->target, "p_randomPortal" ) )
+			randomFlag = 1;
+		if ( randomFlag )
 			isValid = qtrue;
 	} else if ( portalNum >= 1 && portalNum <= MAX_PORTAL_MAPS ) {
 		if ( !level.portalDisabled[portalNum - 1] ) {

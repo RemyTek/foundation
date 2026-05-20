@@ -1462,6 +1462,17 @@ A bmodel that just sits there, doing nothing.  Can be used for conditional walls
 */
 void SP_func_static( gentity_t *ent ) {
 	int blockHall;
+	int randomPortal;
+
+	// RandomPortal marker brushes in q3start are disabled-state overlay geometry.
+	// Show them only while random portal is disabled.
+	G_SpawnInt( "RandomPortal", "0", &randomPortal );
+	if ( randomPortal ) {
+		if ( p_randomPortal.integer ) {
+			G_FreeEntity( ent );
+			return;
+		}
+	}
 
 	// p_blockHall: hallway-blocking walls in q3start. If any portal in the
 	// associated room is configured, remove the wall so players can reach the portal.

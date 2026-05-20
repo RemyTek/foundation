@@ -270,6 +270,7 @@ trigger_teleport
 
 void trigger_teleporter_touch (gentity_t *self, gentity_t *other, trace_t *trace ) {
 	gentity_t	*dest;
+	int		portalNum;
 
 	if ( !other->client ) {
 		return;
@@ -278,9 +279,27 @@ void trigger_teleporter_touch (gentity_t *self, gentity_t *other, trace_t *trace
 		return;
 	}
 	// Spectators only?
-	if ( ( self->spawnflags & 1 ) && 
+	if ( ( self->spawnflags & 1 ) &&
 		other->client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		return;
+	}
+
+	// Support portal map entities wired as trigger_teleport target p_portalMap##/p_randomPortal.
+	if ( self->target && self->target[0] ) {
+		portalNum = -1;
+
+		if ( !Q_stricmp( self->target, "p_randomPortal" ) ) {
+			portalNum = 0;
+		} else if ( !Q_stricmpn( self->target, "p_portalMap", 10 ) ) {
+			portalNum = atoi( self->target + 10 );
+			if ( portalNum < 1 || portalNum > 64 )
+				portalNum = -1;
+		}
+
+		if ( portalNum >= 0 ) {
+			G_Portal_HandleVoteTouch( other, portalNum );
+			return;
+		}
 	}
 
 
