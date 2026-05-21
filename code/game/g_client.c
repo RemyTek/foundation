@@ -124,6 +124,7 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 	int			checkMask;
 	const char	*portalCtxFilter;
 	char		portalMgCtx[24];
+	qboolean	portalForceLobby;
 	qboolean	isBot;
 
 	checkType = qtrue;
@@ -136,8 +137,18 @@ static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t a
 
 	// Portal hub (GT_FFA + enablePortal): use CTX_MINIGAME_N when a mini-game is active, CTX_MAIN_VOTING otherwise.
 	portalCtxFilter = NULL;
+	portalForceLobby = qfalse;
 	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA ) {
-		if ( level.portalCurrentMinigame >= 0 ) {
+		if ( ent && level.portalCurrentMinigame >= 0 && level.portalVoteTime
+			&& level.time - level.portalVoteTime < p_voteSeconds.integer * 1000 ) {
+			int clientNum = ent - g_entities;
+			if ( clientNum >= 0 && clientNum < level.maxclients
+				&& !level.portalPlayerVoted[clientNum] ) {
+				portalForceLobby = qtrue;
+			}
+		}
+
+		if ( level.portalCurrentMinigame >= 0 && !portalForceLobby ) {
 			Com_sprintf( portalMgCtx, sizeof( portalMgCtx ), "CTX_MINIGAME_%i",
 			             level.portalCurrentMinigame );
 			portalCtxFilter = portalMgCtx;
@@ -1079,9 +1090,18 @@ void ClientSpawn(gentity_t *ent) {
 	int		eventSequence;
 	char	userinfo[MAX_INFO_STRING];
 	qboolean isSpectator;
+	qboolean forceLobbyDuringVote;
 
 	index = ent - g_entities;
 	client = ent->client;
+	forceLobbyDuringVote = qfalse;
+	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA
+		&& level.portalCurrentMinigame >= 0 && level.portalVoteTime
+		&& level.time - level.portalVoteTime < p_voteSeconds.integer * 1000
+		&& index >= 0 && index < level.maxclients
+		&& !level.portalPlayerVoted[index] ) {
+		forceLobbyDuringVote = qtrue;
+	}
 
 	trap_UnlinkEntity( ent );
 
@@ -1264,8 +1284,12 @@ void ClientSpawn(gentity_t *ent) {
 		G_KillBox(ent);
 	G_SpawnWeapon(client);
 	if ( !isSpectator ) {
-		G_PortalApplyLobbyLoadout( ent );
-		G_PortalApplyMiniGameLoadout( ent );
+		if ( forceLobbyDuringVote ) {
+			G_PortalApplyLobbyLoadout( ent );
+		} else {
+			G_PortalApplyLobbyLoadout( ent );
+			G_PortalApplyMiniGameLoadout( ent );
+		}
 	}
 
 	// force the base weapon up

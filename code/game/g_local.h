@@ -316,6 +316,8 @@ struct gclient_s {
 	int			lastkilled_client;	// last client that this client killed
 	int			lasthurt_client;	// last client that damaged this client
 	int			lasthurt_mod;		// type of damage the client did
+	int			portalStepPusherClient;	// mini-game 2: attacker who shot the platform under this client
+	int			portalStepPusherTime;	// level.time when platform shooter attribution was recorded
 
 	// timers
 	int			respawnTime;		// can respawn when time > this, force after g_forcerespwan

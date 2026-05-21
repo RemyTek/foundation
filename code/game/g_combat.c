@@ -638,6 +638,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	int			killer;
 	int			i;
 	qboolean	miniGameOneScoring;
+	int			fallPusherNum;
 	char		*killerName, *obit;
 
 	if ( self->client->ps.pm_type == PM_DEAD ) {
@@ -669,6 +670,36 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	G_GenericDeathCleanup(self); // removes hook and prox mines stuck to victim
 
 	self->client->ps.pm_type = PM_DEAD;
+	fallPusherNum = -1;
+
+	/*
+	 * Platform mini-games can kill via world hazards (e.g. trigger_hurt pit)
+	 * rather than strict falling damage, so attribute recent platform shots
+	 * across environment death mods.
+	 */
+	if ( self->client
+		&& p_enablePortal.integer && g_gametype.integer == GT_FFA
+		&& G_PortalMiniGameRulesEnabled()
+		&& ( meansOfDeath == MOD_FALLING
+			|| meansOfDeath == MOD_TRIGGER_HURT
+			|| meansOfDeath == MOD_LAVA
+			|| meansOfDeath == MOD_SLIME
+			|| meansOfDeath == MOD_WATER
+			|| meansOfDeath == MOD_CRUSH ) ) {
+		int pusherNum = self->client->portalStepPusherClient;
+		if ( self->client->portalStepPusherTime > 0
+			&& level.time - self->client->portalStepPusherTime <= 7000
+			&& pusherNum >= 0 && pusherNum < level.maxclients
+			&& pusherNum != self->s.number
+			&& g_entities[pusherNum].inuse
+			&& g_entities[pusherNum].client
+			&& g_entities[pusherNum].client->pers.connected == CON_CONNECTED
+			&& !OnSameTeam( self, &g_entities[pusherNum] ) ) {
+			fallPusherNum = pusherNum;
+			attacker = &g_entities[pusherNum];
+			inflictor = attacker;
+		}
+	}
 
 	if ( attacker ) {
 		killer = attacker->s.number;
@@ -705,6 +736,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	ent->r.svFlags = SVF_BROADCAST;	// send to everyone
 
 	self->enemy = attacker;
+	if ( self->client ) {
+		self->client->portalStepPusherClient = -1;
+		self->client->portalStepPusherTime = 0;
+	}
 
 	self->client->ps.persistant[PERS_KILLED]++;
 	miniGameOneScoring = ( G_PortalCurrentMiniGame() == 1 );
@@ -754,7 +789,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 		}
 	} else {
-		if ( !miniGameOneScoring ) {
+		if ( !miniGameOneScoring && fallPusherNum < 0 ) {
 			AddScore( self, self->r.currentOrigin, -1 );
 		}
 	}
@@ -1110,6 +1145,40 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 	// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {
+		if ( p_enablePortal.integer && g_gametype.integer == GT_FFA
+			&& G_PortalMiniGameRulesEnabled() && mod == MOD_RAILGUN
+			&& attacker && attacker->client ) {
+			int i;
+			for ( i = 0; i < level.maxclients; i++ ) {
+				gentity_t *victim = &g_entities[i];
+				qboolean onHitPlatform;
+				if ( !victim->inuse || !victim->client || victim == attacker ) {
+					continue;
+				}
+				if ( victim->client->pers.connected != CON_CONNECTED ) {
+					continue;
+				}
+
+				onHitPlatform = ( victim->client->ps.groundEntityNum == targ->s.number
+					|| victim->s.groundEntityNum == targ->s.number );
+				if ( !onHitPlatform ) {
+					float px = victim->r.currentOrigin[0];
+					float py = victim->r.currentOrigin[1];
+					float pz = victim->r.currentOrigin[2];
+					onHitPlatform = ( px >= ( targ->r.absmin[0] - 20.0f )
+						&& px <= ( targ->r.absmax[0] + 20.0f )
+						&& py >= ( targ->r.absmin[1] - 20.0f )
+						&& py <= ( targ->r.absmax[1] + 20.0f )
+						&& pz >= ( targ->r.absmax[2] - 40.0f )
+						&& pz <= ( targ->r.absmax[2] + 72.0f ) );
+				}
+				if ( !onHitPlatform ) {
+					continue;
+				}
+				victim->client->portalStepPusherClient = attacker->s.number;
+				victim->client->portalStepPusherTime = level.time;
+			}
+		}
 		if ( targ->use && targ->moverState == MOVER_POS1 ) {
 			targ->use( targ, inflictor, attacker );
 		}
