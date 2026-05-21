@@ -27,6 +27,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
+static qboolean CG_IsPortalVotingMode( void ) {
+	int i;
+
+	if ( cgs.gametype != GT_FFA ) {
+		return qfalse;
+	}
+
+	for ( i = 0; i < 64; i++ ) {
+		const char *portalInfo = CG_ConfigString( CS_PORTALS + i );
+		if ( portalInfo[0] && Info_ValueForKey( portalInfo, "m" )[0] ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
 /*
 ==============
 CG_CheckAmmo
@@ -775,7 +792,7 @@ void CG_CheckLocalSounds(playerState_t* ps, playerState_t* ops)
 			// never play lead changes during warmup
 			if (ps->persistant[PERS_RANK] != ops->persistant[PERS_RANK])
 			{
-				if (cgs.gametype < GT_TEAM && !cg_noLeadSounds.integer)
+				if (cgs.gametype < GT_TEAM && !cg_noLeadSounds.integer && !CG_IsPortalVotingMode())
 				{
 					if (ps->persistant[PERS_RANK] == 0)
 					{
@@ -832,7 +849,7 @@ void CG_CheckLocalSounds(playerState_t* ps, playerState_t* ops)
 	}
 
 	// fraglimit warnings
-	if (cgs.fraglimit > 0 && cgs.gametype < GT_CTF)
+	if (cgs.fraglimit > 0 && cgs.gametype < GT_CTF && !CG_IsPortalVotingMode())
 	{
 		highScore = cgs.scores1;
 		if (!(cg.fraglimitWarnings & 4) && highScore == (cgs.fraglimit - 1))

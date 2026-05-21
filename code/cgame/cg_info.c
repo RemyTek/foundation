@@ -318,7 +318,7 @@ void CG_DrawInformation(void)
 		y += PROP_HEIGHT;
 	}
 
-	if (cgs.gametype < GT_CTF)
+	if (cgs.gametype < GT_CTF && !CG_ShouldHidePortalGametypeInfo())
 	{
 		value = atoi(Info_ValueForKey(info, "fraglimit"));
 		if (value)

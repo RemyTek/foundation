@@ -22,8 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "g_local.h"
 
-static int g_portalSillyQuadCursor = -1;
-
 
 static qboolean G_IsSillyItem( const gitem_t *item ) {
 	if ( !item || !item->classname )
@@ -196,6 +194,12 @@ timing -- see SpawnTime().
 int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 	gentity_t	*te;
 	int durationMs = 10000;
+	qboolean miniGameOne;
+
+	miniGameOne = ( G_PortalCurrentMiniGame() == 1 );
+	if ( miniGameOne ) {
+		AddScore( other, ent->s.pos.trBase, 2 );
+	}
 
 	if ( !other->client->ps.powerups[PW_QUAD] ) {
 		other->client->ps.powerups[PW_QUAD] = level.time - ( level.time % 1000 );
@@ -210,9 +214,11 @@ int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 	G_Printf( "%s grabbed a silly quad!\n",
 	          other->client->pers.netname );
 
-	if ( G_PortalCurrentMiniGame() == 1 ) {
+	if ( miniGameOne ) {
+		gentity_t *candidates[MAX_GENTITIES];
 		gentity_t *next = NULL;
-		int start, i;
+		int count = 0;
+		int i;
 
 		/* Hide the picked silly immediately so there is never more than one
 		   world-spawned silly active at a time. */
@@ -221,34 +227,26 @@ int Pickup_Silly( gentity_t *ent, gentity_t *other ) {
 		ent->r.contents = 0;
 		trap_LinkEntity( ent );
 
-		if ( g_portalSillyQuadCursor < 0 || g_portalSillyQuadCursor >= level.num_entities ) {
-			g_portalSillyQuadCursor = ent->s.number + 1;
-		}
-
-		start = g_portalSillyQuadCursor;
-		for ( i = 0; i < level.num_entities; i++ ) {
-			int idx = ( start + i ) % level.num_entities;
-			gentity_t *cand = &g_entities[idx];
+		for ( i = MAX_CLIENTS; i < level.num_entities; i++ ) {
+			gentity_t *cand = &g_entities[i];
 
 			if ( cand == ent )
 				continue;
 			if ( !cand->inuse || !cand->item || !G_IsSillyItem( cand->item ) )
 				continue;
-			next = cand;
-			g_portalSillyQuadCursor = idx + 1;
-			if ( g_portalSillyQuadCursor >= level.num_entities )
-				g_portalSillyQuadCursor = 0;
-			break;
+			candidates[count++] = cand;
 		}
 
-		if ( !next ) {
-			next = ent;
+		if ( count > 0 ) {
+			next = candidates[rand() % count];
 		}
 
-		next->r.contents = CONTENTS_TRIGGER;
-		next->s.eFlags &= ~EF_NODRAW;
-		next->r.svFlags &= ~SVF_NOCLIENT;
-		trap_LinkEntity( next );
+		if ( next ) {
+			next->r.contents = CONTENTS_TRIGGER;
+			next->s.eFlags &= ~EF_NODRAW;
+			next->r.svFlags &= ~SVF_NOCLIENT;
+			trap_LinkEntity( next );
+		}
 
 		/* Chain mode: picked silly does not use timer-based respawn. */
 		return -1;
@@ -297,9 +295,6 @@ void G_PortalSillyQuadSetupForMiniGame( int miniGame ) {
 		active->nextthink = 0;
 		active->think = 0;
 		trap_LinkEntity( active );
-		g_portalSillyQuadCursor = active->s.number + 1;
-		if ( g_portalSillyQuadCursor >= level.num_entities )
-			g_portalSillyQuadCursor = 0;
 	}
 }
 

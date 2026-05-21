@@ -4,6 +4,27 @@
 
 static superhudElement_t* elementsHead;
 
+static qboolean CG_SHUDIsPortalVotingMode( void )
+{
+	int i;
+
+	if ( cgs.gametype != GT_FFA )
+	{
+		return qfalse;
+	}
+
+	for ( i = 0; i < 64; i++ )
+	{
+		const char* portalInfo = CG_ConfigString( CS_PORTALS + i );
+		if ( portalInfo[0] && Info_ValueForKey( portalInfo, "m" )[0] )
+		{
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
 static void CG_SHUDRoutenesDestroy(superhudElement_t* shud)
 {
 	superhudElement_t* tmp;
@@ -368,8 +389,16 @@ void CG_SHUDEventFrag(const char* message)
 
 	if (cgs.gametype < GT_TEAM)
 	{
-		ctx->rankmessage.time = cg.time;
-		Com_sprintf(ctx->rankmessage.message, sizeof(ctx->rankmessage.message), "%s place with %i", CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1), cg.snap->ps.persistant[PERS_SCORE]);
+		if ( CG_SHUDIsPortalVotingMode() )
+		{
+			ctx->rankmessage.time = 0;
+			ctx->rankmessage.message[0] = 0;
+		}
+		else
+		{
+			ctx->rankmessage.time = cg.time;
+			Com_sprintf(ctx->rankmessage.message, sizeof(ctx->rankmessage.message), "%s place with %i", CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1), cg.snap->ps.persistant[PERS_SCORE]);
+		}
 	}
 	else
 	{

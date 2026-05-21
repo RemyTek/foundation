@@ -1785,7 +1785,8 @@ static void CheckExitRules( void ) {
 		}
 	}
 
-	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer ) {
+	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer
+		&& !G_PortalMiniGameRulesEnabled() ) {
 		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
@@ -1985,6 +1986,15 @@ static void CheckTournament( void ) {
 	// check because we run 3 game frames before calling Connect and/or ClientBegin
 	// for clients on a map_restart
 	if ( level.numPlayingClients == 0 ) {
+		return;
+	}
+
+	// Portal mode (lobby + mini-games) should start instantly with no warmup countdown.
+	if ( G_PortalMiniGameRulesEnabled() || G_PortalLobbyRulesEnabled() ) {
+		if ( level.warmupTime != 0 ) {
+			level.warmupTime = 0;
+			trap_SetConfigstring( CS_WARMUP, "" );
+		}
 		return;
 	}
 

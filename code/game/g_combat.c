@@ -637,6 +637,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	int			contents;
 	int			killer;
 	int			i;
+	qboolean	miniGameOneScoring;
 	char		*killerName, *obit;
 
 	if ( self->client->ps.pm_type == PM_DEAD ) {
@@ -706,14 +707,23 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->enemy = attacker;
 
 	self->client->ps.persistant[PERS_KILLED]++;
+	miniGameOneScoring = ( G_PortalCurrentMiniGame() == 1 );
 
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
 
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			AddScore( attacker, self->r.currentOrigin, -1 );
+			if ( !miniGameOneScoring ) {
+				AddScore( attacker, self->r.currentOrigin, -1 );
+			}
 		} else {
-			AddScore( attacker, self->r.currentOrigin, 1 );
+			if ( miniGameOneScoring ) {
+				if ( attacker->client->ps.powerups[PW_QUAD] > level.time ) {
+					AddScore( attacker, self->r.currentOrigin, 1 );
+				}
+			} else {
+				AddScore( attacker, self->r.currentOrigin, 1 );
+			}
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 
@@ -744,7 +754,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 		}
 	} else {
-		AddScore( self, self->r.currentOrigin, -1 );
+		if ( !miniGameOneScoring ) {
+			AddScore( self, self->r.currentOrigin, -1 );
+		}
 	}
 
 	// Add team bonuses

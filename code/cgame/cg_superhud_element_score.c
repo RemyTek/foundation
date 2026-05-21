@@ -16,6 +16,27 @@ typedef struct
 	shudElementScoreType_t type;
 } shudElementScore;
 
+static qboolean CG_SHUDIsPortalVotingMode( void )
+{
+	int i;
+
+	if ( cgs.gametype != GT_FFA )
+	{
+		return qfalse;
+	}
+
+	for ( i = 0; i < 64; i++ )
+	{
+		const char* portalInfo = CG_ConfigString( CS_PORTALS + i );
+		if ( portalInfo[0] && Info_ValueForKey( portalInfo, "m" )[0] )
+		{
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
 static void* CG_SHUDElementScoreCreate(const superhudConfig_t* config, shudElementScoreType_t type)
 {
 	shudElementScore* element;
@@ -61,6 +82,11 @@ void* CG_SHUDElementScoreMAXCreate(const superhudConfig_t* config)
 
 static qboolean CG_SHUDScoresGetMax(int* scores)
 {
+	if ( CG_SHUDIsPortalVotingMode() )
+	{
+		return qfalse;
+	}
+
 	if (cgs.gametype == GT_CTFS)
 	{
 		*scores = cgs.scorelimit;
