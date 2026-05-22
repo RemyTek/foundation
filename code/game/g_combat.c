@@ -24,6 +24,98 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+static gitem_t *G_FindItemByClassname( const char *classname ) {
+	int i;
+
+	if ( !classname || !classname[0] )
+		return NULL;
+
+	for ( i = 1; i < bg_numItems; i++ ) {
+		if ( bg_itemlist[i].classname && !Q_stricmp( bg_itemlist[i].classname, classname ) )
+			return &bg_itemlist[i];
+	}
+
+	return NULL;
+}
+
+static void G_PortalRandomizeCoinVelocity( gentity_t *drop ) {
+	vec3_t dir;
+	float speed;
+
+	if ( !drop )
+		return;
+
+	// Random outward burst in XY with a consistent upward kick.
+	dir[0] = crandom();
+	dir[1] = crandom();
+	dir[2] = 0.0f;
+
+	if ( dir[0] == 0.0f && dir[1] == 0.0f )
+		dir[0] = 1.0f;
+
+	VectorNormalize( dir );
+	speed = 175.0f + random() * 225.0f;
+
+	drop->s.pos.trDelta[0] = dir[0] * speed;
+	drop->s.pos.trDelta[1] = dir[1] * speed;
+	drop->s.pos.trDelta[2] = 170.0f + random() * 170.0f;
+}
+
+static void G_PortalSpillCoins( gentity_t *ent, int points ) {
+	gitem_t *coinBig;
+	gitem_t *coinMedium;
+	gitem_t *coinSmall;
+	gentity_t *drop;
+	int bigCount;
+	int mediumCount;
+	int smallCount;
+	int i;
+	float angle;
+
+	if ( !ent || points <= 0 )
+		return;
+
+	coinBig = G_FindItemByClassname( "item_coin_big" );
+	coinMedium = G_FindItemByClassname( "item_coin_medium" );
+	coinSmall = G_FindItemByClassname( "item_coin_small" );
+	if ( !coinBig || !coinMedium || !coinSmall )
+		return;
+
+	bigCount = points / 50;
+	points %= 50;
+	mediumCount = points / 10;
+	smallCount = points % 10;
+
+	angle = (float)( rand() % 360 );
+	for ( i = 0; i < bigCount; i++ ) {
+		drop = Drop_Item( ent, coinBig, angle );
+		if ( drop ) {
+			G_PortalRandomizeCoinVelocity( drop );
+			drop->r.ownerNum = ent->s.number;
+			drop->dropTime = level.time + 1000;
+		}
+		angle = (float)( rand() % 360 );
+	}
+	for ( i = 0; i < mediumCount; i++ ) {
+		drop = Drop_Item( ent, coinMedium, angle );
+		if ( drop ) {
+			G_PortalRandomizeCoinVelocity( drop );
+			drop->r.ownerNum = ent->s.number;
+			drop->dropTime = level.time + 1000;
+		}
+		angle = (float)( rand() % 360 );
+	}
+	for ( i = 0; i < smallCount; i++ ) {
+		drop = Drop_Item( ent, coinSmall, angle );
+		if ( drop ) {
+			G_PortalRandomizeCoinVelocity( drop );
+			drop->r.ownerNum = ent->s.number;
+			drop->dropTime = level.time + 1000;
+		}
+		angle = (float)( rand() % 360 );
+	}
+}
+
 
 /*
 ============
@@ -638,6 +730,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	int			killer;
 	int			i;
 	qboolean	miniGameOneScoring;
+	qboolean	miniGameFourNoFragScoring;
 	int			fallPusherNum;
 	char		*killerName, *obit;
 
@@ -743,12 +836,13 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	self->client->ps.persistant[PERS_KILLED]++;
 	miniGameOneScoring = ( G_PortalCurrentMiniGame() == 1 );
+	miniGameFourNoFragScoring = ( G_PortalCurrentMiniGame() == 4 );
 
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
 
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			if ( !miniGameOneScoring ) {
+			if ( !miniGameOneScoring && !miniGameFourNoFragScoring ) {
 				AddScore( attacker, self->r.currentOrigin, -1 );
 			}
 		} else {
@@ -756,7 +850,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 				if ( attacker->client->ps.powerups[PW_QUAD] > level.time ) {
 					AddScore( attacker, self->r.currentOrigin, 1 );
 				}
-			} else {
+			} else if ( !miniGameFourNoFragScoring ) {
 				AddScore( attacker, self->r.currentOrigin, 1 );
 			}
 
@@ -789,7 +883,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 		}
 	} else {
-		if ( !miniGameOneScoring && fallPusherNum < 0 ) {
+		if ( !miniGameOneScoring && !miniGameFourNoFragScoring && fallPusherNum < 0 ) {
 			AddScore( self, self->r.currentOrigin, -1 );
 		}
 	}
@@ -1089,6 +1183,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	int			asave;
 	int			knockback;
 	int			max;
+	int			preDamageHealth;
 #ifdef MISSIONPACK
 	vec3_t		bouncedir, impactpoint;
 #endif
@@ -1314,6 +1409,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		damage = 1;
 	}
 	take = damage;
+	preDamageHealth = targ->health;
 
 	//qlone - self damages
 	if ( targ == attacker && g_noSelfDamage.integer )
@@ -1328,6 +1424,26 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( g_debugDamage.integer ) {
 		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
 			targ->health, take, asave );
+	}
+
+	if ( take > 0 && targ->client && preDamageHealth > 0
+		&& p_enablePortal.integer && g_gametype.integer == GT_FFA
+		&& level.portalCurrentMinigame == 4 ) {
+		int score = targ->client->ps.persistant[PERS_SCORE];
+		if ( score > 0 ) {
+			int loss;
+			if ( take >= preDamageHealth ) {
+				loss = score;
+			} else {
+				loss = ( score * take + preDamageHealth - 1 ) / preDamageHealth;
+			}
+			if ( loss > score )
+				loss = score;
+			if ( loss > 0 ) {
+				AddScore( targ, targ->r.currentOrigin, -loss );
+				G_PortalSpillCoins( targ, loss );
+			}
+		}
 	}
 
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)

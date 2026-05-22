@@ -89,6 +89,8 @@ void G_PortalApplyMiniGameLoadout( gentity_t *ent ) {
 	}
 	ent->client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
 	ent->client->ps.powerups[PW_SPAWNPROTECTION] = 0;
+	ent->client->ps.powerups[PW_REGEN] = 0;
+	ent->client->ps.stats[STAT_ARMOR] = 0;
 
 	switch ( miniGame ) {
 		case 0:
@@ -120,6 +122,7 @@ void G_PortalApplyMiniGameLoadout( gentity_t *ent ) {
 			ent->client->ps.ammo[WP_SHOTGUN] = 50;
 			ent->client->ps.ammo[WP_ROCKET_LAUNCHER] = 50;
 			ent->client->ps.ammo[WP_RAILGUN] = 50;
+			ent->client->ps.powerups[PW_REGEN] = 0x7fffffff;
 			ent->client->ps.weapon = WP_ROCKET_LAUNCHER;
 			break;
 		default:
@@ -143,6 +146,8 @@ void G_PortalApplyLobbyLoadout( gentity_t *ent ) {
 	ent->client->ps.ammo[WP_GAUNTLET] = -1;
 	ent->client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
 	ent->client->ps.powerups[PW_SPAWNPROTECTION] = 0;
+	ent->client->ps.powerups[PW_REGEN] = 0;
+	ent->client->ps.stats[STAT_ARMOR] = 0;
 	ent->client->ps.weapon = WP_GAUNTLET;
 }
 

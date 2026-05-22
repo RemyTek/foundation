@@ -1091,9 +1091,12 @@ void ClientSpawn(gentity_t *ent) {
 	char	userinfo[MAX_INFO_STRING];
 	qboolean isSpectator;
 	qboolean forceLobbyDuringVote;
+	qboolean wasDead;
+	qboolean portalLoadoutContext;
 
 	index = ent - g_entities;
 	client = ent->client;
+	wasDead = ( client->ps.pm_type == PM_DEAD );
 	forceLobbyDuringVote = qfalse;
 	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA
 		&& level.portalCurrentMinigame >= 0 && level.portalVoteTime
@@ -1102,6 +1105,7 @@ void ClientSpawn(gentity_t *ent) {
 		&& !level.portalPlayerVoted[index] ) {
 		forceLobbyDuringVote = qtrue;
 	}
+	portalLoadoutContext = ( p_enablePortal.integer && g_gametype.integer == GT_FFA );
 
 	trap_UnlinkEntity( ent );
 
@@ -1254,7 +1258,7 @@ void ClientSpawn(gentity_t *ent) {
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
 
-	if (g_startHealth.integer > 0) {
+	if ( !portalLoadoutContext && g_startHealth.integer > 0 ) {
 		client->ps.stats[STAT_HEALTH] = g_startHealth.integer;
 		if (client->ps.stats[STAT_HEALTH] > client->ps.stats[STAT_MAX_HEALTH] * 2)
 			client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] * 2;
@@ -1263,7 +1267,7 @@ void ClientSpawn(gentity_t *ent) {
 
 
 
-	if (g_startArmor.integer > 0) {
+	if ( !portalLoadoutContext && g_startArmor.integer > 0 ) {
 		client->ps.stats[STAT_ARMOR] = g_startArmor.integer;
 		if (client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] * 2) {
 			client->ps.stats[STAT_ARMOR] = client->ps.stats[STAT_MAX_HEALTH] * 2;
@@ -1289,6 +1293,23 @@ void ClientSpawn(gentity_t *ent) {
 		} else {
 			G_PortalApplyLobbyLoadout( ent );
 			G_PortalApplyMiniGameLoadout( ent );
+		}
+
+		if ( p_enablePortal.integer && g_gametype.integer == GT_FFA ) {
+			int miniGame;
+
+			client->ps.stats[STAT_ARMOR] = 0;
+			miniGame = G_PortalCurrentMiniGame();
+			if ( forceLobbyDuringVote || miniGame >= 0 || G_PortalLobbyRulesEnabled() ) {
+				ent->health = 125;
+				client->ps.stats[STAT_HEALTH] = 125;
+			}
+
+			/* Mini-game 3 starts gauntlet-only, but death respawns also grant MG+75. */
+			if ( miniGame == 3 && wasDead ) {
+				client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_MACHINEGUN );
+				client->ps.ammo[WP_MACHINEGUN] = 75;
+			}
 		}
 	}
 
@@ -1350,7 +1371,7 @@ void ClientSpawn(gentity_t *ent) {
 				}
 			}
 		}
-		if (g_startArmor.integer > 0) {
+		if ( !portalLoadoutContext && g_startArmor.integer > 0 ) {
 			client->ps.stats[STAT_ARMOR] = g_startArmor.integer;
 			if (client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] * 2) {
 				client->ps.stats[STAT_ARMOR] = client->ps.stats[STAT_MAX_HEALTH] * 2;

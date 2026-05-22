@@ -308,9 +308,17 @@ Mini-game coin pickup. Awards score using the coin quantity value.
 int Pickup_Coin( gentity_t *ent, gentity_t *other ) {
 	int points;
 
-	points = ent->item->quantity;
-	if ( points < 1 )
+	if ( !Q_stricmp( ent->item->classname, "item_coin_small" ) ) {
 		points = 1;
+	} else if ( !Q_stricmp( ent->item->classname, "item_coin_medium" ) ) {
+		points = 10;
+	} else if ( !Q_stricmp( ent->item->classname, "item_coin_big" ) ) {
+		points = 50;
+	} else {
+		points = ent->item->quantity;
+		if ( points < 1 )
+			points = 1;
+	}
 
 	AddScore( other, ent->s.pos.trBase, points );
 
@@ -847,6 +855,12 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		return;		// dead people can't pickup
 	if ( ent->item && G_ItemDisabledForGTCTFS( ent->item ) )
 		return;
+	if ( ent->item && G_IsCoinItem( ent->item )
+		&& ( ent->flags & FL_DROPPED_ITEM )
+		&& ent->r.ownerNum == other->s.number
+		&& ent->dropTime > level.time ) {
+		return;
+	}
 
 	miniGame = G_PortalCurrentMiniGame();
 	if ( miniGame >= 0 && ent->item ) {
