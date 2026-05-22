@@ -1115,7 +1115,7 @@ void ClientSpawn(gentity_t *ent) {
 	// ranging doesn't count this client
 	if ( isSpectator ) {
 		spawnPoint = SelectSpectatorSpawnPoint( spawn_origin, spawn_angles );
-	} else if ( p_enablePortal.integer ) {
+	} else if ( p_enablePortal.integer && g_gametype.integer == GT_FFA ) {
 		// Portal hub: use q3start's CTX_MAIN_VOTING tagged spawn points.
 		// Bypass the CTF team-spawn path so SelectRandomFurthestSpawnPoint
 		// can apply the CTX_MAIN_VOTING filter.

@@ -21,6 +21,62 @@ void G_ATDClientSound( int clientNum, const char *path ) {
 
 /*
 ==============
+G_ATDApplySafeCarrierBonus
+
+Apply the same g_threewave safe-carrier criteria used on flag capture:
+- attacker who first touched the base flag this round,
+- still carrying the enemy flag,
+- held it for at least 8 seconds.
+Awards +1 team point and player feedback when eligible.
+==============
+*/
+static void G_ATDApplySafeCarrierBonus( team_t atkTeam, vec3_t scoreOrigin ) {
+	gentity_t *carrier;
+	int carrierNum;
+	qboolean carryingEnemyFlag;
+
+	if ( !g_threewave.integer ) {
+		return;
+	}
+
+	carrierNum = level.atdFlagToucherNum;
+	if ( carrierNum < 0 || carrierNum >= level.maxclients ) {
+		return;
+	}
+
+	carrier = &g_entities[carrierNum];
+	if ( !carrier->inuse || !carrier->client ) {
+		return;
+	}
+	if ( carrier->client->pers.connected != CON_CONNECTED ) {
+		return;
+	}
+	if ( carrier->client->sess.sessionTeam != atkTeam ) {
+		return;
+	}
+
+	carryingEnemyFlag = ( atkTeam == TEAM_RED )
+		? ( carrier->client->ps.powerups[PW_BLUEFLAG] > 0 )
+		: ( carrier->client->ps.powerups[PW_REDFLAG] > 0 );
+	if ( !carryingEnemyFlag ) {
+		return;
+	}
+
+	if ( ( level.time - (int)carrier->client->pers.teamState.flagsince ) < 8000 ) {
+		return;
+	}
+
+	AddTeamScore( scoreOrigin, atkTeam, 1 );
+	trap_SendServerCommand( carrierNum, "cp \"Safe Carrier!\n+1 Bonus Point\"" );
+	G_BroadcastServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " is a Safe Carrier! Attackers score 1 bonus point!\n\"",
+		carrier->client->pers.netname ) );
+	carrier->client->ps.eFlags &= ~EF_AWARDS;
+	carrier->client->ps.eFlags |= EF_AWARD_DEFEND;
+	carrier->client->rewardTime = level.time + REWARD_SPRITE_TIME;
+}
+
+/*
+==============
 G_ATDInitGame
 
 Initialise Attack & Defend state at map load.
@@ -537,6 +593,7 @@ void G_CheckATDRound( void ) {
 		}
 		/* Wait out the 3-second window before ending the round. */
 		if ( level.atdElimTime > 0 && level.time >= level.atdElimTime + 3000 ) {
+			G_ATDApplySafeCarrierBonus( atkTeam, level.intermission_origin );
 			AddTeamScore( level.intermission_origin, atkTeam, 2 );
 			G_BroadcastServerCommand( -1, "print \"Defending team eliminated! Attackers score 2 points!\n\"" );
 			G_ATDEndRound();

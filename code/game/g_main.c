@@ -831,6 +831,21 @@ static void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	if ( p_enablePortal.integer && g_gametype.integer == GT_FFA )
 		G_Portal_FindMinigames();
 
+	if ( p_enablePortal.integer ) {
+		qboolean hasPortalEntities = qfalse;
+		for ( i = 1; i <= 64; i++ ) {
+			if ( level.portalEntityMap[i] ) {
+				hasPortalEntities = qtrue;
+				break;
+			}
+		}
+
+		// Any map entered from the portal vote that is not the portal hub should return to hub at map end.
+		if ( !hasPortalEntities ) {
+			trap_SendConsoleCommand( EXEC_APPEND, "set nextmap \"vstr GotoPortal\"\n" );
+		}
+	}
+
 	// general initialization
 	G_FindTeams();
 

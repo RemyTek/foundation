@@ -35,6 +35,68 @@ with the most votes wins and the server loads that map.
 
 static int G_Portal_RandomPortal( void );
 
+static void G_Portal_PersistDisabledPortal( int portalNum ) {
+	char list[512];
+	char copy[512];
+	char *tok;
+	qboolean disabled[MAX_PORTAL_MAPS];
+	int i;
+	int n;
+	char rebuilt[512];
+	int offset;
+
+	if ( portalNum < 1 || portalNum > MAX_PORTAL_MAPS )
+		return;
+
+	Com_Memset( disabled, 0, sizeof( disabled ) );
+
+	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
+		if ( level.portalDisabled[i] )
+			disabled[i] = qtrue;
+	}
+
+	trap_Cvar_VariableStringBuffer( "p_disablePortalList", list, sizeof( list ) );
+	Q_strncpyz( copy, list, sizeof( copy ) );
+
+	tok = strtok( copy, "," );
+	while ( tok ) {
+		n = atoi( tok );
+		if ( n >= 1 && n <= MAX_PORTAL_MAPS )
+			disabled[n - 1] = qtrue;
+		tok = strtok( NULL, "," );
+	}
+
+	disabled[portalNum - 1] = qtrue;
+	level.portalDisabled[portalNum - 1] = qtrue;
+
+	rebuilt[0] = '\0';
+	offset = 0;
+	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
+		if ( !disabled[i] )
+			continue;
+		offset += Com_sprintf( rebuilt + offset, sizeof( rebuilt ) - offset,
+		                      offset > 0 ? ",%i" : "%i", i + 1 );
+		if ( offset >= (int)sizeof( rebuilt ) - 1 )
+			break;
+	}
+
+	trap_Cvar_Set( "p_disablePortalList", rebuilt );
+}
+
+static void G_Portal_MarkPortalDisabledInCS( int portalNum ) {
+	char info[MAX_INFO_STRING];
+
+	if ( portalNum < 1 || portalNum > MAX_PORTAL_MAPS )
+		return;
+
+	trap_GetConfigstring( CS_PORTALS + portalNum - 1, info, sizeof( info ) );
+	if ( !info[0] )
+		return;
+
+	Info_SetValueForKey( info, "e", "0" );
+	trap_SetConfigstring( CS_PORTALS + portalNum - 1, info );
+}
+
 qboolean G_PortalMiniGameRulesEnabled( void ) {
 	return ( p_enablePortal.integer
 		&& g_gametype.integer == GT_FFA
@@ -360,6 +422,10 @@ static void G_Portal_Resolve( void ) {
 	gametype = G_Portal_GametypeForNum( bestPortal );
 	if ( gametype < 0 )
 		gametype = p_defaultGametype.integer;
+
+	// Disable the winning portal for subsequent returns to the hub (same visual/logic path as disabled slots).
+	G_Portal_PersistDisabledPortal( bestPortal );
+	G_Portal_MarkPortalDisabledInCS( bestPortal );
 
 	G_Printf( "^2Portal: voting done — loading '%s' (gametype %i)\n", mapname, gametype );
 	G_BroadcastServerCommand( -1, va( "print \"^2Portal vote: '%s' wins! Loading map...\n\"", mapname ) );
