@@ -26,6 +26,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static void CG_SillyQuadTransition(float* rollDeg, float* collapse);
 
+static qboolean CG_IsPortalTransitionActive( void ) {
+	const char *cs;
+	int endTime;
+
+	cs = CG_ConfigString( CS_PORTAL_TRANSITION );
+	if ( !cs || !cs[0] )
+		return qfalse;
+
+	endTime = atoi( cs );
+	return ( endTime > 0 && cg.time < endTime );
+}
+
 
 /*
 =============================================================================
@@ -364,6 +376,10 @@ static void CG_SillyQuadTransition(float* rollDeg, float* collapse)
 	}
 
 	if (cg.sillyQuadEndTime <= cg.time)
+	{
+		return;
+	}
+	if ( CG_IsPortalTransitionActive() )
 	{
 		return;
 	}
@@ -1116,6 +1132,10 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
+
+	if ( CG_IsPortalTransitionActive() ) {
+		cg.sillyQuadEndTime = 0;
+	}
 
 	if ( cg.sillyQuadEndTime && cg.sillyQuadEndTime <= cg.time ) {
 		cg.sillyQuadEndTime = 0;

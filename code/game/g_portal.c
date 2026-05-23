@@ -35,8 +35,24 @@ with the most votes wins and the server loads that map.
 #define PORTAL_TRANSITION_MS 5000
 
 static int G_Portal_RandomPortal( void );
+static void G_Portal_MapForNum( int portalNum, char *out, int outSize );
 static int s_portalDisabledWarnTime[MAX_CLIENTS];
-static qboolean s_portalReliableTextEnabled = qfalse;
+static qboolean s_portalReliableTextEnabled = qtrue;
+
+static void G_Portal_ExpireAllSillyQuads( void ) {
+	int i;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *ent = &g_entities[i];
+		if ( !ent->inuse || !ent->client )
+			continue;
+		if ( ent->client->pers.connected != CON_CONNECTED )
+			continue;
+
+		ent->client->ps.powerups[PW_QUAD] = 0;
+		ent->s.powerups &= ~( 1 << PW_QUAD );
+	}
+}
 
 static void G_Portal_SendClientText( int clientNum, const char *text ) {
 	if ( !s_portalReliableTextEnabled )
@@ -48,6 +64,45 @@ static void G_Portal_BroadcastText( const char *text ) {
 	if ( !s_portalReliableTextEnabled )
 		return;
 	G_BroadcastServerCommand( -1, text );
+}
+
+static void G_Portal_BroadcastVoteTallies( void ) {
+	char msg[1024];
+	char chunk[80];
+	int i;
+	int totalVotes = 0;
+
+	if ( !s_portalReliableTextEnabled )
+		return;
+
+	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
+		totalVotes += level.portalVotes[i];
+	}
+
+	if ( totalVotes <= 0 )
+		return;
+
+	Com_sprintf( msg, sizeof( msg ), "print \"Portal votes (%i): ", totalVotes );
+
+	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
+		char mapname[MAX_QPATH];
+		int count = level.portalVotes[i];
+
+		if ( count <= 0 )
+			continue;
+
+		G_Portal_MapForNum( i + 1, mapname, sizeof( mapname ) );
+		if ( !mapname[0] )
+			continue;
+
+		Com_sprintf( chunk, sizeof( chunk ), "%s:%i ", mapname, count );
+		if ( strlen( msg ) + strlen( chunk ) + 4 >= sizeof( msg ) )
+			break;
+		Q_strcat( msg, sizeof( msg ), chunk );
+	}
+
+	Q_strcat( msg, sizeof( msg ), "\\n\"" );
+	G_Portal_BroadcastText( msg );
 }
 
 static void G_Portal_BeginMapTransition( const char *mapname, int gametype ) {
@@ -63,6 +118,7 @@ static void G_Portal_BeginMapTransition( const char *mapname, int gametype ) {
 	trap_SetConfigstring( CS_PORTAL_TRANSITION, va( "%i", level.portalMapChangeTime ) );
 
 	// Mimic Threewave election output while entering the short portal transition.
+	G_Portal_ExpireAllSillyQuads();
 	G_Portal_BroadcastText( va( "print \"%s has won the election!\n\"", mapname ) );
 	G_Portal_BroadcastText( "print \"Map voting complete\n\"" );
 	G_Portal_BroadcastText( va( "print \"Map: %s\n\"", g_mapname.string ) );
@@ -588,6 +644,7 @@ void G_Portal_Vote( gentity_t *activator, int portalNum ) {
 	// Start the countdown on the very first vote
 	if ( !level.portalVoteTime ) {
 		level.portalVoteTime = level.time;
+		G_Portal_ExpireAllSillyQuads();
 		G_Portal_BroadcastText(
 			va( "print \"^2Portal voting started! %i seconds to vote.\n\"",
 				p_voteSeconds.integer ) );
@@ -613,6 +670,7 @@ void G_Portal_Vote( gentity_t *activator, int portalNum ) {
 	if ( prev >= 1 && prev <= MAX_PORTAL_MAPS )
 		G_Portal_UpdateVoteCS( prev );
 	G_Portal_UpdateVoteCS( portalNum );
+	G_Portal_BroadcastVoteTallies();
 
 	G_Portal_SendClientText( activator - g_entities,
 		va( "print \"^2You voted for: ^3%s\n\"", mapname ) );
