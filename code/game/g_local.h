@@ -508,6 +508,9 @@ typedef struct {
 	qboolean	portalMinigameEnabled[5];	// worldspawn enableMinigames mask (0..4)
 	int			portalNumEnabledMinigames;	// number of enabled minigames from worldspawn
 	int			portalCurrentMinigame;			// active mini-game room for all players (0-4); -1 = none
+	int			portalMapChangeTime;			// level.time when delayed voted map load should execute; 0 = inactive
+	int			portalNextGametype;			// voted map gametype to apply when portalMapChangeTime expires
+	char		portalNextMap[MAX_QPATH];	// voted map name to load after transition
 
 } level_locals_t;
 

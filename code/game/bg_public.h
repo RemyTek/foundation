@@ -108,6 +108,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // Portal configstrings — 64 slots, one per portal map slot (portals 1..64)
 #define CS_PORTALS				(CS_MAX)
+#define CS_PORTAL_TRANSITION	(CS_PORTALS + 64)	// serverTime when portal vote transition ends; "0" = inactive
 
 //CPM
 #define CS_PROMODE             16

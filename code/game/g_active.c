@@ -870,6 +870,15 @@ void ClientThink_real( gentity_t *ent ) {
 		return;
 	}
 
+	// Portal transition uses spectator movement/camera behavior without changing
+	// persistent team metadata, so HUD/score rows don't switch to SPEC.
+	if ( level.portalMapChangeTime && level.time < level.portalMapChangeTime ) {
+		client->sess.spectatorState = SPECTATOR_FREE;
+		client->ps.pm_flags &= ~PMF_FOLLOW;
+		SpectatorThink( ent, ucmd );
+		return;
+	}
+
 	// spectators don't do much
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {

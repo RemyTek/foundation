@@ -32,8 +32,53 @@ with the most votes wins and the server loads that map.
 #include "g_local.h"
 
 #define MAX_PORTAL_MAPS     64
+#define PORTAL_TRANSITION_MS 5000
 
 static int G_Portal_RandomPortal( void );
+
+static void G_Portal_BeginMapTransition( const char *mapname, int gametype ) {
+	int i;
+	vec3_t zero = { 0, 0, 0 };
+
+	if ( !mapname || !mapname[0] )
+		return;
+
+	Q_strncpyz( level.portalNextMap, mapname, sizeof( level.portalNextMap ) );
+	level.portalNextGametype = gametype;
+	level.portalMapChangeTime = level.time + PORTAL_TRANSITION_MS;
+	trap_SetConfigstring( CS_PORTAL_TRANSITION, va( "%i", level.portalMapChangeTime ) );
+
+	// Mimic Threewave election output while entering the short portal transition.
+	G_BroadcastServerCommand( -1, va( "print \"%s has won the election!\n\"", mapname ) );
+	G_BroadcastServerCommand( -1, "print \"Map voting complete\n\"" );
+	G_BroadcastServerCommand( -1, va( "print \"Map: %s\n\"", g_mapname.string ) );
+	G_ATDGlobalSound( "sound/misc/gong.wav" );
+
+	// Return everyone to q3start's spectator/intermission camera context so the
+	// transition view matches the original portal map behavior.
+	level.portalCurrentMinigame = -1;
+	level.portalVoteTime = 0;
+	FindIntermissionPoint();
+
+	// Push a fresh scoreboard snapshot so clients can immediately render scores.
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *ent = &g_entities[i];
+		if ( !ent->inuse || !ent->client )
+			continue;
+		if ( ent->client->pers.connected != CON_CONNECTED )
+			continue;
+
+		VectorCopy( level.intermission_origin, ent->s.origin );
+		VectorCopy( level.intermission_origin, ent->client->ps.origin );
+		VectorCopy( zero, ent->client->ps.velocity );
+		SetClientViewAngle( ent, level.intermission_angle );
+
+		ent->client->ps.pm_type = PM_SPECTATOR;
+		ent->client->ps.pm_flags &= ~PMF_SCOREBOARD;
+		ent->client->ps.pm_flags &= ~PMF_FOLLOW;
+		DeathmatchScoreboardMessage( ent );
+	}
+}
 
 static void G_Portal_PersistDisabledPortal( int portalNum ) {
 	char list[512];
@@ -427,12 +472,8 @@ static void G_Portal_Resolve( void ) {
 	G_Portal_PersistDisabledPortal( bestPortal );
 	G_Portal_MarkPortalDisabledInCS( bestPortal );
 
-	G_Printf( "^2Portal: voting done — loading '%s' (gametype %i)\n", mapname, gametype );
-	G_BroadcastServerCommand( -1, va( "print \"^2Portal vote: '%s' wins! Loading map...\n\"", mapname ) );
-
-	// Change map: set gametype, load map, then return to portal on nextmap
-	trap_SendConsoleCommand( EXEC_APPEND,
-		va( "g_gametype %i; map %s; set nextmap \"vstr GotoPortal\"\n", gametype, mapname ) );
+	G_Printf( "^2Portal: voting done — winner '%s' (gametype %i), transition starts\n", mapname, gametype );
+	G_Portal_BeginMapTransition( mapname, gametype );
 }
 
 /*
@@ -557,8 +598,44 @@ deadline has been reached.
 ================
 */
 void G_Portal_Frame( void ) {
+	int i;
+
 	if ( !p_enablePortal.integer )
 		return;
+
+	if ( level.portalMapChangeTime ) {
+		// Hold clients in free spectator view during the short transition.
+		for ( i = 0; i < level.maxclients; i++ ) {
+			gentity_t *ent = &g_entities[i];
+			if ( !ent->inuse || !ent->client )
+				continue;
+			if ( ent->client->pers.connected != CON_CONNECTED )
+				continue;
+			ent->client->ps.pm_type = PM_SPECTATOR;
+			ent->client->ps.pm_flags &= ~PMF_SCOREBOARD;
+		}
+
+		if ( level.time >= level.portalMapChangeTime ) {
+			int nextGT = level.portalNextGametype;
+			char nextMap[MAX_QPATH];
+
+			Q_strncpyz( nextMap, level.portalNextMap, sizeof( nextMap ) );
+			if ( nextGT < 0 )
+				nextGT = p_defaultGametype.integer;
+
+			level.portalMapChangeTime = 0;
+			level.portalNextGametype = -1;
+			level.portalNextMap[0] = '\0';
+			trap_SetConfigstring( CS_PORTAL_TRANSITION, "0" );
+
+			if ( nextMap[0] ) {
+				trap_SendConsoleCommand( EXEC_APPEND,
+					va( "g_gametype %i; map %s; set nextmap \"vstr GotoPortal\"\n", nextGT, nextMap ) );
+			}
+		}
+
+		return;
+	}
 
 	if ( !level.portalVoteTime )
 		return;
@@ -647,6 +724,10 @@ void G_Portal_Init( void ) {
 	memset( level.portalDisabled,     0, sizeof( level.portalDisabled ) );
 	level.portalCurrentMinigame = -1;
 	level.portalVoteTime = 0;
+	level.portalMapChangeTime = 0;
+	level.portalNextGametype = -1;
+	level.portalNextMap[0] = '\0';
+	trap_SetConfigstring( CS_PORTAL_TRANSITION, "0" );
 
 	if ( level.portalNumEnabledMinigames <= 0 ) {
 		for ( i = 0; i < 5; i++ )

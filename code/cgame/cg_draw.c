@@ -3189,12 +3189,32 @@ CG_Draw2D
 
 static int colorChangeStartTime;
 
+static qboolean CG_IsPortalTransitionActive( void ) {
+	const char *cs;
+	int endTime;
+
+	cs = CG_ConfigString( CS_PORTAL_TRANSITION );
+	if ( !cs || !cs[0] )
+		return qfalse;
+
+	endTime = atoi( cs );
+	return ( endTime > 0 && cg.time < endTime );
+}
+
 static void CG_Draw2D(void)
 {
+	qboolean forcePortalScores;
+
 	// if we are taking a levelshot for the menu, don't draw anything
 	if (cg.levelShot)
 	{
 		return;
+	}
+
+	forcePortalScores = CG_IsPortalTransitionActive();
+	if ( forcePortalScores ) {
+		cg.showScores = qtrue;
+		cg.scoreFadeTime = cg.time;
 	}
 
 	if (!cg_draw2D.integer)
