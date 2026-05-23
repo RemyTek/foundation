@@ -2119,7 +2119,10 @@ qboolean CG_DrawIntermission(void)
 		}
 		else
 		{
-			result = CG_DrawOldScoreboard();
+			if (cg_scoreboardBE.integer && cg_newFFAScoreboard.integer)
+				result = CG_BEDrawTeamScoretable();
+			else
+				result = CG_DrawOldScoreboard();
 		}
 	}
 	else

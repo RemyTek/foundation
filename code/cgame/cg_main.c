@@ -217,6 +217,7 @@ static cvarTable_t cvarTable[] =
 	{ &cg_oversampleMouse, "cg_oversampleMouse", "0", CVAR_ARCHIVE },
 	{ &cg_statScrollTime, "cg_statScrollTime", "0.15", CVAR_ARCHIVE },
 	{ &cg_q3compScoreboard, "cg_q3compScoreboard", "1", CVAR_ARCHIVE },
+	{ &cg_newFFAScoreboard, "cg_newFFAScoreboard", "1", CVAR_ARCHIVE },
 	{ &cg_scoreTransparency, "cg_scoreTransparency", "1.0", CVAR_ARCHIVE },
 	{ &cg_showPlayerLean, "cg_showPlayerLean", "1", CVAR_ARCHIVE },
 	{ &cg_smoke_sg, "cg_smoke_sg", "1", CVAR_ARCHIVE },
