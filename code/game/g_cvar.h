@@ -218,5 +218,6 @@ G_CVAR( p_gametypeVote,              "p_gametypeVote",              "0",  CVAR_A
 G_CVAR( p_defaultGametype,           "p_defaultGametype",           "4",  CVAR_ARCHIVE, 0, qfalse, qfalse )
 G_CVAR( p_disableLastPlayedPortals,  "p_disableLastPlayedPortals",  "0",  CVAR_ARCHIVE, 0, qfalse, qfalse )
 G_CVAR( p_disablePortalList,         "p_disablePortalList",         "",   CVAR_ARCHIVE, 0, qfalse, qfalse )
+G_CVAR( p_disablePortalTemp,         "p_disablePortalTemp",         "-1", 0,            0, qfalse, qfalse )
 
 #undef G_CVAR

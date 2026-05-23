@@ -35,6 +35,20 @@ with the most votes wins and the server loads that map.
 #define PORTAL_TRANSITION_MS 5000
 
 static int G_Portal_RandomPortal( void );
+static int s_portalDisabledWarnTime[MAX_CLIENTS];
+static qboolean s_portalReliableTextEnabled = qfalse;
+
+static void G_Portal_SendClientText( int clientNum, const char *text ) {
+	if ( !s_portalReliableTextEnabled )
+		return;
+	trap_SendServerCommand( clientNum, text );
+}
+
+static void G_Portal_BroadcastText( const char *text ) {
+	if ( !s_portalReliableTextEnabled )
+		return;
+	G_BroadcastServerCommand( -1, text );
+}
 
 static void G_Portal_BeginMapTransition( const char *mapname, int gametype ) {
 	int i;
@@ -49,9 +63,9 @@ static void G_Portal_BeginMapTransition( const char *mapname, int gametype ) {
 	trap_SetConfigstring( CS_PORTAL_TRANSITION, va( "%i", level.portalMapChangeTime ) );
 
 	// Mimic Threewave election output while entering the short portal transition.
-	G_BroadcastServerCommand( -1, va( "print \"%s has won the election!\n\"", mapname ) );
-	G_BroadcastServerCommand( -1, "print \"Map voting complete\n\"" );
-	G_BroadcastServerCommand( -1, va( "print \"Map: %s\n\"", g_mapname.string ) );
+	G_Portal_BroadcastText( va( "print \"%s has won the election!\n\"", mapname ) );
+	G_Portal_BroadcastText( "print \"Map voting complete\n\"" );
+	G_Portal_BroadcastText( va( "print \"Map: %s\n\"", g_mapname.string ) );
 	G_ATDGlobalSound( "sound/misc/gong.wav" );
 
 	// Return everyone to q3start's spectator/intermission camera context so the
@@ -81,65 +95,94 @@ static void G_Portal_BeginMapTransition( const char *mapname, int gametype ) {
 }
 
 static void G_Portal_PersistDisabledPortal( int portalNum ) {
-	char list[512];
-	char copy[512];
-	char *tok;
-	qboolean disabled[MAX_PORTAL_MAPS];
 	int i;
-	int n;
-	char rebuilt[512];
-	int offset;
 
 	if ( portalNum < 1 || portalNum > MAX_PORTAL_MAPS )
 		return;
 
-	Com_Memset( disabled, 0, sizeof( disabled ) );
-
 	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
-		if ( level.portalDisabled[i] )
-			disabled[i] = qtrue;
+		level.portalDisabled[i] = qfalse;
 	}
+ 	level.portalDisabled[portalNum - 1] = qtrue;
 
-	trap_Cvar_VariableStringBuffer( "p_disablePortalList", list, sizeof( list ) );
-	Q_strncpyz( copy, list, sizeof( copy ) );
-
-	tok = strtok( copy, "," );
-	while ( tok ) {
-		n = atoi( tok );
-		if ( n >= 1 && n <= MAX_PORTAL_MAPS )
-			disabled[n - 1] = qtrue;
-		tok = strtok( NULL, "," );
-	}
-
-	disabled[portalNum - 1] = qtrue;
-	level.portalDisabled[portalNum - 1] = qtrue;
-
-	rebuilt[0] = '\0';
-	offset = 0;
-	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
-		if ( !disabled[i] )
-			continue;
-		offset += Com_sprintf( rebuilt + offset, sizeof( rebuilt ) - offset,
-		                      offset > 0 ? ",%i" : "%i", i + 1 );
-		if ( offset >= (int)sizeof( rebuilt ) - 1 )
-			break;
-	}
-
-	trap_Cvar_Set( "p_disablePortalList", rebuilt );
+	trap_Cvar_Set( "p_disablePortalList", va( "%i", portalNum ) );
+	trap_Cvar_Set( "p_disablePortalTemp", va( "%i", portalNum ) );
 }
 
 static void G_Portal_MarkPortalDisabledInCS( int portalNum ) {
+	int i;
 	char info[MAX_INFO_STRING];
+	const char *currentEnabled;
+	const char *desiredEnabled;
 
-	if ( portalNum < 1 || portalNum > MAX_PORTAL_MAPS )
+	if ( portalNum < 0 || portalNum > MAX_PORTAL_MAPS )
 		return;
 
-	trap_GetConfigstring( CS_PORTALS + portalNum - 1, info, sizeof( info ) );
-	if ( !info[0] )
+	for ( i = 1; i <= MAX_PORTAL_MAPS; i++ ) {
+		trap_GetConfigstring( CS_PORTALS + i - 1, info, sizeof( info ) );
+		if ( !info[0] )
+			continue;
+
+		desiredEnabled = ( portalNum > 0 && i == portalNum ) ? "0" : "1";
+		currentEnabled = Info_ValueForKey( info, "e" );
+		if ( currentEnabled && !Q_stricmp( currentEnabled, desiredEnabled ) )
+			continue;
+
+		Info_SetValueForKey( info, "e", desiredEnabled );
+		trap_SetConfigstring( CS_PORTALS + i - 1, info );
+	}
+}
+
+static void G_Portal_SyncDisabledState( void ) {
+	int i;
+	int desired = 0;
+	char rememberStr[32];
+	char disabledListStr[32];
+	char tempStr[32];
+	qboolean needsUpdate = qfalse;
+
+	trap_Cvar_VariableStringBuffer( "p_disablePortalTemp", rememberStr, sizeof( rememberStr ) );
+	desired = atoi( rememberStr );
+	if ( desired < 1 || desired > MAX_PORTAL_MAPS ) {
+		desired = 0;
+	}
+
+	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
+		qboolean want = ( desired > 0 && i == desired - 1 );
+		if ( level.portalDisabled[i] != want ) {
+			needsUpdate = qtrue;
+			break;
+		}
+	}
+
+	if ( desired > 0 ) {
+		trap_Cvar_VariableStringBuffer( "p_disablePortalList", disabledListStr, sizeof( disabledListStr ) );
+		trap_Cvar_VariableStringBuffer( "p_disablePortalTemp", tempStr, sizeof( tempStr ) );
+		if ( atoi( disabledListStr ) != desired || atoi( tempStr ) != desired )
+			needsUpdate = qtrue;
+	} else {
+		trap_Cvar_VariableStringBuffer( "p_disablePortalList", disabledListStr, sizeof( disabledListStr ) );
+		trap_Cvar_VariableStringBuffer( "p_disablePortalTemp", tempStr, sizeof( tempStr ) );
+		if ( disabledListStr[0] || atoi( tempStr ) > 0 )
+			needsUpdate = qtrue;
+	}
+
+	if ( !needsUpdate )
 		return;
 
-	Info_SetValueForKey( info, "e", "0" );
-	trap_SetConfigstring( CS_PORTALS + portalNum - 1, info );
+	for ( i = 0; i < MAX_PORTAL_MAPS; i++ ) {
+		level.portalDisabled[i] = ( desired > 0 && i == desired - 1 );
+	}
+
+	if ( desired > 0 ) {
+		trap_Cvar_Set( "p_disablePortalList", va( "%i", desired ) );
+		trap_Cvar_Set( "p_disablePortalTemp", va( "%i", desired ) );
+	} else {
+		trap_Cvar_Set( "p_disablePortalList", "" );
+		trap_Cvar_Set( "p_disablePortalTemp", "-1" );
+	}
+
+	G_Portal_MarkPortalDisabledInCS( desired );
 }
 
 qboolean G_PortalMiniGameRulesEnabled( void ) {
@@ -283,7 +326,7 @@ qboolean G_Portal_HandleVoteTouch( gentity_t *activator, int portalNum ) {
 
 	// Portal voting only runs when the portal system is active (hub is GT_FFA)
 	if ( !p_enablePortal.integer ) {
-		trap_SendServerCommand( activator - g_entities,
+		G_Portal_SendClientText( activator - g_entities,
 			"print \"The portal is disabled on this server.\\n\"" );
 		return qfalse;
 	}
@@ -295,6 +338,18 @@ qboolean G_Portal_HandleVoteTouch( gentity_t *activator, int portalNum ) {
 		portalNum = G_Portal_RandomPortal();
 		if ( portalNum == 0 )
 			return qfalse;
+	}
+
+	if ( portalNum >= 1 && portalNum <= MAX_PORTAL_MAPS && level.portalDisabled[portalNum - 1] ) {
+		int clientNum = activator - g_entities;
+		if ( clientNum >= 0 && clientNum < MAX_CLIENTS ) {
+			if ( level.time >= s_portalDisabledWarnTime[clientNum] ) {
+				s_portalDisabledWarnTime[clientNum] = level.time + 1000;
+				G_Portal_SendClientText( clientNum,
+					"print \"This portal is disabled.\\n\"" );
+			}
+		}
+		return qfalse;
 	}
 
 	{
@@ -521,7 +576,7 @@ void G_Portal_Vote( gentity_t *activator, int portalNum ) {
 	// Verify this portal has a map configured
 	G_Portal_MapForNum( portalNum, mapname, sizeof( mapname ) );
 	if ( !mapname[0] ) {
-		trap_SendServerCommand( activator - g_entities,
+		G_Portal_SendClientText( activator - g_entities,
 			va( "print \"^3Portal %i has no map configured.\n\"", portalNum ) );
 		return;
 	}
@@ -533,7 +588,7 @@ void G_Portal_Vote( gentity_t *activator, int portalNum ) {
 	// Start the countdown on the very first vote
 	if ( !level.portalVoteTime ) {
 		level.portalVoteTime = level.time;
-		G_BroadcastServerCommand( -1,
+		G_Portal_BroadcastText(
 			va( "print \"^2Portal voting started! %i seconds to vote.\n\"",
 				p_voteSeconds.integer ) );
 	}
@@ -559,34 +614,8 @@ void G_Portal_Vote( gentity_t *activator, int portalNum ) {
 		G_Portal_UpdateVoteCS( prev );
 	G_Portal_UpdateVoteCS( portalNum );
 
-	trap_SendServerCommand( activator - g_entities,
+	G_Portal_SendClientText( activator - g_entities,
 		va( "print \"^2You voted for: ^3%s\n\"", mapname ) );
-
-	// Broadcast running tally
-	{
-		int  j, total = 0;
-		char msg[512];
-		char *p = msg;
-		int  remaining;
-
-		for ( j = 0; j < MAX_PORTAL_MAPS; j++ )
-			total += level.portalVotes[j];
-
-		p += Com_sprintf( msg, sizeof( msg ), "print \"^3Portal votes (%i):", total );
-		for ( j = 0; j < MAX_PORTAL_MAPS; j++ ) {
-			if ( level.portalVotes[j] > 0 ) {
-				char pmap[64];
-				G_Portal_MapForNum( j + 1, pmap, sizeof( pmap ) );
-				remaining = sizeof( msg ) - (int)( p - msg );
-				if ( remaining > 2 )
-					p += Com_sprintf( p, remaining, " %s:%i", pmap, level.portalVotes[j] );
-			}
-		}
-		remaining = sizeof( msg ) - (int)( p - msg );
-		if ( remaining > 3 )
-			Q_strcat( msg, sizeof( msg ), "\\n\"" );
-		G_BroadcastServerCommand( -1, msg );
-	}
 }
 
 /*
@@ -602,6 +631,8 @@ void G_Portal_Frame( void ) {
 
 	if ( !p_enablePortal.integer )
 		return;
+
+	G_Portal_SyncDisabledState();
 
 	if ( level.portalMapChangeTime ) {
 		// Hold clients in free spectator view during the short transition.
@@ -713,8 +744,6 @@ void G_Portal_FindMinigames( void ) {
 }
 
 void G_Portal_Init( void ) {
-	char list[256], *tok;
-	int  n;
 	int  i;
 
 	memset( level.portalVotes,        0, sizeof( level.portalVotes ) );
@@ -722,6 +751,7 @@ void G_Portal_Init( void ) {
 	memset( level.portalPlayerVote,   0, sizeof( level.portalPlayerVote ) );
 	memset( level.portalEntityMap,    0, sizeof( level.portalEntityMap ) );
 	memset( level.portalDisabled,     0, sizeof( level.portalDisabled ) );
+	memset( s_portalDisabledWarnTime, 0, sizeof( s_portalDisabledWarnTime ) );
 	level.portalCurrentMinigame = -1;
 	level.portalVoteTime = 0;
 	level.portalMapChangeTime = 0;
@@ -735,15 +765,7 @@ void G_Portal_Init( void ) {
 		level.portalNumEnabledMinigames = 5;
 	}
 
-	// Parse p_disablePortalList: comma-separated portal numbers to exclude from voting
-	trap_Cvar_VariableStringBuffer( "p_disablePortalList", list, sizeof( list ) );
-	tok = strtok( list, "," );
-	while ( tok ) {
-		n = atoi( tok );
-		if ( n >= 1 && n <= MAX_PORTAL_MAPS )
-			level.portalDisabled[n - 1] = qtrue;
-		tok = strtok( NULL, "," );
-	}
+	G_Portal_SyncDisabledState();
 
 	// Broadcast portal info to clients via configstrings
 	{
